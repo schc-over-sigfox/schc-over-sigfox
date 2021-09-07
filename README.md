@@ -1,2 +1,2 @@
 # schc-over-sigfox
-SCHC over Sigfox implementations latest code
+SCHC over Sigfox Uplink ACK-on-Error implementation latest code
