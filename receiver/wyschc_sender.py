@@ -3,7 +3,7 @@ import requests
 import config_testing as config
 from Entities.SCHCLogger import SCHCLogger
 from Entities.SCHCSender import SCHCSender
-from loss_masks.loss_masks import *
+from testing.loss_masks import *
 
 with open(config.PAYLOAD, "rb") as data:
     f = data.read()
@@ -16,7 +16,7 @@ sender.PROFILE.RETRANSMISSION_TIMER_VALUE = 5
 sender.PROFILE.SIGFOX_DL_TIMEOUT = 5
 
 sender.set_logging(None, None, severity=SCHCLogger.INFO)
-loss_mask = loss_mask_7
+loss_mask = loss_mask_2
 sender.set_loss_mask(loss_mask)
 sender.set_device("4d5a87")
 
