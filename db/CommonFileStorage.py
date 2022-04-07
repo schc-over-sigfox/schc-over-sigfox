@@ -37,9 +37,9 @@ class CommonFileStorage(FileStorage):
     def create_folder(self, path: str = ''):
         if not self.folder_exists(path):
             if path == '':
-                os.mkdir(self.ROOT)
+                os.makedirs(self.ROOT)
             else:
-                os.mkdir(f"{self.ROOT}/{path}")
+                os.makedirs(f"{self.ROOT}/{path}")
 
     def list_files(self, path: str = '') -> list[str]:
         if self.folder_exists(path):

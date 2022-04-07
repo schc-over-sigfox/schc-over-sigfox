@@ -69,7 +69,7 @@ class TestCommonFileStorage(TestCase):
         self.FS.write("testfolder/testfile3", "test")
         self.FS.write("testfolder/testfile4", "test")
 
-        self.assertEqual(sorted(["testfile1", "testfile2", "testfile3", "testfile4"]), self.FS.list_files("testfolder"))
+        self.assertEqual(sorted(["testfile1", "testfile2", "testfile3", "testfile4"]), sorted(self.FS.list_files("testfolder")))
 
         self.FS.delete_folder("testfolder")
 
