@@ -4,6 +4,8 @@ Module that contains functions used to transform between different data types.
 import binascii
 from math import log
 
+from utils.misc import zfill
+
 
 def bin_to_int(b: str) -> int:
     return int(b, 2)
@@ -15,7 +17,7 @@ def bin_to_hex(b: str) -> str:
 
 
 def bin_to_bytes(b: str) -> bytes:
-    return bytes(int(b[i:i + 8], 2) for i in range(0, len(s), 8))
+    return bytes(int(b[i:i + 8], 2) for i in range(0, len(b), 8))
 
 
 def bin_to_string(bits: str, encoding: str = 'utf-8') -> str:
@@ -37,10 +39,6 @@ def hex_to_bytes(h: str) -> bytes:
     return binascii.unhexlify(h)
 
 
-def bytes_to_hex(b: bytes) -> str:
-    return str(binascii.hexlify(b))[2:-1]
-
-
 def bytes_to_bin(b: bytes, length: int = None) -> str:
     if length is None:
         length = len(b) * 8
@@ -48,7 +46,11 @@ def bytes_to_bin(b: bytes, length: int = None) -> str:
     as_int = int.from_bytes(b, byteorder='big')
     as_bin = bin(as_int)[2:]
 
-    return zfill(as_bin[2:], length)
+    return zfill(as_bin, length)
+
+
+def bytes_to_hex(b: bytes) -> str:
+    return str(binascii.hexlify(b))[2:-1]
 
 
 def int_to_bin(n: int, length: int = 0) -> str:
@@ -56,7 +58,7 @@ def int_to_bin(n: int, length: int = 0) -> str:
 
 
 def int_to_hex(n: int) -> str:
-    return hex(n)
+    return hex(n)[2:]
 
 
 def int_to_bytes(n: int, length: int = None) -> bytes:
