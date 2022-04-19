@@ -101,3 +101,10 @@ class TestMisc(unittest.TestCase):
             }
 
             b = invert_dict(d)
+
+    def test_next_multiple(self):
+        self.assertEqual(14, round_to_next_multiple(8, 7))
+        self.assertEqual(14, round_to_next_multiple(14, 7))
+        self.assertEqual(21, round_to_next_multiple(15, 7))
+        self.assertEqual(0, round_to_next_multiple(0, 7))
+        self.assertEqual(-14, round_to_next_multiple(-20, 7))

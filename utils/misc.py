@@ -67,3 +67,9 @@ def invert_dict(d: dict) -> dict:
         raise ValueError("Dictionary cannot be inverted")
 
     return {v: k for k, v in d.items()}
+
+
+def round_to_next_multiple(n, factor):
+    """Rounds a number to the next greater multiple of a specified factor."""
+
+    return -(n // (-factor)) * factor
