@@ -1,25 +1,21 @@
+from Entities.SigfoxProfile import SigfoxProfile
 from Messages.Fragment import Fragment
+from db.JSONStorage import JSONStorage
 
 
 class Reassembler:
-	PROFILE = None
-	SCHC_FRAGMENTS = []
-	rule_set = set()
-	dtag_set = set()
-	window_set = set()
-	fcn_set = set()
 
-	def __init__(self, profile, schc_fragments):
+	def __init__(self, profile: SigfoxProfile, fragments: list[Fragment], storage: JSONStorage):
 		self.PROFILE = profile
-
-		self.SCHC_FRAGMENTS = [Fragment(self.PROFILE, fragment) for fragment in schc_fragments]
-
-		# for fragment in self.SCHC_FRAGMENTS:
-		# 	 self.rule_set.add(fragment.HEADER.RULE_ID)
-		# 	 self.dtag_set.add(fragment.HEADER.DTAG)
-		#  	 self.window_set.add(fragment.HEADER.W)
-		# 	 self.fcn_set.add(fragment.HEADER.FCN)
+		self.FRAGMENTS = fragments
+		# TODO: self.STORAGE = storage
+		self.SCHC_PACKET = b''
+		self.COMPLETE = False
 
 	def reassemble(self):
-		payload_list = [fragment.PAYLOAD for fragment in self.SCHC_FRAGMENTS]
-		return b"".join(payload_list)
+		"""Merges all the SCHC Fragments into the original SCHC Packet."""
+
+		self.SCHC_PACKET = b''.join([fragment.PAYLOAD for fragment in self.FRAGMENTS])
+		self.COMPLETE = True
+
+		return self.SCHC_PACKET
