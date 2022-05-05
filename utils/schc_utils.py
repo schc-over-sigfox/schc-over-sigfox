@@ -1,42 +1,24 @@
 import json
-import logging as log
 import os
 
 import requests
 
-
-def init_logging(logfile):
-    log.basicConfig(filename=logfile,
-                    format='%(asctime)s - %(levelname)s - %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S',
-                    level=log.DEBUG)
+from Entities.Rule import Rule
+from utils.casting import bin_to_int
 
 
-def log_debug(text):
-    print(text)
-    log.debug(text)
-
-
-def log_info(text):
-    print(text)
-    log.info(text)
-
-
-def log_warning(text):
-    print(text)
-    log.warning(text)
-
-
-def log_error(text):
-    print(text)
-    log.error(text)
-
-
-def zfill(string, width):
-    if len(string) < width:
-        return ("0" * (width - len(string))) + string
-    else:
-        return string
+def get_rule(b: str) -> Rule:
+    """Parses the Rule ID of the given binary string, assuming that it is located in the leftmost bits."""
+    first_byte = b[:8]
+    rule_id = first_byte[:3]
+    option = 0
+    if is_monochar(rule_id, '1'):
+        rule_id = first_byte[:6]
+        option = 1
+        if is_monochar(rule_id, '1'):
+            option = 2
+            rule_id = first_byte[:8]
+    return Rule(bin_to_int(rule_id), option)
 
 
 def insert_index(ls, pos, elmt):

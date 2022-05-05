@@ -7,7 +7,7 @@ from Messages.Fragment import Fragment
 from Messages.FragmentHeader import FragmentHeader
 from db.CommonFileStorage import CommonFileStorage as Storage
 from utils.casting import int_to_bin, bytes_to_bin
-from utils.schc_utils import zfill
+from utils.misc import zfill
 
 
 class Fragmenter:

@@ -1,75 +1,88 @@
+from Entities.SigfoxProfile import SigfoxProfile
+from Entities.exceptions import LengthMismatchError
 from Messages.ACKHeader import ACKHeader
-from utils.schc_utils import bitstring_to_bytes, is_monochar, zfill
+from config import schc as config
+from utils.casting import bin_to_hex, hex_to_bin
+from utils.schc_utils import is_monochar, get_rule
 
 
 class ACK:
-    PROFILE = None
-    BITMAP = None
-    HEADER = None
-    PADDING = None
-
-    def __init__(self, profile, rule_id, dtag, w, c, bitmap, padding=''):
+    def __init__(
+            self,
+            profile: SigfoxProfile,
+            dtag: str,
+            w: str,
+            c: str,
+            bitmap: str,
+            padding: str = ''
+    ) -> None:
         self.PROFILE = profile
         self.BITMAP = bitmap
-        self.PADDING = padding
 
-        # Bitmap may or may not be carried
-        self.HEADER = ACKHeader(profile, rule_id, dtag, w, c)
+        self.HEADER = ACKHeader(profile, dtag, w, c)
+        self.PADDING = padding + '0' * (profile.DOWNLINK_MTU - len(self.HEADER.to_binary() + self.BITMAP + padding))
 
-        while len(self.HEADER.to_string() + self.BITMAP + self.PADDING) < profile.DOWNLINK_MTU:
-            self.PADDING += '0'
+    def to_hex(self) -> str:
+        """Obtains the hex representationi of the ACK."""
+        return bin_to_hex(self.HEADER.to_binary() + self.BITMAP + self.PADDING)
 
-    def to_string(self):
-        return self.HEADER.to_string() + self.BITMAP + self.PADDING
+    def is_receiver_abort(self) -> bool:
+        """Checks whether the ACK is a SCHC Receiver Abort."""
 
-    def to_bytes(self):
-        return bitstring_to_bytes(self.to_string())
-
-    def length(self):
-        return len(self.to_string())
-
-    def is_receiver_abort(self):
-        ack_string = self.to_string()
-        l2_word_size = self.PROFILE.L2_WORD_SIZE
+        as_bin = hex_to_bin(self.to_hex())
         header_length = len(self.HEADER.RULE_ID + self.HEADER.DTAG + self.HEADER.W + self.HEADER.C)
-        header = ack_string[:header_length]
-        padding = ack_string[header_length:ack_string.rfind('1') + 1]
-        padding_start = padding[:-l2_word_size]
-        padding_end = padding[-l2_word_size:]
+        header = as_bin[:header_length]
+        padding = as_bin[header_length:as_bin.rfind('1') + 1]
+        padding_start = padding[:-config.L2_WORD_SIZE]
+        padding_end = padding[-config.L2_WORD_SIZE:]
 
-        if padding_end == "1" * l2_word_size:
-            if padding_start != '' and len(header) % l2_word_size != 0:
-                return is_monochar(padding_start) and padding_start[0] == '1'
-            else:
-                return len(header) % l2_word_size == 0
-        else:
-            return False
+        if is_monochar(self.HEADER.W, '1') and self.HEADER.C == '1':
+            if padding_end == "1" * config.L2_WORD_SIZE:
+                if padding_start != '' and len(header) % config.L2_WORD_SIZE != 0:
+                    return is_monochar(padding_start, '1') \
+                           and (len(header) + len(padding_start)) % config.L2_WORD_SIZE == 0
+                else:
+                    return len(header) % config.L2_WORD_SIZE == 0
+        return False
 
-    @staticmethod
-    def parse_from_string(profile, s):
-        ack = s
-        ack_index_dtag = profile.RULE_ID_SIZE
-        ack_index_w = ack_index_dtag + profile.T
-        ack_index_c = ack_index_w + profile.M
-        ack_index_bitmap = ack_index_c + 1
-        ack_index_padding = ack_index_bitmap + profile.BITMAP_SIZE
-        return ACK(profile,
-                   ack[:ack_index_dtag],
-                   ack[ack_index_dtag:ack_index_w],
-                   ack[ack_index_w:ack_index_c],
-                   ack[ack_index_c],
-                   ack[ack_index_bitmap:ack_index_padding],
-                   ack[ack_index_padding:])
+    def is_compound_ack(self) -> bool:
+        """Checks if the ACK can be parsed as a Compound ACK."""
+        return not self.is_receiver_abort() and not is_monochar(self.PADDING, '0')
+
+    def is_complete(self) -> bool:
+        """Checks if the ACK reports the end of a SCHC session."""
+        return self.HEADER.C == '1' and not self.is_receiver_abort()
 
     @staticmethod
-    def parse_from_hex(profile, h):
-        ack = zfill(bin(int(h, 16))[2:], profile.DOWNLINK_MTU)
-        return ACK.parse_from_string(profile, ack)
+    def from_hex(hex_string: str) -> 'ACK':
+        """Creates an ACK from a hexadecimal string."""
+        as_bin = hex_to_bin(hex_string)
 
-    @staticmethod
-    def parse_from_bytes(profile, b):
-        ack = ''.join("{:08b}".format(int(byte)) for byte in b)
-        return ACK.parse_from_string(profile, ack)
+        if len(as_bin) != SigfoxProfile.DOWNLINK_MTU:
+            raise LengthMismatchError("ACK was not of length DOWNLINK_MTU.")
 
-    def is_compound_ack(self):
-        return not self.is_receiver_abort() and not is_monochar(self.PADDING, char='0')
+        rule = get_rule(as_bin)
+        profile = SigfoxProfile("UPLINK", config.FR_MODE, rule)
+
+        dtag_idx = profile.RULE_ID_SIZE
+        w_idx = profile.RULE_ID_SIZE + profile.T
+        c_idx = profile.RULE_ID_SIZE + profile.T + profile.M
+
+        header = as_bin[:rule.ACK_HEADER_LENGTH]
+
+        dtag = header[dtag_idx:dtag_idx + profile.T]
+        w = header[w_idx:w_idx + profile.M]
+        c = header[c_idx:c_idx + 1]
+
+        payload = as_bin[rule.ACK_HEADER_LENGTH:]
+        bitmap = payload[:profile.WINDOW_SIZE]
+        padding = payload[profile.WINDOW_SIZE:]
+
+        return ACK(
+            profile,
+            dtag,
+            w,
+            c,
+            bitmap,
+            padding
+        )

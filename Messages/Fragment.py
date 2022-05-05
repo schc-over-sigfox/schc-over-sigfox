@@ -1,13 +1,12 @@
 import json
 
 import config.schc as config
-from Entities.Rule import Rule
 from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import LengthMismatchError, BadProfileError
 from Messages.FragmentHeader import FragmentHeader
-from utils.casting import bytes_to_hex, hex_to_bin, bin_to_int, hex_to_bytes
+from utils.casting import bytes_to_hex, hex_to_bin, hex_to_bytes
 from utils.misc import round_to_next_multiple
-from utils.schc_utils import is_monochar
+from utils.schc_utils import is_monochar, get_rule
 
 
 class Fragment:
@@ -63,31 +62,20 @@ class Fragment:
         """Parses a hex string into a Fragment, using the specified Profile"""
 
         as_bin = hex_to_bin(hex_string)
-        first_byte = as_bin[:8]
-        rule_id = first_byte[:3]
-        option = 0
-        if is_monochar(rule_id, '1'):
-            rule_id = first_byte[:6]
-            option = 1
-            if is_monochar(rule_id, '1'):
-                option = 2
-                rule_id = first_byte[:8]
-
-        rule = Rule(bin_to_int(rule_id), option)
+        rule = get_rule(as_bin)
         profile = SigfoxProfile("UPLINK", config.FR_MODE, rule)
 
-        rule_idx = 0
         dtag_idx = profile.RULE_ID_SIZE
         w_idx = profile.RULE_ID_SIZE + profile.T
         fcn_idx = profile.RULE_ID_SIZE + profile.T + profile.M
         rcs_idx = profile.RULE_ID_SIZE + profile.T + profile.M + profile.N
 
-        fcn = as_bin[fcn_idx:rcs_idx]
+        fcn = as_bin[fcn_idx:fcn_idx + profile.N]
 
         if is_monochar(fcn, '1'):
             header_length = profile.RULE.ALL1_HEADER_LENGTH
             header_padding_index = rcs_idx + profile.U
-            rcs = as_bin[rcs_idx:header_padding_index]
+            rcs = as_bin[rcs_idx:rcs_idx + profile.U]
 
             if rcs == '':
                 rcs = None
@@ -107,8 +95,8 @@ class Fragment:
                 raise LengthMismatchError(f"Header length mismatch: "
                                           f"Expected {header_length}, actual {rcs_idx}")
 
-        dtag = as_bin[dtag_idx:w_idx]
-        w = as_bin[w_idx:fcn_idx]
+        dtag = as_bin[dtag_idx:dtag_idx + profile.T]
+        w = as_bin[w_idx:w_idx + profile.M]
 
         header = FragmentHeader(profile, dtag, w, fcn, rcs)
         header_nibs = header_length // 4
