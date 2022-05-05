@@ -17,7 +17,7 @@ class Fragmenter:
             self,
             profile: SigfoxProfile,
             fragment_dir: str = "debug/sd",
-    ):
+    ) -> None:
         """
         Instantiate a Fragmenter.
 
@@ -32,7 +32,7 @@ class Fragmenter:
         if not self.STORAGE.folder_exists("fragments"):
             self.STORAGE.create_folder("fragments")
 
-    def generate_fragment(self, payload: bytes, all_1: bool):
+    def generate_fragment(self, payload: bytes, all_1: bool) -> Fragment:
 
         number_of_windows = 2 ** self.PROFILE.M
         w = int_to_bin(
@@ -101,6 +101,6 @@ class Fragmenter:
         self.CURRENT_FRAGMENT_NUMBER = 0
         return fragments
 
-    def clear_fragment_directory(self):
+    def clear_fragment_directory(self) -> None:
         for file in self.STORAGE.list_files("fragments"):
             self.STORAGE.delete_file(f"fragments/{file}")

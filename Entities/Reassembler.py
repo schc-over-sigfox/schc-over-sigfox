@@ -5,14 +5,19 @@ from db.JSONStorage import JSONStorage
 
 class Reassembler:
 
-	def __init__(self, profile: SigfoxProfile, fragments: list[Fragment], storage: JSONStorage):
+	def __init__(
+			self,
+			profile: SigfoxProfile,
+			fragments: list[Fragment],
+			storage: JSONStorage
+	) -> None:
 		self.PROFILE = profile
 		self.FRAGMENTS = fragments
 		# TODO: self.STORAGE = storage
 		self.SCHC_PACKET = b''
 		self.COMPLETE = False
 
-	def reassemble(self):
+	def reassemble(self) -> bytes:
 		"""Merges all the SCHC Fragments into the original SCHC Packet."""
 
 		self.SCHC_PACKET = b''.join([fragment.PAYLOAD for fragment in self.FRAGMENTS])

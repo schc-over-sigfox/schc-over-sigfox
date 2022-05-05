@@ -6,7 +6,7 @@ from utils.misc import round_to_next_multiple
 
 class Rule:
 
-    def __init__(self, rule_id: int, option: int):
+    def __init__(self, rule_id: int, option: int) -> None:
 
         self.ID = rule_id
 
@@ -47,5 +47,5 @@ class Rule:
 
         self.ACK_HEADER_LENGTH = self.RULE_ID_SIZE + self.M + 1
 
-    def __str__(self):
+    def __str__(self) -> str:
         return int_to_bin(self.ID, length=self.RULE_ID_SIZE)

@@ -6,8 +6,8 @@ import requests
 
 from Entities.Fragmenter import Fragmenter
 from Entities.SCHCLogger import SCHCLogger
-from Entities.SCHCTimer import SCHCTimer
 from Entities.SigfoxProfile import SigfoxProfile
+from Entities.Timer import SCHCTimer
 from Entities.exceptions import *
 from Messages.ACK import ACK
 from Messages.CompoundACK import CompoundACK

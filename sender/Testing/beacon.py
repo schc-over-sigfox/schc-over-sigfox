@@ -1,10 +1,10 @@
 # This is the beacon module to be run for experiments...
 
-from network import Sigfox
 import socket
-import time
 
-from Entities.SCHCTimer import SCHCTimer
+from network import Sigfox
+
+from Entities.Timer import SCHCTimer
 
 
 def zfill(string, width):

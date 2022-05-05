@@ -1,4 +1,4 @@
-from Entities.SCHCTimer import SCHCTimer
+from Entities.Timer import SCHCTimer
 from utils.schc_utils import *
 
 

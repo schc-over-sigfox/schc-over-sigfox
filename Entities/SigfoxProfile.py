@@ -12,7 +12,7 @@ class SigfoxProfile:
     UPLINK_MTU = 96
     DOWNLINK_MTU = 64
 
-    def __init__(self, direction: str, mode: str, rule: Rule):
+    def __init__(self, direction: str, mode: str, rule: Rule) -> None:
         self.DIRECTION = direction
         self.RULE = rule
         self.MODE = mode

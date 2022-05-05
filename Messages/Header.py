@@ -9,7 +9,7 @@ class Header:
             profile: SigfoxProfile,
             dtag: str,
             w: str
-    ):
+    ) -> None:
         """Class to encapsulate SCHC Header fields present in Fragments and ACKs."""
 
         self.PROFILE = profile

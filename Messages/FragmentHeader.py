@@ -15,7 +15,7 @@ class FragmentHeader(Header):
             w: str,
             fcn: str,
             rcs: str = None
-    ):
+    ) -> None:
         """Subclass of Header, used exclusively in Fragments."""
         super().__init__(profile, dtag, w)
 

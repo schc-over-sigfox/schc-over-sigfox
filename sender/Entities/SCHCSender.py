@@ -1,16 +1,17 @@
-from network import Sigfox
 import socket as s
+
 from machine import Timer
+from network import Sigfox
+from schc_utils import is_monochar
 
 from Entities.Fragmenter import Fragmenter
 from Entities.SCHCLogger import SCHCLogger
-from Entities.SCHCTimer import SCHCTimer
 from Entities.SigfoxProfile import SigfoxProfile
+from Entities.Timer import SCHCTimer
 from Entities.exceptions import *
 from Messages.ACK import ACK
 from Messages.Fragment import Fragment
 from Messages.SenderAbort import SenderAbort
-from schc_utils import is_monochar
 
 
 class SCHCSender:

@@ -17,7 +17,7 @@ class Fragment:
             profile: SigfoxProfile,
             header: FragmentHeader,
             payload: bytes
-    ):
+    ) -> None:
         """
         Create a SCHC Fragment.
 
