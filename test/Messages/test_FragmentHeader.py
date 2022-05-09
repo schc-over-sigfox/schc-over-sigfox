@@ -1,12 +1,11 @@
-from unittest import TestCase
-
 from Entities.Rule import Rule
 from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import LengthMismatchError, BadProfileError
 from Messages.FragmentHeader import FragmentHeader
+from test.Messages.test_Header import TestHeader
 
 
-class TestFragmentHeader(TestCase):
+class TestFragmentHeader(TestHeader):
 
     def test_init(self):
         rule_0 = Rule(0, 0)

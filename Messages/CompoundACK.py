@@ -1,69 +1,92 @@
-from Entities.exceptions import LengthMismatchError
+import config.schc as config
+from Entities.SigfoxProfile import SigfoxProfile
+from Entities.exceptions import LengthMismatchError, BadProfileError
 from Messages.ACK import ACK
-from utils.schc_utils import is_monochar, zfill
-
-# This class extend the regular ACK into the SCHC Compound ACK defined in
-# https://datatracker.ietf.org/doc/html/draft-ietf-lpwan-schc-compound-ack-00
+from utils.casting import hex_to_bin
+from utils.schc_utils import is_monochar, get_rule
 
 
 class CompoundACK(ACK):
-    TUPLES = None
 
-    def __init__(self, profile, rule_id, dtag, windows, c, bitmaps, padding=''):
+    def __init__(
+            self,
+            profile: SigfoxProfile,
+            dtag: str,
+            windows: list[str],
+            c: str,
+            bitmaps: list[str],
+            padding: str = ''
+    ):
         self.TUPLES = []
 
         if len(windows) != len(bitmaps):
-            print("ERROR: Window array and bitmap array must be of same length.")
-            raise LengthMismatchError
+            raise BadProfileError("Window and bitmap arrays must be of same length. "
+                                  f"(Window array has length {len(windows)}, "
+                                  f"bitmap array has length {len(bitmaps)})")
 
         first_window = windows[0]
         first_bitmap = bitmaps[0]
         self.TUPLES.append((first_window, first_bitmap))
 
-        payload_arr = []
         for i in range(len(windows[:-1])):
-            payload_arr.extend([windows[i + 1], bitmaps[i + 1]])
             self.TUPLES.append((windows[i + 1], bitmaps[i + 1]))
 
-        payload = ''.join(payload_arr) + padding
+        payload = ''.join(f"{t[0]}{t[1]}" for t in self.TUPLES[1:]) + padding
 
-        super().__init__(profile, rule_id, dtag, first_window, c, first_bitmap, padding=payload)
+        super().__init__(
+            profile,
+            dtag,
+            first_window,
+            c,
+            first_bitmap,
+            padding=payload
+        )
 
     @staticmethod
-    def parse_from_string(profile, s):
-        ack = s
-        index_dtag = profile.RULE_ID_SIZE
-        index_first_window = index_dtag + profile.T
-        index_c = index_first_window + profile.M
-        index_first_bitmap = index_c + 1
-        index_padding = index_first_bitmap + profile.BITMAP_SIZE
+    def from_hex(hex_string: str) -> 'CompoundACK':
+        """Creates a CompoundACK from a hexadecimal string."""
+        as_bin = hex_to_bin(hex_string)
 
-        windows = [ack[index_first_window:index_c]]
-        bitmaps = [ack[index_first_bitmap:index_padding]]
-        padding = ack[index_padding:]
+        if len(as_bin) != SigfoxProfile.DOWNLINK_MTU:
+            raise LengthMismatchError("Compound ACK was not of length DOWNLINK_MTU.")
 
-        while len(padding) >= profile.M + profile.BITMAP_SIZE:
-            if is_monochar(padding, "0"):
+        as_bin = hex_to_bin(hex_string)
+
+        if len(as_bin) != SigfoxProfile.DOWNLINK_MTU:
+            raise LengthMismatchError("ACK was not of length DOWNLINK_MTU.")
+
+        rule = get_rule(as_bin)
+        profile = SigfoxProfile("UPLINK", config.FR_MODE, rule)
+
+        dtag_idx = profile.RULE_ID_SIZE
+        w_idx = profile.RULE_ID_SIZE + profile.T
+        c_idx = profile.RULE_ID_SIZE + profile.T + profile.M
+
+        header = as_bin[:rule.ACK_HEADER_LENGTH]
+
+        dtag = header[dtag_idx:dtag_idx + profile.T]
+        w = header[w_idx:w_idx + profile.M]
+        c = header[c_idx:c_idx + 1]
+
+        payload = as_bin[rule.ACK_HEADER_LENGTH:]
+        bitmap = payload[:profile.WINDOW_SIZE]
+        padding = payload[profile.WINDOW_SIZE:]
+
+        windows = [w]
+        bitmaps = [bitmap]
+
+        while len(padding) >= profile.M + profile.WINDOW_SIZE:
+            if is_monochar(padding, '0'):
                 break
-            next_window = padding[:profile.M]
             windows.append(padding[:profile.M])
-            bitmaps.append(padding[profile.M:profile.M + profile.BITMAP_SIZE])
-            padding = padding[profile.M + profile.BITMAP_SIZE:]
+            bitmaps.append(padding[profile.M:profile.M + profile.WINDOW_SIZE])
+            padding = padding[profile.M + profile.WINDOW_SIZE:]
 
-        return CompoundACK(profile,
-                           ack[:index_dtag],
-                           ack[index_dtag:index_first_window],
-                           windows,
-                           ack[index_c],
-                           bitmaps,
-                           padding)
-
-    @staticmethod
-    def parse_from_hex(profile, h):
-        ack = zfill(bin(int(h, 16))[2:], profile.DOWNLINK_MTU)
-        return CompoundACK.parse_from_string(profile, ack)
-
-    @staticmethod
-    def parse_from_bytes(profile, b):
-        ack = ''.join("{:08b}".format(int(byte)) for byte in b)
-        return CompoundACK.parse_from_string(profile, ack)
+        return CompoundACK(
+            profile,
+            dtag,
+            windows,
+            c,
+            bitmaps,
+            padding
+        )

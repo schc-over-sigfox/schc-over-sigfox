@@ -1,11 +1,10 @@
-from unittest import TestCase
-
 from Messages.Fragment import Fragment
 from Messages.SenderAbort import SenderAbort
+from test.Messages.test_Fragment import TestFragment
 from utils.casting import bin_to_hex
 
 
-class TestSenderAbort(TestCase):
+class TestSenderAbort(TestFragment):
     def test_init(self):
         b = '00010101100010001000100010001000'
         h = bin_to_hex(b)

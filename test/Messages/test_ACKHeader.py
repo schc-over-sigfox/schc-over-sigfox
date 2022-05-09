@@ -1,12 +1,11 @@
-from unittest import TestCase
-
 from Entities.Rule import Rule
 from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import LengthMismatchError
 from Messages.ACKHeader import ACKHeader
+from test.Messages.test_Header import TestHeader
 
 
-class TestACKHeader(TestCase):
+class TestACKHeader(TestHeader):
     def test_init(self):
         rule_0 = Rule(0, 0)
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule_0)
