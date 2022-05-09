@@ -50,10 +50,11 @@ class TestACK(TestCase):
         ack = ACK.from_hex(as_hex)
         self.assertTrue(ack.is_compound_ack())
 
-        b = '0001110000000000000000000000000000000000000000000000000000000000'
+        b = '0001111111111111000000000000000000000000000000000000000000000000'
         as_hex = bin_to_hex(b)
         ack = ACK.from_hex(as_hex)
         self.assertFalse(ack.is_compound_ack())
+        self.assertTrue(ack.is_receiver_abort())
 
     def test_is_complete(self):
         b = '0001110000000000000000000000000000000000000000000000000000000000'

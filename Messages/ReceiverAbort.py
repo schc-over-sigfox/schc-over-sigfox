@@ -1,20 +1,23 @@
 from Messages.ACK import ACK
+from Messages.ACKHeader import ACKHeader
+from config.schc import L2_WORD_SIZE
 
 
 class ReceiverAbort(ACK):
 
-    def __init__(self, profile, header):
-        rule_id = header.RULE_ID
+    def __init__(self, header: ACKHeader):
+        profile = header.PROFILE
         dtag = header.DTAG
-        w = header.W
+        w = '1' * profile.M
+        c = '1'
 
-        padding = ''
-        # if the Header does not end at an L2 Word boundary,
-        # append bits set to 1 as needed to reach the next L2 Word boundary.
-        while len(rule_id + dtag + w + '1' + padding) % profile.L2_WORD_SIZE != 0:
-            padding += '1'
+        header_length = len(str(profile.RULE) + dtag + w + c)
 
-        # append exactly one more L2 Word with bits all set to ones.
-        padding += '1' * profile.L2_WORD_SIZE
+        if header_length % L2_WORD_SIZE != 0:
+            padding = '1' * (L2_WORD_SIZE - header_length % L2_WORD_SIZE)
+        else:
+            padding = ''
 
-        super().__init__(profile, rule_id, dtag, w, c='1', bitmap='', padding=padding)
+        padding += '1' * L2_WORD_SIZE
+
+        super().__init__(profile, dtag, w, c, bitmap='', padding=padding)

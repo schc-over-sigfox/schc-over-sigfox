@@ -10,7 +10,7 @@ class TestSenderAbort(TestFragment):
         h = bin_to_hex(b)
         fragment = Fragment.from_hex(h)
 
-        abort = SenderAbort(fragment.PROFILE, fragment.HEADER)
+        abort = SenderAbort(fragment.HEADER)
 
         self.assertEqual(fragment.HEADER.RULE_ID, abort.HEADER.RULE_ID)
         self.assertEqual(fragment.HEADER.DTAG, abort.HEADER.DTAG)
@@ -25,7 +25,7 @@ class TestSenderAbort(TestFragment):
         h = bin_to_hex(b)
         fragment = Fragment.from_hex(h)
 
-        abort = SenderAbort(fragment.PROFILE, fragment.HEADER)
+        abort = SenderAbort(fragment.HEADER)
 
         self.assertEqual(fragment.HEADER.RULE_ID, abort.HEADER.RULE_ID)
         self.assertEqual(fragment.HEADER.DTAG, abort.HEADER.DTAG)
