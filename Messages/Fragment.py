@@ -5,7 +5,7 @@ from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import LengthMismatchError, BadProfileError
 from Messages.FragmentHeader import FragmentHeader
 from utils.casting import bytes_to_hex, hex_to_bin, hex_to_bytes
-from utils.misc import round_to_next_multiple
+from utils.misc import round_to_next_multiple, zfill
 from utils.schc_utils import is_monochar, get_rule
 
 
@@ -103,6 +103,13 @@ class Fragment:
         payload = hex_to_bytes(hex_string[header_nibs:])
 
         return Fragment(profile, header, payload)
+
+    def get_indices(self) -> tuple[str, str]:
+        """Returns a tuple of the indices (window, fragment) of the fragment, formatted to be used as filenames."""
+        w_index = zfill(str(self.HEADER.WINDOW_NUMBER), (2 ** self.PROFILE.M - 1) // 10 + 1)
+        f_index = zfill(str(self.INDEX), self.PROFILE.WINDOW_SIZE // 10 + 1)
+
+        return w_index, f_index
 
     @staticmethod
     def from_file(path) -> 'Fragment':

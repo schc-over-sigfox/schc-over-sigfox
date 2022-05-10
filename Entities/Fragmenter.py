@@ -7,7 +7,6 @@ from Messages.Fragment import Fragment
 from Messages.FragmentHeader import FragmentHeader
 from db.CommonFileStorage import CommonFileStorage as Storage
 from utils.casting import int_to_bin, bytes_to_bin
-from utils.misc import zfill
 
 
 class Fragmenter:
@@ -68,14 +67,10 @@ class Fragmenter:
             "hex": fragment.to_hex(),
             "sent": False
         }
-        window_index = zfill(
-            str(fragment.HEADER.WINDOW_NUMBER), (number_of_windows - 1) // 10 + 1
-        )
-        fragment_index = zfill(
-            str(fragment.INDEX), self.PROFILE.WINDOW_SIZE // 10 + 1
-        )
+        w_index, f_index = fragment.get_indices()
+
         self.STORAGE.write(
-            f"fragments/fragment_w{window_index}f{fragment_index}", json.dumps(fragment_data)
+            f"fragments/fragment_w{w_index}f{f_index}", json.dumps(fragment_data)
         )
         self.CURRENT_FRAGMENT_NUMBER = (self.CURRENT_FRAGMENT_NUMBER + 1) % self.PROFILE.MAX_FRAGMENT_NUMBER
 

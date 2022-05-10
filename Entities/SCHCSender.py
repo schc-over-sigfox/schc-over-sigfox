@@ -1,385 +1,182 @@
-import queue
+import json
 import random
-import time
 
-import requests
-
+import config.schc as config
 from Entities.Fragmenter import Fragmenter
-from Entities.SCHCLogger import SCHCLogger
 from Entities.SigfoxProfile import SigfoxProfile
-from Entities.Timer import SCHCTimer
-from Entities.exceptions import *
-from Messages.ACK import ACK
+from Entities.SigfoxSocket import SigfoxSocket
+from Entities.exceptions import SCHCTimeoutError, SenderAbortError, ReceiverAbortError, BadProfileError
+from Logger import Logger, log
 from Messages.CompoundACK import CompoundACK
+from Messages.Fragment import Fragment
 from Messages.SenderAbort import SenderAbort
-from utils.schc_utils import is_monochar, replace_bit, ordinal
+from utils.casting import bytes_to_hex, bin_to_int
+from utils.misc import replace_char, is_monochar
 
 
 class SCHCSender:
-    PROTOCOL = None
-    PROFILE = None
-    MESSAGE = ''
-    FRAGMENTS = []
-    ATTEMPTS = None
-    FRAGMENT_INDEX = None
-    CURRENT_WINDOW = None
-    LAST_WINDOW = None
-    TIMER = None
-    HEADER_BYTES = None
-    DELAY = None
-    ENDPOINT = None
 
-    LOGGER = None
-    DEVICE = None
-    TIMEOUT = None
-    BUFFER = None
-    SEQNUM = None
-
-    LOSS_RATE = None
-    LOSS_MASK = None
-
-    def __init__(self, endpoint):
-        # self.PROTOCOL = Sigfox(mode=Sigfox.SIGFOX, rcz=Sigfox.RCZ4)
-        # self.SOCKET = s.socket(s.AF_SIGFOX, s.SOCK_RAW)
-        # self.SOCKET.setblocking(True)
-        self.MESSAGE = ''
-        self.FRAGMENTS = []
-        self.ATTEMPTS = None
-        self.FRAGMENT_INDEX = 0
-        self.CURRENT_WINDOW = None
-        self.LAST_WINDOW = None
-        self.TIMER = SCHCTimer(0)
-        self.HEADER_BYTES = None
-        self.DELAY = .0
-        self.TIMEOUT = 0
+    def __init__(self, profile: SigfoxProfile):
+        self.PROFILE = profile
+        self.FRAGMENTER = Fragmenter(self.PROFILE)
+        self.STORAGE = self.FRAGMENTER.STORAGE
+        self.FRAGMENT_LIST = []
+        self.ATTEMPTS = 0
+        self.CURRENT_FRAGMENT_INDEX = 0
+        self.CURRENT_WINDOW_INDEX = 0
+        self.LAST_WINDOW = 0
+        self.DELAY: float = config.DELAY_BETWEEN_FRAGMENTS
         self.SEQNUM = 0
-        self.BUFFER = queue.Queue()
-        self.LOSS_RATE = 0
-        self.LOSS_MASK = {}
         self.SENT = 0
         self.RECEIVED = 0
+        self.FINISHED = False
 
-        self.ENDPOINT = endpoint
+        self.LOGGER = Logger('', Logger.DEBUG)
+        self.SOCKET = SigfoxSocket()
 
-    def set_logging(self, filename, json_file, severity):
-        self.LOGGER = SCHCLogger(filename, json_file)
-        self.LOGGER.set_severity(severity)
+        self.LOSS_MASK = {}
+        self.LOSS_RATE = 0
 
-    def set_delay(self, delay):
-        self.DELAY = delay
+    def send(self, fragment: Fragment) -> None:
+        """Send a fragment towards the receiver end."""
 
-    def set_device(self, device):
-        self.DEVICE = device
+        as_bytes = fragment.to_bytes()
 
-    def set_timeout(self, timeout):
-        self.TIMEOUT = timeout
+        if not fragment.is_sender_abort():
+            w_index, f_index = fragment.get_indices()
+            path = f"fragments/fragment_w{w_index}f{f_index}"
+            f_json = json.loads(self.STORAGE.read(path))
+            f_json["sent"] = True
+            self.STORAGE.write(json.dumps(f_json), path)
 
-    def set_loss_rate(self, loss_rate):
-        self.LOSS_RATE = loss_rate
+        if self.LOSS_RATE > 0:
+            if random.random() * 100 <= self.LOSS_RATE:
+                self.SOCKET.SEQNUM += 1
+                log.debug("Fragment lost (rate)")
+                return
 
-    def set_loss_mask(self, loss_mask):
-        self.LOSS_MASK = loss_mask
+        elif self.LOSS_MASK != {}:
+            window_mask = self.LOSS_MASK["fragment"][str(fragment.HEADER.WINDOW_NUMBER)]
+            if window_mask[fragment.INDEX] != '0':
+                log.debug("Fragment lost (mask)")
+                self.LOSS_MASK["fragment"][str(fragment.HEADER.WINDOW_NUMBER)] = replace_char(
+                    window_mask,
+                    fragment.INDEX,
+                    str(int(window_mask[fragment.INDEX]) - 1)
+                )
+                self.SEQNUM += 1
+                return
 
-    def send(self, fragment, loss=False):
+        self.LOGGER.BEHAVIOR += f'W{fragment.HEADER.WINDOW_NUMBER}F{fragment.INDEX}'
+        self.SENT += 1
 
-        # LoPy should use to_bytes()
-        message = fragment.to_hex().decode()
+        return self.SOCKET.send(as_bytes)
 
-        http_body = {
-            'device': self.DEVICE,
-            'data': message,
-            'time': int(time.time()),
-            'seqNumber': self.SEQNUM
-        }
+    def recv(self, bufsize: int) -> CompoundACK:
+        """Receives a message from the socket and parses it as a Compound ACK."""
 
-        print(f"[SEND] sending {message}; time {int(time.time())}; seqnum {self.SEQNUM}; timeout {self.TIMEOUT}")
+        received = self.SOCKET.recv(bufsize)
+        ack = CompoundACK.from_hex(bytes_to_hex(received))
 
-        self.SEQNUM += 1
-
-        if loss and random.random() * 100 <= self.LOSS_RATE:
-            print("[SEND] Fragment lost")
-        else:
-            self.LOGGER.BEHAVIOR += f'W{fragment.HEADER.WINDOW_NUMBER}F{fragment.NUMBER}'
-            self.SENT += 1
-            try:
-                response = requests.post(url=self.ENDPOINT, json=http_body, timeout=self.TIMEOUT)
-                if response.status_code == 200 and self.DEVICE in response.json():
-                    self.BUFFER.put(response.json()[self.DEVICE]["downlinkData"])
-            except requests.exceptions.ReadTimeout:
+        if self.LOSS_RATE > 0:
+            if random.random() * 100 <= self.LOSS_RATE:
+                print("ACK lost (rate)")
+                raise SCHCTimeoutError
+        elif self.LOSS_MASK != {}:
+            attempt = 1 if self.ATTEMPTS == 0 else self.ATTEMPTS
+            window_mask = self.LOSS_MASK["ack"][str(ack.HEADER.WINDOW_NUMBER)]
+            if window_mask[attempt - 1] != '0':
+                log.debug("ACK lost (mask)")
+                self.LOSS_MASK["ack"][str(ack.HEADER.WINDOW_NUMBER)] = replace_char(
+                    window_mask,
+                    attempt - 1,
+                    window_mask[attempt - 1]
+                )
                 raise SCHCTimeoutError
 
-    def send_mask(self, fragment):
-        print("Sending with loss mask")
-        window_mask = self.LOSS_MASK["fragment"][str(fragment.HEADER.WINDOW_NUMBER)]
-        if window_mask[fragment.NUMBER] != '0':
-            print("[SEND] Fragment lost")
-            self.LOSS_MASK["fragment"][str(fragment.HEADER.WINDOW_NUMBER)] = replace_bit(window_mask,
-                                                                                         fragment.NUMBER,
-                                                                                         str(int(window_mask[fragment.NUMBER]) - 1))
-            print(f"loss_mask is now {self.LOSS_MASK}")
-            self.SEQNUM += 1
+        self.RECEIVED += 1
+        return ack
+
+    def schc_send(self, fragment: Fragment, retransmit: bool = False):
+        """Uses the SCHC Sender behavior to send a SCHC Fragment."""
+        ack = None
+
+        if fragment.is_all_0() and not retransmit:
+            log.debug("[SEND] [All-0] Using All-0 SIGFOX_DL_TIMEOUT as timeout.")
+            self.SOCKET.set_timeout(self.PROFILE.SIGFOX_DL_TIMEOUT)
+        elif fragment.is_all_1():
+            log.debug("[SEND] [All-1] Using RETRANSMISSION_TIMER_VALUE as timeout. Increasing ACK attempts.")
+            self.ATTEMPTS += 1
+            self.SOCKET.set_timeout(self.PROFILE.RETRANSMISSION_TIMEOUT)
         else:
-            self.SENT += 1
+            self.SOCKET.set_timeout(60)
+
+        log.info(f"[SEND] Sending fragment: "
+                 f"Rule {fragment.PROFILE.RULE.ID} ({str(fragment.PROFILE.RULE)}), "
+                 f"W{fragment.HEADER.WINDOW_NUMBER}"
+                 f"F{fragment.NUMBER}")
+
+        try:
+            enable_reception = fragment.expects_ack() and not retransmit
+            self.SOCKET.set_recv(enable_reception)
             self.send(fragment)
 
-    def recv(self, bufsize, loss=False):
-        try:
-            print("[RECV] Receiving")
-            received = self.BUFFER.get(timeout=self.TIMEOUT)
-
-            if len(received) / 2 > bufsize:
-                raise LengthMismatchError
-
-            if loss and random.random() * 100 <= self.LOSS_RATE:
-                print("[RECV] Fragment lost")
-                raise SCHCTimeoutError
+            if enable_reception:
+                ack = self.recv(self.PROFILE.DOWNLINK_MTU // 8)
             else:
-                self.RECEIVED += 1
-                return received
+                ack = None
 
-        except queue.Empty:
-            raise SCHCTimeoutError
-
-    def recv_mask(self):
-        received = self.recv(self.PROFILE.DOWNLINK_MTU // 8)
-        ack = ACK.parse_from_hex(self.PROFILE, received)
-
-        attempts = 1 if self.ATTEMPTS == 0 else self.ATTEMPTS
-
-        window_mask = self.LOSS_MASK["ack"][str(ack.HEADER.WINDOW_NUMBER)]
-        if window_mask[attempts - 1] != '0':
-            print("[RECV] Fragment lost")
-            self.LOSS_MASK["ack"][str(ack.HEADER.WINDOW_NUMBER)] = replace_bit(window_mask,
-                                                                               attempts - 1,
-                                                                               str(int(window_mask[attempts - 1]) - 1))
-            raise SCHCTimeoutError
-        else:
-            self.RECEIVED += 1
-            return received
-
-    def set_session(self, mode, message):
-        self.HEADER_BYTES = 1 if len(message) <= 300 else 2
-        self.PROFILE = SigfoxProfile("UPLINK", mode, self.HEADER_BYTES)
-        self.MESSAGE = message
-        fragmenter = Fragmenter(self.PROFILE, message)
-        self.FRAGMENTS = fragmenter.fragment()
-
-        if self.LOGGER is not None:
-            self.LOGGER.FRAGMENTATION_TIME = self.LOGGER.CHRONO.read()
-            self.LOGGER.debug("fragmentation time -> {}".format(self.LOGGER.FRAGMENTATION_TIME))
-
-        if len(self.FRAGMENTS) > (2 ** self.PROFILE.M) * self.PROFILE.WINDOW_SIZE:
-            raise RuleSelectionError
-
-        self.LAST_WINDOW = (len(self.FRAGMENTS) - 1) // self.PROFILE.WINDOW_SIZE
-        self.ATTEMPTS = 0
-
-    def start_session(self):
-        self.CURRENT_WINDOW = 0
-
-        total_size = len(self.MESSAGE)
-        current_size = 0
-
-        logging = self.LOGGER is not None and self.LOGGER.JSON_FILE is not None
-
-        if logging:
-            self.LOGGER.START_SENDING_TIME = self.LOGGER.CHRONO.read()
-            self.LOGGER.TOTAL_SIZE = total_size
-            self.LOGGER.FINISHED = False
-
-        while self.FRAGMENT_INDEX < len(self.FRAGMENTS):
-            fragment = self.FRAGMENTS[self.FRAGMENT_INDEX]
-            current_size += len(self.FRAGMENTS[self.FRAGMENT_INDEX])
-            percent = round(float(current_size) / float(total_size) * 100, 2)
-
-            if logging:
-                self.LOGGER.info("Sending...")
-                self.LOGGER.LAPS.append(self.LOGGER.CHRONO.read())
-                self.LOGGER.debug("laps - > {}".format(self.LOGGER.LAPS))
-
-                self.LOGGER.debug("--------------------------")
-                self.LOGGER.debug("{} fragment:".format(ordinal(self.FRAGMENT_INDEX)))
-                self.LOGGER.debug("RuleID:{}, DTAG:{}, WINDOW:{}, FCN:{}".format(fragment.HEADER.RULE_ID,
-                                                                                 fragment.HEADER.DTAG,
-                                                                                 fragment.HEADER.W,
-                                                                                 fragment.HEADER.FCN))
-                self.LOGGER.debug("SCHC Fragment: {}".format(fragment.to_string()))
-                self.LOGGER.debug("SCHC Fragment Payload: {}".format(fragment.PAYLOAD))
-                self.LOGGER.debug("{} / {}, {}%".format(current_size,
-                                                        total_size,
-                                                        percent))
-
-            try:
-                self.schc_send(fragment)
-            except SCHCError:
-                if logging:
-                    self.LOGGER.FINISHED = False
-                break
-
-        if logging:
-            self.LOGGER.END_SENDING_TIME = self.LOGGER.CHRONO.read()
-            self.LOGGER.save()
-
-    def schc_send(self, fragment_sent, retransmit=False):
-        print(f"Fragment index: {self.FRAGMENT_INDEX}")
-        ack = None
-        current_fragment = {}
-        logging = self.LOGGER is not None and self.LOGGER.JSON_FILE is not None
-        self.TIMER.wait(timeout=self.DELAY, raise_exception=False)
-
-        if logging:
-            self.LOGGER.LOGGING_TIME += self.DELAY
-            current_fragment = {'RULE_ID': fragment_sent.HEADER.RULE_ID,
-                                'W': fragment_sent.HEADER.W,
-                                'FCN': fragment_sent.HEADER.FCN,
-                                'data': fragment_sent.to_bytes(),
-                                'fragment_size': len(fragment_sent.to_bytes()),
-                                'abort': False,
-                                'sending_start': 0,
-                                'sending_end': 0,
-                                'send_time': 0,
-                                'downlink_enable': False,
-                                'timeout': 0,
-                                'ack_received': False,
-                                'ack': "",
-                                'rssi': 0,
-                                'receiver_abort_received': False,
-                                'receiver_abort_message': ""}
-
-        if fragment_sent.is_all_0() and not retransmit:
-            self.LOGGER.debug("[POST] This is an All-0. Using All-0 SIGFOX_DL_TIMEOUT.")
-            self.set_timeout(self.PROFILE.SIGFOX_DL_TIMEOUT)
-            if logging:
-                current_fragment["timeout"] = self.PROFILE.SIGFOX_DL_TIMEOUT
-        elif fragment_sent.is_all_1():
-            self.LOGGER.debug("[POST] This is an All-1. Using RETRANSMISSION_TIMER_VALUE. Increasing ACK attempts.")
-            self.ATTEMPTS += 1
-            self.set_timeout(self.PROFILE.RETRANSMISSION_TIMER_VALUE)
-            if logging:
-                current_fragment["timeout"] = self.PROFILE.RETRANSMISSION_TIMER_VALUE
-        else:
-            self.set_timeout(60)
-            if logging:
-                current_fragment["timeout"] = 60
-
-        self.LOGGER.info(f"[POST] Sending fragment {fragment_sent.HEADER.to_string()} (W{fragment_sent.HEADER.WINDOW_NUMBER}F{fragment_sent.NUMBER})")
-
-        if fragment_sent.expects_ack() and not retransmit:
-            current_fragment['downlink_enable'] = True
-        else:
-            current_fragment['downlink_enable'] = False
-
-        try:
-            if logging:
-                current_fragment['sending_start'] = self.LOGGER.CHRONO.read()
-
-            if self.LOSS_MASK != {}:
-                self.send_mask(fragment_sent)
-            else:
-                self.send(fragment_sent, loss=True)
-
-            if fragment_sent.expects_ack() and not retransmit:
-                if logging:
-                    current_fragment['ack_received'] = False
-
-                ack = self.recv(self.PROFILE.DOWNLINK_MTU // 8, loss=True)
-                # ack = self.recv_mask()
-
-            if logging:
-                current_fragment['sending_end'] = self.LOGGER.CHRONO.read()
-                current_fragment['send_time'] = current_fragment['sending_end'] - current_fragment['sending_start']
-                if ack is not None:
-                    current_fragment['rssi'] = self.PROTOCOL.rssi()
-                    self.LOGGER.debug("Response received at: {}: ".format(self.LOGGER.CHRONO.read()))
-                    self.LOGGER.debug('ack -> {}'.format(ack))
-                    self.LOGGER.debug('message RSSI: {}'.format(self.PROTOCOL.rssi()))
-
-            if fragment_sent.is_sender_abort():
-                self.LOGGER.debug("--- senderAbort:{}".format(fragment_sent.to_string()))
-                self.LOGGER.debug("--- senderAbort:{}".format(fragment_sent.to_bytes()))
-                if logging:
-                    current_fragment['abort'] = True
-                    self.LOGGER.FRAGMENTS_INFO_ARRAY.append(current_fragment)
-                self.LOGGER.error("Sent Sender-Abort. Goodbye")
+            if fragment.is_sender_abort():
+                log.error("[SENDER-ABORT]")
                 self.LOGGER.SENDER_ABORTED = True
                 raise SenderAbortError
 
-            if not fragment_sent.expects_ack():
+            if not fragment.expects_ack():
                 if not retransmit:
-                    self.FRAGMENT_INDEX += 1
-                if logging:
-                    self.LOGGER.FRAGMENTS_INFO_ARRAY.append(current_fragment)
+                    self.CURRENT_FRAGMENT_INDEX += 1
                 return
 
             if ack is not None:
-                if logging:
-                    current_fragment['ack'] = ack
-                    current_fragment['ack_received'] = True
-                self.LOGGER.info("[ACK] Bytes: {}. Ressetting attempts counter to 0.".format(ack))
+                log.info(f"[ACK] Received ACK {ack.to_hex()} (hex). Ressetting attempts counter to 0.")
                 self.ATTEMPTS = 0
 
-                # Parse ACK
-                ack_object = CompoundACK.parse_from_hex(self.PROFILE, ack)
-                print("Received Compound ACK")
-                print(ack_object.TUPLES)
-
-                if ack_object.is_receiver_abort():
-                    if logging:
-                        current_fragment['receiver_abort_message'] = ack
-                        current_fragment['receiver_abort_received'] = True
-                        self.LOGGER.FRAGMENTS_INFO_ARRAY.append(current_fragment)
-                    self.LOGGER.error("ERROR: Receiver Abort received. Aborting communication.")
+                if ack.is_receiver_abort():
+                    self.LOGGER.error("[RECEIVER-ABORT]")
                     self.LOGGER.RECEIVER_ABORTED = True
                     raise ReceiverAbortError
 
-                if not fragment_sent.expects_ack():
-                    self.LOGGER.error("ERROR: ACK received but not requested ({}).".format(ack))
-                    self.LOGGER.FRAGMENTS_INFO_ARRAY.append(current_fragment)
-                    raise UnrequestedACKError
+                if not fragment.expects_ack():
+                    self.LOGGER.error(f"ACK received but not requested.")
+                    raise BadProfileError
 
-                # Extract data from ACK
-                ack_window = ack_object.HEADER.W
-                c = ack_object.HEADER.C
-                bitmap = ack_object.BITMAP
-                self.LOGGER.debug("ACK: {}".format(ack))
-                self.LOGGER.debug("ACK window: {}".format(ack_window))
-                self.LOGGER.debug("ACK bitmap: {}".format(bitmap))
-                self.LOGGER.debug("ACK C bit: {}".format(c))
-                self.LOGGER.debug("last window: {}".format(self.LAST_WINDOW))
-
-                # Save ACKREQ data
-                self.LOGGER.FRAGMENTS_INFO_ARRAY.append(current_fragment)
-
-                for tup in ack_object.TUPLES:
-                    ack_window_number = int(tup[0], 2)
+                for tup in ack.TUPLES:
+                    ack_window_number = bin_to_int(tup[0])
                     bitmap = tup[1]
 
-                    # If the SCHC Compound ACK reports the last window of the SCHC Packet:
                     if ack_window_number == self.LAST_WINDOW:
-                        # If the C bit is set, the sender MAY exit successfully.
-                        if c == '1':
-                            print(f"here because fragment {fragment_sent.HEADER.to_string()} sn {self.SEQNUM}")
-                            self.LOGGER.info("Last ACK received, fragments reassembled successfully. End of transmission.")
+
+                        if ack.HEADER.C == '1':
+                            self.LOGGER.info("ACK received with C = 1. End of transmission.")
                             self.LOGGER.FINISHED = True
-                            self.FRAGMENT_INDEX += 1
+                            self.CURRENT_FRAGMENT_INDEX += 1
+                            self.FRAGMENTER.clear_fragment_directory()
                             return
-                        # Otherwise,
+
                         else:
-                            # If the Profile mandates that the last tile be sent in an All-1 SCHC Fragment
-                            # (we are in the last window), .is_all_1() should be true:
-                            if fragment_sent.is_all_1():
-                                # This is the last bitmap, it contains the data before the All-1 fragment.
-                                # The leftmost bit of this bitmap should always be 1, as the All-1 gets to the network
-                                # to request the ACK.
-                                last_bitmap = bitmap[:(len(self.FRAGMENTS) - 1) % self.PROFILE.WINDOW_SIZE]
-                                self.LOGGER.debug("last bitmap {}".format(last_bitmap))
+                            if fragment.is_all_1():
+                                last_bitmap = bitmap[:(len(self.FRAGMENT_LIST) - 1) % self.PROFILE.WINDOW_SIZE]
+                                log.debug("last bitmap {}".format(last_bitmap))
                                 # If the SCHC ACK shows no missing tile at the receiver, abort.
                                 # (C = 0 but transmission complete)
-                                if last_bitmap == '' or (last_bitmap[0] == '1' and is_monochar(last_bitmap)):
-                                    self.LOGGER.error("ERROR: SCHC ACK shows no missing tile at the receiver.")
-                                    self.schc_send(SenderAbort(fragment_sent.PROFILE, fragment_sent.HEADER))
+                                fragments_arent_missing = (last_bitmap == '' and bitmap[-1] == '1') or (
+                                    is_monochar(last_bitmap, '1'))
 
-                                # Otherwise (fragments are lost),
+                                # Aquí llegué :)
+
+                                if fragments_arent_missing:
+                                    self.LOGGER.error("ERROR: SCHC ACK shows no missing tile at the receiver.")
+                                    self.schc_send(SenderAbort(fragment.HEADER))
+
                                 else:
                                     # Check for lost fragments.
                                     for j in range(len(last_bitmap)):
@@ -390,8 +187,10 @@ class SCHCSender:
                                                                                        self.PROFILE.WINDOW_SIZE * ack_window_number + j,
                                                                                        len(self.FRAGMENTS)))
                                             # Try sending again the lost fragment.
-                                            fragment_to_be_resent = self.FRAGMENTS[self.PROFILE.WINDOW_SIZE * ack_window_number + j]
-                                            self.LOGGER.debug("Lost fragment: {}".format(fragment_to_be_resent.to_string()))
+                                            fragment_to_be_resent = self.FRAGMENTS[
+                                                self.PROFILE.WINDOW_SIZE * ack_window_number + j]
+                                            self.LOGGER.debug(
+                                                "Lost fragment: {}".format(fragment_to_be_resent.to_string()))
                                             self.schc_send(fragment_to_be_resent, retransmit=True)
 
                                     # Send All-1 again to end communication or check again for lost data.
@@ -466,3 +265,49 @@ class SCHCSender:
             else:
                 self.LOGGER.error("ERROR: Timeout reached.")
                 raise NetworkDownError
+
+    def start_session(self):
+        self.CURRENT_WINDOW = 0
+
+        total_size = len(self.MESSAGE)
+        current_size = 0
+
+        logging = self.LOGGER is not None and self.LOGGER.JSON_FILE is not None
+
+        if logging:
+            self.LOGGER.START_SENDING_TIME = self.LOGGER.CHRONO.read()
+            self.LOGGER.TOTAL_SIZE = total_size
+            self.LOGGER.FINISHED = False
+
+        while self.FRAGMENT_INDEX < len(self.FRAGMENTS):
+            fragment = self.FRAGMENTS[self.FRAGMENT_INDEX]
+            current_size += len(self.FRAGMENTS[self.FRAGMENT_INDEX])
+            percent = round(float(current_size) / float(total_size) * 100, 2)
+
+            if logging:
+                self.LOGGER.info("Sending...")
+                self.LOGGER.LAPS.append(self.LOGGER.CHRONO.read())
+                self.LOGGER.debug("laps - > {}".format(self.LOGGER.LAPS))
+
+                self.LOGGER.debug("--------------------------")
+                self.LOGGER.debug("{} fragment:".format(ordinal(self.FRAGMENT_INDEX)))
+                self.LOGGER.debug("RuleID:{}, DTAG:{}, WINDOW:{}, FCN:{}".format(fragment.HEADER.RULE_ID,
+                                                                                 fragment.HEADER.DTAG,
+                                                                                 fragment.HEADER.W,
+                                                                                 fragment.HEADER.FCN))
+                self.LOGGER.debug("SCHC Fragment: {}".format(fragment.to_string()))
+                self.LOGGER.debug("SCHC Fragment Payload: {}".format(fragment.PAYLOAD))
+                self.LOGGER.debug("{} / {}, {}%".format(current_size,
+                                                        total_size,
+                                                        percent))
+
+            try:
+                self.schc_send(fragment)
+            except SCHCError:
+                if logging:
+                    self.LOGGER.FINISHED = False
+                break
+
+        if logging:
+            self.LOGGER.END_SENDING_TIME = self.LOGGER.CHRONO.read()
+            self.LOGGER.save()

@@ -5,7 +5,7 @@ from config.schc import L2_WORD_SIZE
 
 class ReceiverAbort(ACK):
 
-    def __init__(self, header: ACKHeader):
+    def __init__(self, header: ACKHeader) -> None:
         profile = header.PROFILE
         dtag = header.DTAG
         w = '1' * profile.M

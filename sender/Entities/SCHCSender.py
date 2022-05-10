@@ -5,7 +5,7 @@ from network import Sigfox
 from schc_utils import is_monochar
 
 from Entities.Fragmenter import Fragmenter
-from Entities.SCHCLogger import SCHCLogger
+from Entities.Logger import Logger
 from Entities.SigfoxProfile import SigfoxProfile
 from Entities.Timer import SCHCTimer
 from Entities.exceptions import *
@@ -45,7 +45,7 @@ class SCHCSender:
         self.DELAY = 0
 
     def set_logging(self, filename, json_file):
-        self.LOGGER = SCHCLogger(filename, json_file)
+        self.LOGGER = Logger(filename, json_file)
 
     def set_delay(self, delay):
         self.DELAY = delay

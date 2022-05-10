@@ -1,7 +1,7 @@
 import requests
 
 import config_testing as config
-from Entities.SCHCLogger import SCHCLogger
+from Entities.Logger import Logger
 from Entities.SCHCSender import SCHCSender
 from testing.loss_masks import *
 
@@ -15,7 +15,7 @@ sender.set_session("ACK ON ERROR", payload)
 sender.PROFILE.RETRANSMISSION_TIMER_VALUE = 5
 sender.PROFILE.SIGFOX_DL_TIMEOUT = 5
 
-sender.set_logging(None, None, severity=SCHCLogger.INFO)
+sender.set_logging(None, None, severity=Logger.INFO)
 loss_mask = loss_mask_2
 sender.set_loss_mask(loss_mask)
 sender.set_device("4d5a87")

@@ -16,7 +16,7 @@ class CompoundACK(ACK):
             c: str,
             bitmaps: list[str],
             padding: str = ''
-    ):
+    ) -> None:
         self.TUPLES = []
 
         if len(windows) != len(bitmaps):
