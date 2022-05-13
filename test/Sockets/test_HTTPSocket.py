@@ -89,7 +89,6 @@ class TestHTTPSocket(TestCase):
 
         fragment = Fragment.from_hex('172088888888888888888888')
         socket.send(fragment.to_bytes())
-
         res = socket.recv(SigfoxProfile.DOWNLINK_MTU)
         ack = CompoundACK.from_hex(bytes_to_hex(res))
 

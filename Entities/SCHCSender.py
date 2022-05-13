@@ -11,7 +11,7 @@ from Logger import Logger, log
 from Messages.CompoundACK import CompoundACK
 from Messages.Fragment import Fragment
 from Messages.SenderAbort import SenderAbort
-from Sockets.HTTPSocket import SigfoxSocket
+from Sockets.HTTPSocket import HTTPSocket as Socket
 from utils.casting import bytes_to_hex, bin_to_int
 from utils.misc import replace_char, is_monochar, zfill
 
@@ -32,7 +32,7 @@ class SCHCSender:
         self.SENT = 0
         self.RECEIVED = 0
         self.LOGGER = Logger('', Logger.DEBUG)
-        self.SOCKET = SigfoxSocket()
+        self.SOCKET = Socket()
 
         self.LOSS_MASK = {}
         self.LOSS_RATE = 0
