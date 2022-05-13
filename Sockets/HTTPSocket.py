@@ -38,7 +38,8 @@ class HTTPSocket(Socket):
                 timeout=self.TIMEOUT
             )
             if response.status_code == 200:
-                self.BUFFER.put(response.json()[self.DEVICE]["downlinkData"])
+                if self.EXPECTS_ACK:
+                    self.BUFFER.put(response.json()[self.DEVICE]["downlinkData"])
         except requests.exceptions.ReadTimeout:
             raise SCHCTimeoutError
 
