@@ -5,13 +5,13 @@ import config.schc as config
 from Entities.Fragmenter import Fragmenter
 from Entities.Rule import Rule
 from Entities.SigfoxProfile import SigfoxProfile
-from Entities.SigfoxSocket import SigfoxSocket
 from Entities.exceptions import SCHCTimeoutError, SenderAbortError, ReceiverAbortError, BadProfileError, \
     NetworkDownError, SCHCError
 from Logger import Logger, log
 from Messages.CompoundACK import CompoundACK
 from Messages.Fragment import Fragment
 from Messages.SenderAbort import SenderAbort
+from Sockets.HTTPSocket import SigfoxSocket
 from utils.casting import bytes_to_hex, bin_to_int
 from utils.misc import replace_char, is_monochar, zfill
 
@@ -31,8 +31,6 @@ class SCHCSender:
         self.SEQNUM = 0
         self.SENT = 0
         self.RECEIVED = 0
-        self.FINISHED = False
-
         self.LOGGER = Logger('', Logger.DEBUG)
         self.SOCKET = SigfoxSocket()
 
