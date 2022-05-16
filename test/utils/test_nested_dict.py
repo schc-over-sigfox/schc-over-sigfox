@@ -1,5 +1,7 @@
 from unittest import TestCase
+
 from utils.nested_dict import *
+
 
 class TestNestedDict(TestCase):
     def test_deep_write(self):

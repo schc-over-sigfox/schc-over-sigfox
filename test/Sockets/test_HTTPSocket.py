@@ -12,7 +12,7 @@ from Sockets.HTTPSocket import HTTPSocket
 from utils.casting import bytes_to_hex
 
 APP = Flask(__name__)
-PORT = '5001'
+PORT = 5001
 SERVER = Process(target=APP.run, args=('127.0.0.1', PORT))
 
 
@@ -47,7 +47,6 @@ class TestHTTPSocket(TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        SERVER.terminate()
         SERVER.join()
 
     def test_send(self):

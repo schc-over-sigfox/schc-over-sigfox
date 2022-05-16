@@ -1,5 +1,7 @@
 import unittest
 
+from schc_utils import bitstring_to_bytes, is_monochar
+
 from Entities.Fragmenter import Fragmenter
 from Entities.SigfoxProfile import SigfoxProfile
 from Messages.ACK import ACK
@@ -9,7 +11,6 @@ from Messages.Fragment import Fragment
 from Messages.FragmentHeader import FragmentHeader
 from Messages.ReceiverAbort import ReceiverAbort
 from Messages.SenderAbort import SenderAbort
-from schc_utils import bitstring_to_bytes, is_monochar
 
 
 class TestFragmentHeader(unittest.TestCase):
@@ -195,7 +196,7 @@ class TestFragmenter(unittest.TestCase):
     def test_300B(self):
 
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", 1)
-        with open("testing/Packets/300", 'r') as f:
+        with open("testing/packets/300", 'r') as f:
             packet = f.read()
         fragmenter = Fragmenter(profile, packet)
         fragments = fragmenter.fragment()

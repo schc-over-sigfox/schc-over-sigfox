@@ -3,15 +3,14 @@ import re
 
 from flask import Flask, request
 from flask import abort
+from schc_utils import *
 
+import config
 from Entities.Reassembler import Reassembler
 from Entities.SigfoxProfile import SigfoxProfile
 from Messages.CompoundACK import CompoundACK
 from Messages.Fragment import Fragment
 from Messages.ReceiverAbort import ReceiverAbort
-from receiver import config
-
-from schc_utils import *
 
 mode = 'filedir'
 
