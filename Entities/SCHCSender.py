@@ -3,11 +3,10 @@ import random
 
 import config.schc as config
 from Entities.Fragmenter import Fragmenter
-from Entities.Rule import Rule
+from Entities.Logger import Logger, log
 from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import SCHCTimeoutError, SenderAbortError, ReceiverAbortError, BadProfileError, \
     NetworkDownError, SCHCError
-from Logger import Logger, log
 from Messages.CompoundACK import CompoundACK
 from Messages.Fragment import Fragment
 from Messages.SenderAbort import SenderAbort
@@ -28,7 +27,6 @@ class SCHCSender:
         self.CURRENT_WINDOW_INDEX = 0
         self.LAST_WINDOW = 0
         self.DELAY: float = config.DELAY_BETWEEN_FRAGMENTS
-        self.SEQNUM = 0
         self.SENT = 0
         self.RECEIVED = 0
         self.LOGGER = Logger('', Logger.DEBUG)
@@ -47,7 +45,7 @@ class SCHCSender:
             path = f"fragments/fragment_w{w_index}f{f_index}"
             f_json = json.loads(self.STORAGE.read(path))
             f_json["sent"] = True
-            self.STORAGE.write(json.dumps(f_json), path)
+            self.STORAGE.write(path, json.dumps(f_json))
 
         if self.LOSS_RATE > 0:
             if random.random() * 100 <= self.LOSS_RATE:
@@ -64,7 +62,7 @@ class SCHCSender:
                     fragment.INDEX,
                     str(int(window_mask[fragment.INDEX]) - 1)
                 )
-                self.SEQNUM += 1
+                self.SOCKET.SEQNUM += 1
                 return
 
         self.LOGGER.BEHAVIOR += f'W{fragment.HEADER.WINDOW_NUMBER}F{fragment.INDEX}'
@@ -116,7 +114,7 @@ class SCHCSender:
 
         try:
             enable_reception = fragment.expects_ack() and not retransmit
-            self.SOCKET.set_recv(enable_reception)
+            self.SOCKET.set_reception(enable_reception)
             self.send(fragment)
 
             if enable_reception:
@@ -220,9 +218,8 @@ class SCHCSender:
                 self.LOGGER.error("ERROR: Timeout reached.")
                 raise NetworkDownError
 
-    def start_session(self, schc_packet: bytes, rule: Rule):
-        profile = SigfoxProfile(direction="UPLINK", mode=config.FR_MODE, rule=rule)
-        fragmenter = Fragmenter(profile)
+    def start_session(self, schc_packet: bytes):
+        fragmenter = Fragmenter(self.PROFILE)
         self.FRAGMENT_LIST = fragmenter.fragment(schc_packet)
 
         while self.CURRENT_FRAGMENT_INDEX < len(self.FRAGMENT_LIST):

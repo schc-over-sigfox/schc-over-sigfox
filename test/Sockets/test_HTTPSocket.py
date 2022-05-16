@@ -1,8 +1,4 @@
-import time
-from multiprocessing import Process
 from unittest import TestCase
-
-from flask import Flask, request
 
 from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import SCHCTimeoutError
@@ -11,43 +7,10 @@ from Messages.Fragment import Fragment
 from Sockets.HTTPSocket import HTTPSocket
 from utils.casting import bytes_to_hex
 
-APP = Flask(__name__)
-PORT = 5001
-SERVER = Process(target=APP.run, args=('127.0.0.1', PORT))
+PORT = 1313
 
 
 class TestHTTPSocket(TestCase):
-
-    @classmethod
-    def setUpClass(cls) -> None:
-
-        @APP.route('/test', methods=['POST'])
-        def test() -> tuple[object, int]:
-            if request.method != 'POST':
-                return '', 403
-            request_dict = request.get_json()
-
-            device_type_id = request_dict["deviceTypeId"]
-            device = request_dict["device"]
-            data = request_dict["data"]
-            net_time = request_dict["time"]
-            seq_number = request_dict["seqNumber"]
-            ack = request_dict["ack"]
-
-            fragment = Fragment.from_hex(data)
-
-            if fragment.is_all_1():
-                return {device: {'downlinkData': '1c00000000000000'}}, 200
-            elif fragment.to_hex()[-1] == 'f':
-                time.sleep(2)
-            else:
-                return '', 204
-
-        SERVER.start()
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        SERVER.join()
 
     def test_send(self):
         socket = HTTPSocket()
