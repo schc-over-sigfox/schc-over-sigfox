@@ -1,4 +1,5 @@
 import json
+import shutil
 from unittest import TestCase
 
 from Entities.Rule import Rule
@@ -33,7 +34,7 @@ class TestSCHCSender(TestCase):
 
         self.assertEqual(1, sender.SENT)
         self.assertEqual(1, sender.SOCKET.SEQNUM)
-        self.assertEqual('W2F1', sender.LOGGER.BEHAVIOR)
+        self.assertEqual('W2F0', sender.LOGGER.BEHAVIOR)
 
         sender.LOSS_RATE = 100
 
@@ -41,14 +42,14 @@ class TestSCHCSender(TestCase):
         h = bin_to_hex(b)
         fragment = Fragment.from_hex(h)
 
-        with open("debug/sd/rule_0/fragments/fragment_w2f1", 'w') as f:
+        with open(f"debug/sd/rule_0/fragments/fragment_{fragment.get_indices()}", 'w') as f:
             f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
         sender.send(fragment)
 
         self.assertEqual(1, sender.SENT)
         self.assertEqual(2, sender.SOCKET.SEQNUM)
-        self.assertEqual('W2F1', sender.LOGGER.BEHAVIOR)
+        self.assertEqual('W2F0', sender.LOGGER.BEHAVIOR)
 
         sender.LOSS_RATE = 0
         sender.LOSS_MASK = {
@@ -68,12 +69,14 @@ class TestSCHCSender(TestCase):
 
         self.assertEqual(1, sender.SENT)
         self.assertEqual(3, sender.SOCKET.SEQNUM)
-        self.assertEqual('W2F1', sender.LOGGER.BEHAVIOR)
+        self.assertEqual('W2F0', sender.LOGGER.BEHAVIOR)
         self.assertEqual({
             "fragment": {
                 "2": "0000000"
             }
         }, sender.LOSS_MASK)
+
+        shutil.rmtree("debug/sd")
 
     def test_recv(self):
         self.fail()
