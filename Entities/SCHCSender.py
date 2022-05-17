@@ -1,5 +1,6 @@
 import json
 import random
+from typing import Optional
 
 import config.schc as config
 from Entities.Fragmenter import Fragmenter
@@ -70,32 +71,31 @@ class SCHCSender:
 
         return self.SOCKET.send(as_bytes)
 
-    def recv(self, bufsize: int) -> CompoundACK:
+    def recv(self, bufsize: int) -> Optional[CompoundACK]:
         """Receives a message from the socket and parses it as a Compound ACK."""
+
+        if not self.SOCKET.EXPECTS_ACK:
+            return None
 
         received = self.SOCKET.recv(bufsize)
         ack = CompoundACK.from_hex(bytes_to_hex(received))
 
         if self.LOSS_RATE > 0:
             if random.random() * 100 <= self.LOSS_RATE:
-                print("ACK lost (rate)")
+                log.debug("ACK lost (rate)")
                 raise SCHCTimeoutError
         elif self.LOSS_MASK != {}:
-            attempt = 1 if self.ATTEMPTS == 0 else self.ATTEMPTS
             window_mask = self.LOSS_MASK["ack"][str(ack.HEADER.WINDOW_NUMBER)]
-            if window_mask[attempt - 1] != '0':
+            loss = window_mask[0] != '0'
+            self.LOSS_MASK["ack"][str(ack.HEADER.WINDOW_NUMBER)] = window_mask[1:]
+            if loss:
                 log.debug("ACK lost (mask)")
-                self.LOSS_MASK["ack"][str(ack.HEADER.WINDOW_NUMBER)] = replace_char(
-                    window_mask,
-                    attempt - 1,
-                    window_mask[attempt - 1]
-                )
                 raise SCHCTimeoutError
 
         self.RECEIVED += 1
         return ack
 
-    def schc_send(self, fragment: Fragment, retransmit: bool = False):
+    def schc_send(self, fragment: Fragment, retransmit: bool = False) -> None:
         """Uses the SCHC Sender behavior to send a SCHC Fragment."""
         if fragment.is_all_0() and not retransmit:
             log.debug("[SEND] [All-0] Using All-0 SIGFOX_DL_TIMEOUT as timeout.")
@@ -110,7 +110,7 @@ class SCHCSender:
         log.info(f"[SEND] Sending fragment: "
                  f"Rule {fragment.PROFILE.RULE.ID} ({str(fragment.PROFILE.RULE)}), "
                  f"W{fragment.HEADER.WINDOW_NUMBER}"
-                 f"F{fragment.NUMBER}")
+                 f"F{fragment.INDEX}")
 
         try:
             enable_reception = fragment.expects_ack() and not retransmit
@@ -190,7 +190,7 @@ class SCHCSender:
                                 str(fragment_id % self.PROFILE.WINDOW_SIZE),
                                 self.PROFILE.WINDOW_SIZE // 10 + 1
                             )
-                            path = f"{self.STORAGE.ROOT}fragments/fragment_w{w_index}f{f_index}"
+                            path = f"{self.STORAGE.ROOT}/fragments/fragment_w{w_index}f{f_index}"
                             self.schc_send(Fragment.from_file(path), retransmit=True)
 
                 if fragment.is_all_1():
@@ -221,10 +221,10 @@ class SCHCSender:
     def start_session(self, schc_packet: bytes):
         fragmenter = Fragmenter(self.PROFILE)
         self.FRAGMENT_LIST = fragmenter.fragment(schc_packet)
+        self.LAST_WINDOW = self.FRAGMENT_LIST[-1].HEADER.WINDOW_NUMBER
 
         while self.CURRENT_FRAGMENT_INDEX < len(self.FRAGMENT_LIST):
             fragment = self.FRAGMENT_LIST[self.CURRENT_FRAGMENT_INDEX]
-
             try:
                 self.schc_send(fragment)
             except SCHCError:

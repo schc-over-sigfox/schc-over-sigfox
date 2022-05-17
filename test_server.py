@@ -27,8 +27,7 @@ def test() -> tuple[object, int]:
         return {device: {'downlinkData': '1c00000000000000'}}, 200
     elif fragment.to_hex()[-1] == 'f':
         time.sleep(2)
-    else:
-        return '', 204
+    return '', 204
 
 
 if __name__ == '__main__':
