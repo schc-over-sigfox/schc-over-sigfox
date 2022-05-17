@@ -1,32 +1,72 @@
+from Entities.Logger import Logger
 from Entities.SigfoxProfile import SigfoxProfile
-from Entities.exceptions import FormatError, LengthMismatchError, SenderAbortError, SCHCTimeoutError
+from Entities.exceptions import ReceiverAbortError, LengthMismatchError, SenderAbortError
+from Messages import CompoundACK
 from Messages.Fragment import Fragment
+from Messages.Header import Header
 from Messages.ReceiverAbort import ReceiverAbort
-from schc_utils import replace_bit, send_ack
-
-mode = 'filedir'
-
-if mode == 'firebase':
-    from firebase_utils import *
-elif mode == 'filedir':
-    from filedir_utils import *
+from db.JSONStorage import JSONStorage
 
 
 class SCHCReceiver:
-    PROFILE = None
-    BUFFER_SIZE = None
-    N = None
-    M = None
-    SIGFOX_SN = None
-    DATA = None
-    FRAGMENT = None
-    FRAGMENT_NUMBER = None
-    CURRENT_WINDOW = None
-    CURRENT_BITMAP = None
-    TIMESTAMP = None
-    DEVICE = None
 
-    def __init__(self, request_dict):
+    def __init__(self, profile: SigfoxProfile, storage: JSONStorage):
+        self.PROFILE = profile
+        storage.ROOT += f"rule_{self.PROFILE.RULE.ID}/"
+        self.STORAGE = storage
+        self.LOGGER = Logger('', Logger.DEBUG)
+
+    def schc_recv(self, fragment: Fragment, timestamp: int) -> CompoundACK:
+        """Receives a SCHC Fragment and processes it accordingly."""
+
+        if self.session_was_aborted():
+            self.LOGGER.error("Session aborted.")
+            raise ReceiverAbortError
+
+        if self.inactivity_timer_expired(timestamp):
+            self.STORAGE.delete("state/TIMESTAMP")
+            self.LOGGER.error("Inactivity Timer expired.")
+            return self.generate_receiver_abort(fragment.HEADER)
+
+        self.STORAGE.write(str(timestamp), "state/TIMESTAMP")
+
+        if len(fragment.to_bin()) > self.PROFILE.UPLINK_MTU:
+            raise LengthMismatchError("Fragment is larger than uplink MTU.")
+
+        if fragment.is_sender_abort():
+            self.LOGGER.error(f"[Sender-Abort] Aborting session for rule {self.PROFILE.RULE.ID}")
+            raise SenderAbortError
+
+        current_window = fragment.WINDOW
+        fragment_index = fragment.INDEX
+
+        self.LOGGER.info(f"Received fragment W{current_window}F{fragment_index}")
+
+        if not self.fragment_is_expected(fragment):
+            self.reset()
+
+    def session_was_aborted(self) -> bool:
+        """Checks if an "ABORT" node exists in the Storage."""
+        return self.STORAGE.exists(f"rule_{self.PROFILE.RULE.ID}/state/ABORT")
+
+    def inactivity_timer_expired(self, current_timestamp) -> bool:
+        """Checks if the difference between the current timestamp and the previous one exceeds the timeout value."""
+        if self.STORAGE.exists(f"rule_{self.PROFILE.RULE.ID}/TIMESTAMP"):
+            previous_timestamp = self.STORAGE.read(f"rule_{self.PROFILE.RULE.ID}/TIMESTAMP")
+            if abs(current_timestamp - previous_timestamp) > self.PROFILE.INACTIVITY_TIMEOUT:
+                return True
+        return False
+
+    def generate_receiver_abort(self, header: Header) -> ReceiverAbort:
+        """Creates a Receiver-Abort, stores it in the Storage and returns it."""
+        abort = ReceiverAbort(header)
+        self.STORAGE.write(abort.to_hex(), "state/ABORT")
+        return abort
+
+    def fragment_is_expected(self, fragment: Fragment) -> bool:
+        """Checks if a fragment is expected according to the SCHC state machine."""
+        ...
+
         # Get data and Sigfox Sequence Number.
         fragment = request_dict["data"]
         self.SIGFOX_SN = request_dict["seqNumber"]

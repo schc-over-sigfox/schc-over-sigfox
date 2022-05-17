@@ -67,6 +67,13 @@ class TestFragment(TestCase):
 
         self.assertEqual("15888888", fragment.to_hex())
 
+    def test_to_bin(self):
+        b = '00010101100010001000100010001000'
+        h = bin_to_hex(b)
+        fragment = Fragment.from_hex(h)
+
+        self.assertEqual(b, fragment.to_bin())
+
     def test_is_all_1(self):
         b = '00010111100000000100010001000100'
         h = bin_to_hex(b)

@@ -1,11 +1,11 @@
 from Messages.ACK import ACK
-from Messages.ACKHeader import ACKHeader
+from Messages.Header import Header
 from config.schc import L2_WORD_SIZE
 
 
 class ReceiverAbort(ACK):
 
-    def __init__(self, header: ACKHeader) -> None:
+    def __init__(self, header: Header) -> None:
         profile = header.PROFILE
         dtag = header.DTAG
         w = '1' * profile.M
