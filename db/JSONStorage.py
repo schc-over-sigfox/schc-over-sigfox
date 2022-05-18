@@ -1,3 +1,5 @@
+from typing import Union
+
 from utils.nested_dict import deep_write, deep_read, deep_delete
 
 
@@ -9,6 +11,7 @@ class JSONStorage:
 
     def __init__(self, root: str) -> None:
         self.ROOT: str = root
+        self.ROOT_PATH = self.ROOT.split('/')
         self.JSON: dict = {}
 
     def load(self) -> None:
@@ -21,20 +24,15 @@ class JSONStorage:
 
     def write(self, data: object, path: str = '') -> None:
         """Saves the 'data' object in the node identified by the path."""
-        if path == '' and isinstance(data, dict):
-            self.JSON = data
-        else:
-            deep_write(self.JSON, data, path.split('/'))
+        path_as_list = [e for e in self.ROOT_PATH + path.split('/') if e != '']
+        deep_write(self.JSON, data, path_as_list)
 
-    def read(self, path: str = '') -> object:
+    def read(self, path: str = '') -> Union[str, int, bool, dict, list, object, None]:
         """Returns the object stored in the node identified by the path."""
-        if path == '':
-            if self.JSON == {}:
-                return None
-            else:
-                return self.JSON
-        else:
-            return deep_read(self.JSON, path.split('/'))
+        path_as_list = [e for e in self.ROOT_PATH + path.split('/') if e != '']
+        print(f"reading in {path_as_list}")
+
+        return deep_read(self.JSON, path_as_list)
 
     def exists(self, path: str) -> bool:
         """Checks if the node identified by the path, exists."""
@@ -42,11 +40,13 @@ class JSONStorage:
 
     def delete(self, path: str) -> None:
         """Deletes the node identified by the path."""
-        return deep_delete(self.JSON, path.split('/'))
+        path_as_list = [e for e in self.ROOT_PATH + path.split('/') if e != '']
+        return deep_delete(self.JSON, path_as_list)
 
     def make(self, path: str) -> None:
         """Creates an empty node at the specified path."""
-        deep_write(self.JSON, {}, path.split('/'))
+        path_as_list = [e for e in self.ROOT_PATH + path.split('/') if e != '']
+        deep_write(self.JSON, {}, path_as_list)
 
     def is_empty(self, path: str) -> bool:
         """Checks if a node exists and contains no object."""
@@ -54,15 +54,12 @@ class JSONStorage:
 
     def list_nodes(self, path: str = '') -> list[str]:
         """Lists all the nodes contained in the node specified by the path."""
-        if path == '':
-            return list(self.JSON.keys())
+        node = self.read(path)
+        if isinstance(node, dict):
+            return list(node.keys())
         else:
-            node = self.read(path)
-            if isinstance(node, dict):
-                return list(node.keys())
-            else:
-                return []
+            return []
 
     def reset(self) -> None:
-        """Deletes all data in the self.JSON variable."""
-        self.JSON = {}
+        """Deletes all data in the self.JSON variable at the ROOT level."""
+        self.write({})
