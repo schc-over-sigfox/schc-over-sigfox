@@ -1,5 +1,6 @@
 import json
 import shutil
+import unittest
 from unittest import TestCase
 
 from Entities.Fragmenter import Fragmenter
@@ -13,6 +14,7 @@ from utils.casting import bin_to_hex
 PORT = 1313
 
 
+@unittest.skip
 class TestSCHCSender(TestCase):
 
     def test_send(self):

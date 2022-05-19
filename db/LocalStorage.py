@@ -7,8 +7,9 @@ from db.JSONStorage import JSONStorage
 class LocalStorage(JSONStorage):
     """Local JSON storage class, stores data in a file in the disk."""
 
-    def __init__(self, root: str) -> None:
+    def __init__(self) -> None:
 
+        super().__init__()
         self.PATH: str = "debug"
 
         if not os.path.exists(self.PATH):
@@ -16,11 +17,10 @@ class LocalStorage(JSONStorage):
 
         if not os.path.exists(f"{self.PATH}/STORAGE.json"):
             with open(f"{self.PATH}/STORAGE.json", 'w') as f:
-                f.write(json.dumps({}))
-
-        super().__init__(root)
+                f.write(json.dumps(self.JSON))
 
     def load(self) -> None:
+        print(f"reading in {self.PATH}")
         try:
             with open(f"{self.PATH}/STORAGE.json", 'r') as f:
                 j = json.loads(f.read())

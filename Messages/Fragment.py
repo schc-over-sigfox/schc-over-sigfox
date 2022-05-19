@@ -1,12 +1,14 @@
 import json
+from typing import Optional
 
 import config.schc as config
+from Entities.Rule import Rule
 from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import LengthMismatchError, BadProfileError
 from Messages.FragmentHeader import FragmentHeader
 from utils.casting import bytes_to_hex, hex_to_bin, hex_to_bytes, bytes_to_bin
 from utils.misc import round_to_next_multiple, zfill
-from utils.schc_utils import is_monochar, get_rule
+from utils.schc_utils import is_monochar
 
 
 class Fragment:
@@ -62,11 +64,14 @@ class Fragment:
         return is_monochar(self.HEADER.FCN, '1') and is_monochar(self.HEADER.W, '1') and self.PAYLOAD == b''
 
     @staticmethod
-    def from_hex(hex_string: str) -> 'Fragment':
+    def from_hex(hex_string: str) -> Optional['Fragment']:
         """Parses a hex string into a Fragment, using the specified Profile"""
 
+        if hex_string is None:
+            return None
+
         as_bin = hex_to_bin(hex_string)
-        rule = get_rule(as_bin)
+        rule = Rule.from_hex(as_bin)
         profile = SigfoxProfile("UPLINK", config.FR_MODE, rule)
 
         dtag_idx = profile.RULE_ID_SIZE

@@ -1,3 +1,4 @@
+import unittest
 from unittest import TestCase
 
 from Entities.SigfoxProfile import SigfoxProfile
@@ -10,6 +11,7 @@ from utils.casting import bytes_to_hex
 PORT = 1313
 
 
+@unittest.skip
 class TestHTTPSocket(TestCase):
 
     def test_send(self):

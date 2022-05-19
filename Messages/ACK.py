@@ -1,9 +1,10 @@
+from Entities.Rule import Rule
 from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import LengthMismatchError
 from Messages.ACKHeader import ACKHeader
 from config import schc as config
 from utils.casting import bin_to_hex, hex_to_bin
-from utils.schc_utils import is_monochar, get_rule
+from utils.schc_utils import is_monochar
 
 
 class ACK:
@@ -61,7 +62,7 @@ class ACK:
         if len(as_bin) != SigfoxProfile.DOWNLINK_MTU:
             raise LengthMismatchError("ACK was not of length DOWNLINK_MTU.")
 
-        rule = get_rule(as_bin)
+        rule = Rule.from_hex(hex_string)
         profile = SigfoxProfile("UPLINK", config.FR_MODE, rule)
 
         dtag_idx = profile.RULE_ID_SIZE

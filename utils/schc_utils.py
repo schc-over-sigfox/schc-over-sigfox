@@ -3,23 +3,6 @@ import os
 
 import requests
 
-from Entities.Rule import Rule
-from utils.casting import bin_to_int
-
-
-def get_rule(b: str) -> Rule:
-    """Parses the Rule ID of the given binary string, assuming that it is located in the leftmost bits."""
-    first_byte = b[:8]
-    rule_id = first_byte[:3]
-    option = 0
-    if is_monochar(rule_id, '1'):
-        rule_id = first_byte[:6]
-        option = 1
-        if is_monochar(rule_id, '1'):
-            option = 2
-            rule_id = first_byte[:8]
-    return Rule(bin_to_int(rule_id), option)
-
 
 def insert_index(ls, pos, elmt):
     while len(ls) < pos:

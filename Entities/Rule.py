@@ -1,7 +1,8 @@
 from Entities.exceptions import LengthMismatchError
 from config.schc import L2_WORD_SIZE
-from utils.casting import int_to_bin
+from utils.casting import int_to_bin, bin_to_int, hex_to_bin
 from utils.misc import round_to_next_multiple
+from utils.schc_utils import is_monochar
 
 
 class Rule:
@@ -49,3 +50,18 @@ class Rule:
 
     def __str__(self) -> str:
         return int_to_bin(self.ID, length=self.RULE_ID_SIZE)
+
+    @staticmethod
+    def from_hex(h: str) -> 'Rule':
+        """Parses the Rule ID of the given hex string, assuming that it is located in the leftmost bits."""
+        as_bin = hex_to_bin(h)
+        first_byte = as_bin[:8]
+        rule_id = first_byte[:3]
+        option = 0
+        if is_monochar(rule_id, '1'):
+            rule_id = first_byte[:6]
+            option = 1
+            if is_monochar(rule_id, '1'):
+                option = 2
+                rule_id = first_byte[:8]
+        return Rule(bin_to_int(rule_id), option)

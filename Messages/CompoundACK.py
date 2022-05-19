@@ -1,9 +1,12 @@
+from typing import Optional
+
 import config.schc as config
+from Entities.Rule import Rule
 from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import LengthMismatchError, BadProfileError
 from Messages.ACK import ACK
 from utils.casting import hex_to_bin
-from utils.schc_utils import is_monochar, get_rule
+from utils.schc_utils import is_monochar
 
 
 class CompoundACK(ACK):
@@ -43,19 +46,18 @@ class CompoundACK(ACK):
         )
 
     @staticmethod
-    def from_hex(hex_string: str) -> 'CompoundACK':
+    def from_hex(hex_string: str) -> Optional['CompoundACK']:
         """Creates a CompoundACK from a hexadecimal string."""
+
+        if hex_string is None:
+            return None
+
         as_bin = hex_to_bin(hex_string)
 
         if len(as_bin) != SigfoxProfile.DOWNLINK_MTU:
             raise LengthMismatchError("Compound ACK was not of length DOWNLINK_MTU.")
 
-        as_bin = hex_to_bin(hex_string)
-
-        if len(as_bin) != SigfoxProfile.DOWNLINK_MTU:
-            raise LengthMismatchError("ACK was not of length DOWNLINK_MTU.")
-
-        rule = get_rule(as_bin)
+        rule = Rule.from_hex(hex_string)
         profile = SigfoxProfile("UPLINK", config.FR_MODE, rule)
 
         dtag_idx = profile.RULE_ID_SIZE

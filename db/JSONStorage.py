@@ -9,19 +9,24 @@ class JSONStorage:
     be strings (interpreted as a file name), and the value can be any object, including another node.
     """
 
-    def __init__(self, root: str) -> None:
-        self.ROOT = root
-        self.ROOT_PATH = [e for e in self.ROOT.split('/') if e != '']
+    def __init__(self) -> None:
+        self.ROOT = ''
+        self.ROOT_PATH = []
         self.JSON = {}
 
         if self.ROOT_PATH:
             deep_write(self.JSON, {}, self.ROOT_PATH)
 
-    def change_root(self, new_root: str) -> None:
+    def change_root(self, new_root: str, append: bool = False) -> None:
         """Makes all the read and write operations start from a new root path."""
 
-        if deep_read(self.JSON, new_root.split('/')) is None:
-            raise ValueError(f"{new_root} is not a valid path.")
+        if append:
+            new_root = self.ROOT + '/' + new_root
+
+        try:
+            _ = deep_read(self.JSON, new_root.split('/'))
+        except ValueError:
+            deep_write(self.JSON, {}, new_root.split('/'))
 
         self.ROOT = new_root
         self.ROOT_PATH = self.ROOT.split('/')

@@ -9,7 +9,7 @@ from utils.nested_dict import deep_read
 
 class TestLocalStorage(TestCase):
     PATH = "debug/unittest"
-    STORAGE = LocalStorage('')
+    STORAGE = LocalStorage()
     STORAGE.PATH = PATH
 
     @classmethod
@@ -188,14 +188,14 @@ class TestLocalStorage(TestCase):
             }
         }, self.STORAGE.JSON)
 
-        new_storage = LocalStorage('')
+        new_storage = LocalStorage()
         new_storage.PATH = self.PATH
         new_storage.load()
 
         self.assertEqual(self.STORAGE.JSON, new_storage.JSON)
 
     def test_change_root(self):
-        new_storage = LocalStorage('')
+        new_storage = LocalStorage()
         self.assertEqual({}, new_storage.read())
         new_storage.write("test", "a/b/c")
 
