@@ -5,7 +5,6 @@ Functions to handle nested dictionaries, using a list of keys used as a path to 
 
 def deep_write(d: dict, value: object, path: list[str]) -> None:
     """Searches for a key in a nested dictionary and writes the value for that key."""
-    print(f"dict is {d}")
 
     if not path:
         if isinstance(value, dict):
@@ -14,7 +13,6 @@ def deep_write(d: dict, value: object, path: list[str]) -> None:
         else:
             raise ValueError(f"Value to write at the root was not a dictionary.")
 
-    print(f"path: {path}")
     first_key = path[0]
 
     if len(path) == 1:
@@ -29,7 +27,7 @@ def deep_write(d: dict, value: object, path: list[str]) -> None:
                 raise ValueError(f"Value for {first_key} is not a dictionary.")
         else:
             d[first_key] = {}
-            return deep_write(d, value, path[1:])
+            return deep_write(d[first_key], value, path[1:])
 
 
 def deep_read(d: dict, path: list[str]) -> object:
@@ -39,6 +37,7 @@ def deep_read(d: dict, path: list[str]) -> object:
         return d
 
     first_key = path[0]
+
     if len(path) == 1:
         return d.get(first_key, None)
     else:

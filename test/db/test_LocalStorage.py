@@ -193,3 +193,26 @@ class TestLocalStorage(TestCase):
         new_storage.load()
 
         self.assertEqual(self.STORAGE.JSON, new_storage.JSON)
+
+    def test_change_root(self):
+        new_storage = LocalStorage('')
+        self.assertEqual({}, new_storage.read())
+        new_storage.write("test", "a/b/c")
+
+        self.assertEqual({
+            'a': {
+                'b': {
+                    'c': 'test'
+                }
+            }
+        }, new_storage.JSON)
+
+        j = new_storage.JSON
+
+        self.assertEqual("test", new_storage.read("a/b/c"))
+
+        new_storage.change_root("a/b")
+        self.assertEqual(["c"], new_storage.list_nodes())
+        self.assertEqual("test", new_storage.read("c"))
+
+        self.assertEqual(j, new_storage.JSON)

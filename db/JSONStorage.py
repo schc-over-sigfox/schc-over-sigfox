@@ -10,9 +10,21 @@ class JSONStorage:
     """
 
     def __init__(self, root: str) -> None:
-        self.ROOT: str = root
+        self.ROOT = root
+        self.ROOT_PATH = [e for e in self.ROOT.split('/') if e != '']
+        self.JSON = {}
+
+        if self.ROOT_PATH:
+            deep_write(self.JSON, {}, self.ROOT_PATH)
+
+    def change_root(self, new_root: str) -> None:
+        """Makes all the read and write operations start from a new root path."""
+
+        if deep_read(self.JSON, new_root.split('/')) is None:
+            raise ValueError(f"{new_root} is not a valid path.")
+
+        self.ROOT = new_root
         self.ROOT_PATH = self.ROOT.split('/')
-        self.JSON: dict = {}
 
     def load(self) -> None:
         """Read the last saved remote version of the storage and save it in the internal self.JSON parameter."""
@@ -30,7 +42,6 @@ class JSONStorage:
     def read(self, path: str = '') -> Union[str, int, bool, dict, list, object, None]:
         """Returns the object stored in the node identified by the path."""
         path_as_list = [e for e in self.ROOT_PATH + path.split('/') if e != '']
-        print(f"reading in {path_as_list}")
 
         return deep_read(self.JSON, path_as_list)
 
