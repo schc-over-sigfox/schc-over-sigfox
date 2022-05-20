@@ -15,4 +15,4 @@ class SenderAbort(Fragment):
         header = FragmentHeader(profile, dtag, w, fcn, rcs)
         payload = b''
 
-        super().__init__(profile, header, payload)
+        super().__init__(header, payload)

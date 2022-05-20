@@ -15,7 +15,6 @@ class Fragment:
 
     def __init__(
             self,
-            profile: SigfoxProfile,
             header: FragmentHeader,
             payload: bytes
     ) -> None:
@@ -23,12 +22,11 @@ class Fragment:
         Create a SCHC Fragment.
 
         Args:
-            profile: (SigfoxProfile) The Profile object used for the fragment.
             header: (FragmentHeader) The header of the fragment.
             payload: (bytes) The payload of the fragment.
         """
 
-        self.PROFILE = profile
+        self.PROFILE = header.PROFILE
         self.HEADER = header
         self.PAYLOAD = payload
         self.WINDOW = self.HEADER.WINDOW_NUMBER
@@ -111,7 +109,7 @@ class Fragment:
         header_nibs = header_length // 4
         payload = hex_to_bytes(hex_string[header_nibs:])
 
-        return Fragment(profile, header, payload)
+        return Fragment(header, payload)
 
     def get_indices(self) -> tuple[str, str]:
         """Returns a tuple of the indices (window, fragment) of the fragment, formatted to be used as filenames."""

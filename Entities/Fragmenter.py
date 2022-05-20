@@ -62,7 +62,7 @@ class Fragmenter:
                 f"Payload is larger than its maximum size {(len(bytes_to_bin(payload)))} > {payload_max_length}."
             )
 
-        fragment = Fragment(self.PROFILE, header, payload)
+        fragment = Fragment(header, payload)
         fragment_data = {
             "hex": fragment.to_hex(),
             "sent": False

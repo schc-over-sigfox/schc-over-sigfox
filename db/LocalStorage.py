@@ -20,7 +20,6 @@ class LocalStorage(JSONStorage):
                 f.write(json.dumps(self.JSON))
 
     def load(self) -> None:
-        print(f"reading in {self.PATH}")
         try:
             with open(f"{self.PATH}/STORAGE.json", 'r') as f:
                 j = json.loads(f.read())

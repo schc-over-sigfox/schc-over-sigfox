@@ -38,7 +38,7 @@ class SCHCReceiver:
         self.STORAGE.write(abort.to_hex(), "state/ABORT")
         return abort
 
-    def fragment_was_requested(self, fragment: Fragment) -> bool:
+    def fragment_is_requested(self, fragment: Fragment) -> bool:
         """Checks if the fragment was requested for retransmission."""
         requested_fragments = self.STORAGE.read("state/REQUESTED")
         window = f"W{fragment.WINDOW}"
@@ -49,6 +49,8 @@ class SCHCReceiver:
         """
         Checks if a fragment is expected according to the SCHC state machine. The checks to decide this are:
 
+        * If the fragment is an All-1, and if it was already received, it can be processed again
+         (The only fragment that can be received more than once is the All-1) -> Receivable
         * If there is no previous fragment, then there is no active SCHC session -> Receivable
         * If the last fragment was a Sender-Abort, the previous SCHC session was terminated -> Receivable
         * If the last fragment was an All-1 and the ACK it generated was complete,
@@ -61,6 +63,9 @@ class SCHCReceiver:
          ACK-REQs can be sent multiple times -> Receivable
         * Otherwise -> Not receivable.
         """
+
+        if not fragment.is_all_1() and self.fragment_was_already_received(fragment):
+            return False
 
         if not self.STORAGE.exists("state/LAST_FRAGMENT"):
             return True
@@ -75,7 +80,7 @@ class SCHCReceiver:
             if last_ack is not None and last_ack.is_complete():
                 return True
 
-        if self.fragment_was_requested(fragment):
+        if self.fragment_is_requested(fragment):
             return True
 
         if fragment.WINDOW > last_fragment.WINDOW:
@@ -83,7 +88,7 @@ class SCHCReceiver:
         elif fragment.WINDOW == last_fragment.WINDOW:
             if fragment.INDEX > last_fragment.INDEX:
                 return True
-            elif fragment.is_all_0() or fragment.is_all_1():
+            elif fragment.INDEX == last_fragment.INDEX and fragment.is_all_1():
                 return True
 
         return False
@@ -142,9 +147,6 @@ class SCHCReceiver:
 
     def fragment_was_already_received(self, fragment: Fragment):
         """Checks if the fragment was already processed by the receiver."""
-
-        if not self.fragment_is_receivable(fragment):
-            return False
 
         bitmap = self.STORAGE.read(f"state/bitmaps/w{fragment.WINDOW}")
 
