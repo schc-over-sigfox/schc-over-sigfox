@@ -50,7 +50,7 @@ class JSONStorage:
 
         return deep_read(self.JSON, path_as_list)
 
-    def exists(self, path: str) -> bool:
+    def exists(self, path: str = '') -> bool:
         """Checks if the node identified by the path, exists."""
         return self.read(path) is not None
 
@@ -64,7 +64,7 @@ class JSONStorage:
         path_as_list = [e for e in self.ROOT_PATH + path.split('/') if e != '']
         deep_write(self.JSON, {}, path_as_list)
 
-    def is_empty(self, path: str) -> bool:
+    def is_empty(self, path: str = '') -> bool:
         """Checks if a node exists and contains no object."""
         return self.exists(path) and not bool(self.read(path))
 

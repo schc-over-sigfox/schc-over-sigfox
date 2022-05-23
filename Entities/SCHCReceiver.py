@@ -27,7 +27,7 @@ class SCHCReceiver:
     def inactivity_timer_expired(self, current_timestamp) -> bool:
         """Checks if the difference between the current timestamp and the previous one exceeds the timeout value."""
         if self.STORAGE.exists(f"state/TIMESTAMP"):
-            previous_timestamp = self.STORAGE.read(f"state/TIMESTAMP")
+            previous_timestamp = int(self.STORAGE.read(f"state/TIMESTAMP"))
             if abs(current_timestamp - previous_timestamp) > self.PROFILE.INACTIVITY_TIMEOUT:
                 return True
         return False
@@ -40,8 +40,8 @@ class SCHCReceiver:
 
     def fragment_is_requested(self, fragment: Fragment) -> bool:
         """Checks if the fragment was requested for retransmission."""
-        requested_fragments = self.STORAGE.read("state/REQUESTED")
-        window = f"W{fragment.WINDOW}"
+        requested_fragments = self.STORAGE.read("state/requested")
+        window = f"w{fragment.WINDOW}"
         index = fragment.INDEX
         return window in requested_fragments.keys() and index in requested_fragments[window]
 
@@ -99,20 +99,20 @@ class SCHCReceiver:
         if retain_state:
             state = self.STORAGE.read("state")
             try:
-                _ = state.pop("REQUESTED")
+                _ = state.pop("requested")
             except KeyError:
                 pass
         else:
-            state = {}
+            state = {
+                "requested": {},
+                "bitmaps": {}
+            }
 
         root = {
             "fragments": {},
             "reassembly": {},
             "state": state
         }
-
-        bitmaps = {f"w{i}": '0' * self.PROFILE.WINDOW_SIZE for i in range(self.PROFILE.MAX_WINDOW_NUMBER)}
-        root["state"]["bitmaps"] = bitmaps
 
         self.STORAGE.write(root)
         self.STORAGE.save()
@@ -139,6 +139,11 @@ class SCHCReceiver:
 
     def update_bitmap(self, fragment: Fragment) -> None:
         """Updates a stored bitmap according to the window and FCN of the fragment."""
+
+        for i in range(fragment.WINDOW + 1):
+            if not self.STORAGE.exists(f"state/bitmaps/w{i}"):
+                self.STORAGE.write('0' * self.PROFILE.WINDOW_SIZE, f"state/bitmaps/w{i}")
+
         bitmap = self.STORAGE.read(f"state/bitmaps/w{fragment.WINDOW}")
         if bitmap is None:
             bitmap = '0' * self.PROFILE.WINDOW_SIZE
@@ -170,7 +175,7 @@ class SCHCReceiver:
         bitmaps = []
 
         for i in range(current_window + 1):
-            bitmap = self.STORAGE.read(f"state/bitmaps/w{current_window}")
+            bitmap = self.STORAGE.read(f"state/bitmaps/w{i}")
             lost = False
 
             if fragment.is_all_1() and i == current_window:
@@ -204,14 +209,27 @@ class SCHCReceiver:
                     profile=self.PROFILE,
                     dtag=fragment.HEADER.DTAG,
                     windows=[fragment.HEADER.W],
-                    c='0',
+                    c='1',
                     bitmaps=['0' * self.PROFILE.WINDOW_SIZE],
                 )
 
         return None
 
+    def upload_fragment(self, fragment: Fragment) -> None:
+
+        if self.fragment_was_already_received(fragment):
+            self.LOGGER.info(f"Fragment W{fragment.WINDOW}F{fragment.INDEX} was already received")
+            return
+
+        self.STORAGE.write(
+            fragment.to_hex(), f"fragments/w{fragment.get_indices()[0]}/f{fragment.get_indices()[1]}"
+        )
+
     def schc_recv(self, fragment: Fragment, timestamp: int) -> Optional[ACK]:
         """Receives a SCHC Fragment and processes it accordingly."""
+
+        if self.STORAGE.is_empty():
+            self.start_new_session(retain_state=False)
 
         if self.session_was_aborted():
             self.LOGGER.error("Session aborted.")
@@ -222,34 +240,27 @@ class SCHCReceiver:
             self.LOGGER.error("Inactivity Timer expired.")
             return self.generate_receiver_abort(fragment.HEADER)
 
-        self.STORAGE.write(str(timestamp), "state/TIMESTAMP")
-
         if len(fragment.to_bin()) > self.PROFILE.UPLINK_MTU:
             raise LengthMismatchError("Fragment is larger than uplink MTU.")
+
+        self.STORAGE.write(timestamp, "state/TIMESTAMP")
 
         if fragment.is_sender_abort():
             self.LOGGER.error(f"[Sender-Abort] Aborting session for rule {self.PROFILE.RULE.ID}")
             raise SenderAbortError
 
-        current_window = fragment.WINDOW
-        fragment_index = fragment.INDEX
-
-        self.LOGGER.info(f"Received fragment W{current_window}F{fragment_index}")
+        self.LOGGER.info(f"Received fragment W{fragment.WINDOW}F{fragment.INDEX}")
 
         if not self.fragment_is_receivable(fragment):
             self.start_new_session(retain_state=False)
 
-        if not self.fragment_was_already_received(fragment):
-            self.STORAGE.write(fragment.to_hex(), f"fragments/w{current_window}/f{fragment_index}")
-        else:
-            self.LOGGER.info(f"Fragment W{current_window}F{fragment_index} was already received")
+        self.upload_fragment(fragment)
+        self.update_bitmap(fragment)
 
         pending_ack = self.get_pending_ack(fragment)
         if pending_ack is not None:
             self.LOGGER.info(f"Pending ACK retrieved.")
             return pending_ack
-
-        self.update_bitmap(fragment)
 
         if not fragment.expects_ack():
             return None
