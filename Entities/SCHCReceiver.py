@@ -167,6 +167,22 @@ class SCHCReceiver:
 
         return False
 
+    def update_requested(self, ack: CompoundACK) -> None:
+        """Updates the dictionary of requested fragments, using the tuples of a Compound ACK."""
+        if not ack.is_complete():
+            requested = self.STORAGE.read("state/requested")
+
+            if requested is None:
+                requested = {}
+
+            for tup in ack.TUPLES:
+                window = tup[0]
+                bitmap = tup[1]
+                lost_fragments = [idx for (idx, bit) in enumerate(bitmap) if bit != '1']
+                requested.update({f"{bin_to_int(window)}": lost_fragments})
+
+            self.STORAGE.write(requested, "state/requested")
+
     def generate_compound_ack(self, fragment: Fragment) -> Optional[CompoundACK]:
         """Reads data from the stored bitmaps and generates (or not) an ACK accordingly."""
 
@@ -193,25 +209,30 @@ class SCHCReceiver:
                 bitmaps.append(bitmap)
 
         losses_were_found = bitmaps != [] and windows != []
+        ack = None
 
         if losses_were_found:
-            return CompoundACK(
+            ack = CompoundACK(
                 profile=self.PROFILE,
                 dtag=fragment.HEADER.DTAG,
                 windows=windows,
                 c='0',
                 bitmaps=bitmaps,
             )
-
         else:
             if fragment.is_all_1():
-                return CompoundACK(
+                ack = CompoundACK(
                     profile=self.PROFILE,
                     dtag=fragment.HEADER.DTAG,
                     windows=[fragment.HEADER.W],
                     c='1',
                     bitmaps=['0' * self.PROFILE.WINDOW_SIZE],
                 )
+                self.STORAGE.write(ack.to_hex(), "state/LAST_ACK")
+
+        if ack is not None:
+            self.update_requested(ack)
+            return ack
 
         return None
 

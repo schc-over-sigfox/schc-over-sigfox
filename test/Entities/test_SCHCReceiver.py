@@ -251,6 +251,7 @@ class TestSCHCReceiver(TestCase):
         requested = {
             "w0": [0, 3, 4]
         }
+
         last_fragment = Fragment(FragmentHeader(profile, '', '01', '011'), b'\x1a\x2b\x3c\x4d')
         receiver.STORAGE.write(last_fragment.to_hex(), "state/LAST_FRAGMENT")
 

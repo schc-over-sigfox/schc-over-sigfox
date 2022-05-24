@@ -5,4 +5,6 @@ INACTIVITY_TIMEOUT = 500  # in seconds
 MAX_ACK_REQUESTS = 5
 L2_WORD_SIZE = 8
 DELAY_BETWEEN_FRAGMENTS = 10
+
 RECEIVER_URL = "http://localhost:5000/receiver"
+REASSEMBLER_URL = "http://localhost:5000/reassembler"

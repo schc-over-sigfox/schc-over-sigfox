@@ -1,33 +1,92 @@
-import filecmp
-import re
+import json
 
-from flask import Flask, request, abort
+from flask import Flask, request
 
-import config_testing as config
-from Entities.Reassembler import Reassembler
+from Entities.Logger import log
+from Entities.Rule import Rule
+from Entities.SCHCReceiver import SCHCReceiver
 from Entities.SigfoxProfile import SigfoxProfile
-from Messages.CompoundACK import CompoundACK
+from Entities.exceptions import SenderAbortError, ReceiverAbortError
 from Messages.Fragment import Fragment
-from Messages.ReceiverAbort import ReceiverAbort
-from utils.schc_utils import *
-
-mode = 'filedir'
-
-if mode == 'firebase':
-    from utils.firebase_utils import *
-elif mode == 'filedir':
-    from utils.filedir_utils import *
+from config.schc import REASSEMBLER_URL
+from db.LocalStorage import LocalStorage as Storage
 
 app = Flask(__name__)
 
 
-@app.route('/receiver', methods=['GET', 'POST'])
+@app.post('/receiver')
 def receiver():
+    request_dict = request.get_json()
 
-    # Wait for an HTTP POST request.
-    if request.method == 'POST':
+    device_type_id = request_dict["deviceTypeId"]
+    device = request_dict["device"]
+    data = request_dict["data"]
+    net_time = int(request_dict["time"])
+    seq_number = int(request_dict["seqNumber"])
+    ack = request_dict["ack"] == "true"
 
-        # Get request JSON.
+    storage = Storage()
+    storage.change_root(f"{device_type_id}/{device}")
+    profile = SigfoxProfile("UPLINK", "ACK ON ERROR", Rule.from_hex(data))
+    receiver = SCHCReceiver(profile, storage)
+    fragment = Fragment.from_hex(data)
+    log.debug(f"Received {data}. Rule {receiver.PROFILE.RULE.ID}")
+
+    last_request = storage.read("state/LAST_REQUEST")
+    if last_request is not None and last_request == request_dict:
+        log.warning("Sigfox Callback has retried. Replying with previous response.")
+        previous_response = storage.read("state/LAST_RESPONSE")
+        return previous_response["body"], previous_response["status_code"]
+
+    storage.write(request_dict, "state/LAST_REQUEST")
+
+    try:
+        comp_ack = receiver.schc_recv(fragment, net_time)
+
+        if comp_ack is not None:
+            response = {
+                "body": json.dumps({device: {"downlinkData": comp_ack.to_hex()}}),
+                "status_code": 200
+            }
+        else:
+            response = {
+                "body": '',
+                "status_code": 204
+            }
+
+        storage.write(response, "state/LAST_RESPONSE")
+        storage.save()
+
+        if fragment.is_all_1() and comp_ack.is_complete():
+            launch_request(
+                url=REASSEMBLER_URL,
+                body={
+                    "rule": str(profile.RULE),
+                    "window": fragment.WINDOW,
+                    "index": fragment.INDEX,
+                    "session_path": f"{device_type_id}/{device}",
+                    "abort": False
+                }
+            )
+
+        return response["body"], response["status_code"]
+
+    except SenderAbortError:
+        log.info("Sender-Abort received")
+        receiver.start_new_session(retain_state=False)
+        response = {
+            "body": '',
+            "status_code": 204
+        }
+
+        storage.write(response, "state/LAST_RESPONSE")
+        return response["body"], response["status_code"]
+
+    except ReceiverAbortError:
+        if ack:
+            abort = receiver
+
+            # Get request JSON.
         print("POST RECEIVED")
         request_dict = request.get_json()
         print('Received Sigfox message: {}'.format(request_dict))
