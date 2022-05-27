@@ -19,7 +19,7 @@ class TestReassembler(TestCase):
                     b'\x88\xe1\xaa\x07\x87\xf1X\xdak\x85\x1fMw&\x84\x08q(Q\xf3\xa1\xfe\n\xb6e\xdc\xf9\x9e\xebq}|\x9e' \
                     b'\x0e\x98\x81\xca\xaf\xf1\x07B\x83\x85\x8d4@v\x84\x87VV\x11\xb2\xb5\xc9p\xc9\xe5'
 
-        rule_0 = Rule(0, 0)
+        rule_0 = Rule('000')
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule_0)
         fragmenter = Fragmenter(profile, "debug/unittest/sd")
         fragments = fragmenter.fragment(randbytes)

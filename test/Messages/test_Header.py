@@ -9,7 +9,7 @@ from Messages.Header import Header
 class TestHeader(TestCase):
 
     def test_init(self):
-        rule_0 = Rule(0, 0)
+        rule_0 = Rule('000')
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule_0)
         dtag = ''
         w = '10'

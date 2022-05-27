@@ -7,11 +7,11 @@ from utils.schc_utils import is_monochar
 
 class Rule:
 
-    def __init__(self, rule_id: int, option: int) -> None:
+    def __init__(self, rule_id: str) -> None:
 
-        self.ID = rule_id
+        self.ID = bin_to_int(rule_id)
 
-        if option == 0:
+        if rule_id[:3] != '111':
             self.RULE_ID_SIZE = 3
             self.T = 0
             self.M = 2
@@ -19,7 +19,7 @@ class Rule:
             self.WINDOW_SIZE = 7
             self.U = 3
 
-        elif option == 1:
+        elif rule_id[:6] != '111111':
             self.RULE_ID_SIZE = 6
             self.T = 0
             self.M = 2
@@ -27,7 +27,7 @@ class Rule:
             self.WINDOW_SIZE = 12
             self.U = 4
 
-        elif option == 2:
+        else:
             self.RULE_ID_SIZE = 8
             self.T = 0
             self.M = 3
@@ -35,7 +35,7 @@ class Rule:
             self.WINDOW_SIZE = 31
             self.U = 5
 
-        if len(int_to_bin(rule_id)) > self.RULE_ID_SIZE:
+        if len(rule_id) > self.RULE_ID_SIZE:
             raise LengthMismatchError("Rule ID is larger than RULE_ID_SIZE")
 
         self.HEADER_LENGTH = round_to_next_multiple(
@@ -57,11 +57,8 @@ class Rule:
         as_bin = hex_to_bin(h)
         first_byte = as_bin[:8]
         rule_id = first_byte[:3]
-        option = 0
         if is_monochar(rule_id, '1'):
             rule_id = first_byte[:6]
-            option = 1
             if is_monochar(rule_id, '1'):
-                option = 2
                 rule_id = first_byte[:8]
-        return Rule(bin_to_int(rule_id), option)
+        return Rule(rule_id)

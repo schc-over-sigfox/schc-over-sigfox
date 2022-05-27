@@ -8,7 +8,7 @@ from config import schc
 class TestRule(TestCase):
 
     def test_init(self):
-        rule_0 = Rule(0, 0)
+        rule_0 = Rule('000')
         profile = SigfoxProfile("UPLINK", schc.FR_MODE, rule_0)
 
         expected = {
@@ -23,7 +23,7 @@ class TestRule(TestCase):
 
         self.assertEqual(expected, profile.FCN_DICT)
 
-        rule_0 = Rule(0, 1)
+        rule_0 = Rule('111000')
         profile = SigfoxProfile("UPLINK", schc.FR_MODE, rule_0)
 
         expected = {
@@ -43,7 +43,7 @@ class TestRule(TestCase):
 
         self.assertEqual(expected, profile.FCN_DICT)
 
-        rule_0 = Rule(0, 2)
+        rule_0 = Rule('11111100')
         profile = SigfoxProfile("UPLINK", schc.FR_MODE, rule_0)
 
         expected = {

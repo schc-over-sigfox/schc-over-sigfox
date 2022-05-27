@@ -37,7 +37,7 @@ class TestSCHCReceiver(TestCase):
 
     def test_init(self):
         storage = LocalStorage()
-        rule = Rule(0, 0)
+        rule = Rule('000')
         storage.change_root(f"simulator/1a2b3c/rule_{rule.ID}")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
@@ -76,7 +76,7 @@ class TestSCHCReceiver(TestCase):
         storage.load()
         self.assertEqual(j, storage.JSON)
 
-        rule = Rule(0, 0)
+        rule = Rule('000')
         storage.change_root(f"simulator/1a2b3c/rule_{rule.ID}")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
@@ -105,7 +105,7 @@ class TestSCHCReceiver(TestCase):
         storage.PATH = self.PATH
         storage.load()
 
-        rule = Rule(0, 0)
+        rule = Rule('000')
         storage.change_root(f"simulator/1a2b3c/rule_{rule.ID}")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         profile.INACTIVITY_TIMEOUT = 10
@@ -136,7 +136,7 @@ class TestSCHCReceiver(TestCase):
         storage.PATH = self.PATH
         storage.load()
 
-        rule = Rule(0, 0)
+        rule = Rule('000')
         storage.change_root(f"simulator/1a2b3c/rule_{rule.ID}")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         profile.INACTIVITY_TIMEOUT = 10
@@ -172,7 +172,7 @@ class TestSCHCReceiver(TestCase):
         storage.PATH = self.PATH
         storage.load()
 
-        rule = Rule(0, 0)
+        rule = Rule('000')
         storage.change_root(f"simulator/1a2b3c/rule_{rule.ID}")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
@@ -212,7 +212,7 @@ class TestSCHCReceiver(TestCase):
         storage = LocalStorage()
         storage.PATH = self.PATH
         storage.load()
-        rule = Rule(0, 0)
+        rule = Rule('000')
         storage.change_root(f"simulator/1a2b3c/rule_{rule.ID}")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
@@ -312,7 +312,7 @@ class TestSCHCReceiver(TestCase):
         storage = LocalStorage()
         storage.PATH = self.PATH
         storage.load()
-        rule = Rule(0, 0)
+        rule = Rule('000')
         storage.change_root(f"simulator/1a2b3c/rule_{rule.ID}")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
@@ -356,7 +356,7 @@ class TestSCHCReceiver(TestCase):
         storage = LocalStorage()
         storage.PATH = self.PATH
         storage.load()
-        rule = Rule(0, 0)
+        rule = Rule('000')
         storage.change_root(f"simulator/1a2b3c/rule_{rule.ID}")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
@@ -449,7 +449,7 @@ class TestSCHCReceiver(TestCase):
         storage = LocalStorage()
         storage.PATH = self.PATH
         storage.load()
-        rule = Rule(0, 0)
+        rule = Rule('000')
         storage.change_root(f"simulator/1a2b3c/rule_{rule.ID}")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
@@ -482,7 +482,7 @@ class TestSCHCReceiver(TestCase):
         storage = LocalStorage()
         storage.PATH = self.PATH
         storage.load()
-        rule = Rule(0, 0)
+        rule = Rule('000')
         storage.change_root(f"simulator/1a2b3c/rule_{rule.ID}")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
@@ -559,7 +559,7 @@ class TestSCHCReceiver(TestCase):
         storage = LocalStorage()
         storage.PATH = self.PATH
         storage.load()
-        rule = Rule(0, 0)
+        rule = Rule('000')
         storage.change_root(f"simulator/1a2b3c/rule_{rule.ID}")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
@@ -610,7 +610,7 @@ class TestSCHCReceiver(TestCase):
         storage = LocalStorage()
         storage.PATH = self.PATH
         storage.load()
-        rule = Rule(0, 0)
+        rule = Rule('000')
         storage.change_root(f"simulator/1a2b3c/rule_{rule.ID}")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)

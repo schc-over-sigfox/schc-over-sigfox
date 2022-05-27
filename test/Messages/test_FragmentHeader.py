@@ -8,7 +8,7 @@ from test.Messages.test_Header import TestHeader
 class TestFragmentHeader(TestHeader):
 
     def test_init(self):
-        rule_0 = Rule(0, 0)
+        rule_0 = Rule('000')
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule_0)
         dtag = ''
         w = '10'
@@ -37,7 +37,7 @@ class TestFragmentHeader(TestHeader):
         self.assertEqual('00000', header.PADDING)
 
     def test_to_binary(self):
-        rule_0 = Rule(0, 0)
+        rule_0 = Rule('000')
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule_0)
         dtag = ''
         w = '10'
@@ -52,7 +52,7 @@ class TestFragmentHeader(TestHeader):
         self.assertEqual("00010101", header.to_binary())
 
     def test_to_bytes(self):
-        rule_0 = Rule(0, 0)
+        rule_0 = Rule('000')
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule_0)
         dtag = ''
         w = '10'
