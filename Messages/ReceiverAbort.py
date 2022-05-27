@@ -11,7 +11,7 @@ class ReceiverAbort(ACK):
         w = '1' * profile.M
         c = '1'
 
-        header_length = len(str(profile.RULE) + dtag + w + c)
+        header_length = len(profile.RULE.STR + dtag + w + c)
 
         if header_length % L2_WORD_SIZE != 0:
             padding = '1' * (L2_WORD_SIZE - header_length % L2_WORD_SIZE)

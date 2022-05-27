@@ -9,7 +9,7 @@ from config import schc as config
 from utils.casting import bytes_to_hex, hex_to_bytes
 
 
-class HTTPSocket(Socket):
+class SigfoxHTTPSocket(Socket):
 
     def __init__(self):
         super().__init__()

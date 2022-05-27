@@ -16,6 +16,6 @@ class Socket:
         """Configures the socket to be able to receive a message after sending one."""
         raise NotImplementedError
 
-    def set_timeout(self, timeout: int) -> None:
+    def set_timeout(self, timeout: float) -> None:
         """Configures the timeout value of the socket, in seconds."""
         raise NotImplementedError

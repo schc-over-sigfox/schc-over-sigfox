@@ -1,5 +1,8 @@
 """Module of miscellaneous functions used in the project."""
 import os
+from typing import Optional
+
+import requests
 
 
 def zfill(s: str, length: int) -> str:
@@ -73,3 +76,20 @@ def round_to_next_multiple(n, factor):
     """Rounds a number to the next greater multiple of a specified factor."""
 
     return -(n // (-factor)) * factor
+
+
+def http_post(body: dict, endpoint: str, asynchronous: bool = False) -> Optional[requests.Response]:
+    """Makes a HTTP POST request, which wait for its response or not."""
+
+    timeout = .1 if asynchronous else 60
+
+    try:
+        return requests.post(
+            url=endpoint,
+            json=body,
+            headers={},
+            timeout=timeout
+        )
+    except requests.exceptions.ReadTimeout:
+        if asynchronous:
+            return

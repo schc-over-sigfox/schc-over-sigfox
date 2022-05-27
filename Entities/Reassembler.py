@@ -1,6 +1,5 @@
 from Entities.SigfoxProfile import SigfoxProfile
 from Messages.Fragment import Fragment
-from db.JSONStorage import JSONStorage
 
 
 class Reassembler:
@@ -9,11 +8,9 @@ class Reassembler:
 			self,
 			profile: SigfoxProfile,
 			fragments: list[Fragment],
-			storage: JSONStorage
 	) -> None:
 		self.PROFILE = profile
 		self.FRAGMENTS = fragments
-		# TODO: self.STORAGE = storage
 		self.SCHC_PACKET = b''
 		self.COMPLETE = False
 

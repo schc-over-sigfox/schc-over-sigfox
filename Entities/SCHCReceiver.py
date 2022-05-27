@@ -18,6 +18,7 @@ class SCHCReceiver:
     def __init__(self, profile: SigfoxProfile, storage: JSONStorage):
         self.PROFILE = profile
         self.STORAGE = storage
+        self.STORAGE.change_root(f"rule_{self.PROFILE.RULE.ID}")
         self.LOGGER = Logger('', Logger.DEBUG)
 
     def session_was_aborted(self) -> bool:
@@ -137,6 +138,12 @@ class SCHCReceiver:
 
         return None
 
+    def get_receiver_abort(self) -> CompoundACK:
+        """Obtains a receiver abort from the state/ABORT node in the Storage."""
+        abort = CompoundACK.from_hex(self.STORAGE.read("state/ABORT"))
+        self.STORAGE.delete("state/ABORT")
+        return abort
+
     def update_bitmap(self, fragment: Fragment) -> None:
         """Updates a stored bitmap according to the window and FCN of the fragment."""
 
@@ -237,6 +244,7 @@ class SCHCReceiver:
         return None
 
     def upload_fragment(self, fragment: Fragment) -> None:
+        """Uploads the hex representation of a fragment into the Storage."""
 
         if self.fragment_was_already_received(fragment):
             self.LOGGER.info(f"Fragment W{fragment.WINDOW}F{fragment.INDEX} was already received")

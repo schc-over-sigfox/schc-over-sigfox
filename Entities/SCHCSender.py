@@ -11,7 +11,7 @@ from Entities.exceptions import SCHCTimeoutError, SenderAbortError, ReceiverAbor
 from Messages.CompoundACK import CompoundACK
 from Messages.Fragment import Fragment
 from Messages.SenderAbort import SenderAbort
-from Sockets.HTTPSocket import HTTPSocket as Socket
+from Sockets.SigfoxHTTPSocket import SigfoxHTTPSocket as Socket
 from utils.casting import bytes_to_hex, bin_to_int
 from utils.misc import replace_char, is_monochar, zfill
 
@@ -108,7 +108,7 @@ class SCHCSender:
             self.SOCKET.set_timeout(60)
 
         log.info(f"[SEND] Sending fragment: "
-                 f"Rule {fragment.PROFILE.RULE.ID} ({str(fragment.PROFILE.RULE)}), "
+                 f"Rule {fragment.PROFILE.RULE.ID} ({fragment.PROFILE.RULE.STR}), "
                  f"W{fragment.HEADER.WINDOW_NUMBER}"
                  f"F{fragment.INDEX}")
 

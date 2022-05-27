@@ -14,10 +14,12 @@ class Header:
 
         self.PROFILE = profile
 
-        if len(str(profile.RULE)) != profile.RULE_ID_SIZE:
-            raise LengthMismatchError("RULE must be of length RULE_ID_SIZE")
+        if len(profile.RULE.STR) != profile.RULE_ID_SIZE:
+
+            raise LengthMismatchError(f"RULE must be of length RULE_ID_SIZE ({profile.RULE_ID_SIZE}). "
+                                      f"Rule was {profile.RULE.STR}, length = {len(profile.RULE.STR)}. ")
         else:
-            self.RULE_ID = str(profile.RULE)
+            self.RULE_ID = profile.RULE.STR
 
         if profile.T == "0":
             self.DTAG = ""

@@ -5,7 +5,7 @@ from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import SCHCTimeoutError
 from Messages.CompoundACK import CompoundACK
 from Messages.Fragment import Fragment
-from Sockets.HTTPSocket import HTTPSocket
+from Sockets.SigfoxHTTPSocket import SigfoxHTTPSocket
 from utils.casting import bytes_to_hex
 
 PORT = 1313
@@ -15,7 +15,7 @@ PORT = 1313
 class TestHTTPSocket(TestCase):
 
     def test_send(self):
-        socket = HTTPSocket()
+        socket = SigfoxHTTPSocket()
         socket.ENDPOINT = f'http://127.0.0.1:{PORT}/test'
         socket.TIMEOUT = 1
         fragment = Fragment.from_hex('128888888888888888888888')
@@ -37,7 +37,7 @@ class TestHTTPSocket(TestCase):
         self.assertFalse(socket.BUFFER.empty())
 
     def test_set_reception(self):
-        socket = HTTPSocket()
+        socket = SigfoxHTTPSocket()
         socket.ENDPOINT = f'http://127.0.0.1:{PORT}/test'
         socket.TIMEOUT = 1
 
@@ -46,7 +46,7 @@ class TestHTTPSocket(TestCase):
         self.assertTrue(socket.EXPECTS_ACK)
 
     def test_recv(self):
-        socket = HTTPSocket()
+        socket = SigfoxHTTPSocket()
         socket.ENDPOINT = f'http://127.0.0.1:{PORT}/test'
         socket.TIMEOUT = 1
         socket.set_reception(True)
@@ -59,7 +59,7 @@ class TestHTTPSocket(TestCase):
         self.assertTrue(res, ack.to_hex())
 
     def test_set_timeout(self):
-        socket = HTTPSocket()
+        socket = SigfoxHTTPSocket()
         socket.ENDPOINT = f'http://127.0.0.1:{PORT}/test'
         socket.TIMEOUT = 1
         socket.set_timeout(100)

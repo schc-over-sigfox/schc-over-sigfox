@@ -15,7 +15,7 @@ class TestHeader(TestCase):
         w = '10'
         header = Header(profile, dtag, w)
 
-        self.assertEqual(str(rule_0), header.RULE_ID)
+        self.assertEqual(rule_0.STR, header.RULE_ID)
         self.assertEqual('', header.DTAG)
         self.assertEqual('10', header.W)
         self.assertEqual(2, header.WINDOW_NUMBER)

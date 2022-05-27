@@ -1,6 +1,6 @@
 from Entities.exceptions import LengthMismatchError
 from config.schc import L2_WORD_SIZE
-from utils.casting import int_to_bin, bin_to_int, hex_to_bin
+from utils.casting import bin_to_int, hex_to_bin
 from utils.misc import round_to_next_multiple
 from utils.schc_utils import is_monochar
 
@@ -9,6 +9,7 @@ class Rule:
 
     def __init__(self, rule_id: str) -> None:
 
+        self.STR = rule_id
         self.ID = bin_to_int(rule_id)
 
         if rule_id[:3] != '111':
@@ -47,9 +48,6 @@ class Rule:
         )
 
         self.ACK_HEADER_LENGTH = self.RULE_ID_SIZE + self.M + 1
-
-    def __str__(self) -> str:
-        return int_to_bin(self.ID, length=self.RULE_ID_SIZE)
 
     @staticmethod
     def from_hex(h: str) -> 'Rule':
