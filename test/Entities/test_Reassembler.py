@@ -24,7 +24,7 @@ class TestReassembler(TestCase):
         fragmenter = Fragmenter(profile, "debug/unittest/sd")
         fragments = fragmenter.fragment(randbytes)
 
-        reassembler = Reassembler(profile, fragments, fragmenter.STORAGE)
+        reassembler = Reassembler(profile, fragments)
         schc_packet = reassembler.reassemble()
 
         self.assertEqual(randbytes, schc_packet)
@@ -32,7 +32,7 @@ class TestReassembler(TestCase):
         multiple_eleven = b'-\xf2}\x1d\x01\xefg\xe7+\xb3\x16\x12\xedf\xdf^\xe65\xcd\x144f'
         fragmenter = Fragmenter(profile, "debug/unittest/sd")
         fragments = fragmenter.fragment(multiple_eleven)
-        reassembler = Reassembler(profile, fragments, fragmenter.STORAGE)
+        reassembler = Reassembler(profile, fragments)
         schc_packet = reassembler.reassemble()
 
         self.assertEqual(schc_packet, multiple_eleven)

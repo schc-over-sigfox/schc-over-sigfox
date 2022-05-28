@@ -18,8 +18,11 @@ class SCHCReceiver:
     def __init__(self, profile: SigfoxProfile, storage: JSONStorage):
         self.PROFILE = profile
         self.STORAGE = storage
-        self.STORAGE.change_root(f"rule_{self.PROFILE.RULE.ID}")
+        self.STORAGE.change_root(f"rule_{self.PROFILE.RULE.ID}", append=True)
         self.LOGGER = Logger('', Logger.DEBUG)
+
+        if self.STORAGE.is_empty():
+            self.start_new_session(retain_state=False)
 
     def session_was_aborted(self) -> bool:
         """Checks if an "ABORT" node exists in the Storage."""
@@ -147,7 +150,7 @@ class SCHCReceiver:
     def update_bitmap(self, fragment: Fragment) -> None:
         """Updates a stored bitmap according to the window and FCN of the fragment."""
 
-        for i in range(fragment.WINDOW + 1):
+        for i in range(fragment.WINDOW):
             if not self.STORAGE.exists(f"state/bitmaps/w{i}"):
                 self.STORAGE.write('0' * self.PROFILE.WINDOW_SIZE, f"state/bitmaps/w{i}")
 
@@ -192,7 +195,6 @@ class SCHCReceiver:
 
     def generate_compound_ack(self, fragment: Fragment) -> Optional[CompoundACK]:
         """Reads data from the stored bitmaps and generates (or not) an ACK accordingly."""
-
         current_window = fragment.WINDOW
         windows = []
         bitmaps = []

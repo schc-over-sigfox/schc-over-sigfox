@@ -46,7 +46,7 @@ def section_string(s: str, indices: list[int]) -> list[str]:
     return [s[i:j] for i, j in zip(indices, indices[1:])]
 
 
-def generate_packet(byte_size: int, path: str = None) -> str:
+def generate_packet(byte_size: int, path: str = None) -> bytes:
     """Generates a string of the specified byte size and optionally saves it into a file."""
 
     s = '0'
@@ -55,8 +55,10 @@ def generate_packet(byte_size: int, path: str = None) -> str:
         i = (i + 1) % 10
         s += str(i)
 
+    s = s.encode('utf-8')
+
     if path is not None and not os.path.isfile(path):
-        with open(path, 'w') as f:
+        with open(path, 'wb') as f:
             f.write(s)
 
     return s

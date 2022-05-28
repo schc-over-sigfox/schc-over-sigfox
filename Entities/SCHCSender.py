@@ -220,6 +220,8 @@ class SCHCSender:
 
     def start_session(self, schc_packet: bytes):
         """Performs the full SCHC Sender procedure for a given SCHC Packet."""
+
+        log.info(f"SCHC Packet: {schc_packet}")
         fragmenter = Fragmenter(self.PROFILE)
         self.FRAGMENT_LIST = fragmenter.fragment(schc_packet)
         self.LAST_WINDOW = self.FRAGMENT_LIST[-1].HEADER.WINDOW_NUMBER

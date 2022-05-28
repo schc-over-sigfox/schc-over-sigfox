@@ -24,7 +24,8 @@ class JSONStorage:
             new_root = self.ROOT + '/' + new_root
 
         try:
-            _ = deep_read(self.JSON, new_root.split('/'))
+            if deep_read(self.JSON, new_root.split('/')) is None:
+                deep_write(self.JSON, {}, new_root.split('/'))
         except ValueError:
             deep_write(self.JSON, {}, new_root.split('/'))
 
@@ -47,7 +48,6 @@ class JSONStorage:
     def read(self, path: str = '') -> Union[str, int, bool, dict, list, object, None]:
         """Returns the object stored in the node identified by the path."""
         path_as_list = [e for e in self.ROOT_PATH + path.split('/') if e != '']
-
         return deep_read(self.JSON, path_as_list)
 
     def exists(self, path: str = '') -> bool:

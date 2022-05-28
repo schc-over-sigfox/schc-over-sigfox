@@ -19,8 +19,8 @@ def receive():
     """
     Parses a SCHC Fragment and saves it into the storage of the SCHC Receiver according to the SCHC receiving behavior.
     """
-    request_dict = request.get_json()
 
+    request_dict = request.get_json()
     device_type_id = request_dict["deviceTypeId"]
     device = request_dict["device"]
     data = request_dict["data"]
@@ -28,6 +28,7 @@ def receive():
     ack = request_dict["ack"] == "true"
 
     storage = Storage()
+    storage.load()
     storage.change_root(f"{device_type_id}/{device}")
     profile = SigfoxProfile("UPLINK", "ACK ON ERROR", Rule.from_hex(data))
     receiver = SCHCReceiver(profile, storage)
@@ -65,7 +66,7 @@ def receive():
 
             reassembler = Reassembler(profile, fragments)
             schc_packet = reassembler.reassemble()
-
+            log.info(f"Reassembled SCHC Packet: {schc_packet}")
             storage.write(schc_packet, "reassembly/SCHC_PACKET")
             receiver.start_new_session(retain_state=True)
 
@@ -87,6 +88,7 @@ def receive():
     finally:
         storage.write(response, "state/LAST_RESPONSE")
         storage.save()
+        log.info(f"Replying with {response}")
         return response["body"], response["status_code"]
 
 

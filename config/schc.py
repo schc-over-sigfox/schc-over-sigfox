@@ -6,5 +6,5 @@ MAX_ACK_REQUESTS = 5
 L2_WORD_SIZE = 8
 DELAY_BETWEEN_FRAGMENTS = 10
 
-RECEIVER_URL = "http://localhost:5000/receiver"
-REASSEMBLER_URL = "http://localhost:5000/reassembler"
+RECEIVER_URL = "http://localhost:5000/receive"
+REASSEMBLER_URL = "http://localhost:5000/reassemble"
