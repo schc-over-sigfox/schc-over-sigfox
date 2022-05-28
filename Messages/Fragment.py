@@ -7,8 +7,7 @@ from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import LengthMismatchError, BadProfileError
 from Messages.FragmentHeader import FragmentHeader
 from utils.casting import bytes_to_hex, hex_to_bin, hex_to_bytes, bytes_to_bin
-from utils.misc import round_to_next_multiple, zfill
-from utils.schc_utils import is_monochar
+from utils.misc import is_monochar, round_to_next_multiple, zfill
 
 
 class Fragment:

@@ -4,7 +4,7 @@ from Entities.exceptions import LengthMismatchError
 from Messages.ACKHeader import ACKHeader
 from config import schc as config
 from utils.casting import bin_to_hex, hex_to_bin
-from utils.schc_utils import is_monochar
+from utils.misc import is_monochar
 
 
 class ACK:

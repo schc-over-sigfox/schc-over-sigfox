@@ -6,7 +6,7 @@ from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import LengthMismatchError, BadProfileError
 from Messages.ACK import ACK
 from utils.casting import hex_to_bin
-from utils.schc_utils import is_monochar
+from utils.misc import is_monochar
 
 
 class CompoundACK(ACK):

@@ -1,8 +1,7 @@
 from Entities.exceptions import LengthMismatchError
 from config.schc import L2_WORD_SIZE
 from utils.casting import bin_to_int, hex_to_bin
-from utils.misc import round_to_next_multiple
-from utils.schc_utils import is_monochar
+from utils.misc import round_to_next_multiple, is_monochar
 
 
 class Rule:
