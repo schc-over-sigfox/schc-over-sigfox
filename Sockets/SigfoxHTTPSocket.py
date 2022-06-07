@@ -31,7 +31,6 @@ class SigfoxHTTPSocket(Socket):
         }
 
         try:
-            print(f"sending body {http_body}")
             response = requests.post(
                 url=self.ENDPOINT,
                 json=http_body,

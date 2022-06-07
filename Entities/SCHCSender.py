@@ -85,10 +85,16 @@ class SCHCSender:
                 log.debug("ACK lost (rate)")
                 raise SCHCTimeoutError
         elif self.LOSS_MASK != {}:
-            window_mask = self.LOSS_MASK["ack"][str(ack.HEADER.WINDOW_NUMBER)]
-            loss = window_mask[0] != '0'
-            self.LOSS_MASK["ack"][str(ack.HEADER.WINDOW_NUMBER)] = window_mask[1:]
+            print(f"self.LOSS_MASK['ack']: {self.LOSS_MASK['ack']}")
+            ack_mask = self.LOSS_MASK["ack"][str(ack.HEADER.WINDOW_NUMBER)]
+            print(f"str(ack.HEADER.WINDOW_NUMBER): {str(ack.HEADER.WINDOW_NUMBER)}")
+            print(f"window_mask: {ack_mask}")
+            print(f"window_mask[0]: {ack_mask[0]}")
+            loss = ack_mask != '0'
+            print(f"loss: {loss}")
+
             if loss:
+                self.LOSS_MASK["ack"][str(ack.HEADER.WINDOW_NUMBER)] = str(int(ack_mask) - 1)
                 log.debug("ACK lost (mask)")
                 raise SCHCTimeoutError
 
