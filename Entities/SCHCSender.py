@@ -66,7 +66,10 @@ class SCHCSender:
                 self.SOCKET.SEQNUM += 1
                 return
 
-        self.LOGGER.BEHAVIOR += f'W{fragment.HEADER.WINDOW_NUMBER}F{fragment.INDEX}'
+        if fragment.is_sender_abort():
+            self.LOGGER.BEHAVIOR += f'SABORT'
+        else:
+            self.LOGGER.BEHAVIOR += f'W{fragment.HEADER.WINDOW_NUMBER}F{fragment.INDEX}'
         self.SENT += 1
 
         return self.SOCKET.send(as_bytes)
@@ -85,18 +88,18 @@ class SCHCSender:
                 log.debug("ACK lost (rate)")
                 raise SCHCTimeoutError
         elif self.LOSS_MASK != {}:
-            print(f"self.LOSS_MASK['ack']: {self.LOSS_MASK['ack']}")
             ack_mask = self.LOSS_MASK["ack"][str(ack.HEADER.WINDOW_NUMBER)]
-            print(f"str(ack.HEADER.WINDOW_NUMBER): {str(ack.HEADER.WINDOW_NUMBER)}")
-            print(f"window_mask: {ack_mask}")
-            print(f"window_mask[0]: {ack_mask[0]}")
             loss = ack_mask != '0'
-            print(f"loss: {loss}")
 
             if loss:
                 self.LOSS_MASK["ack"][str(ack.HEADER.WINDOW_NUMBER)] = str(int(ack_mask) - 1)
                 log.debug("ACK lost (mask)")
                 raise SCHCTimeoutError
+
+        if ack.is_receiver_abort():
+            self.LOGGER.BEHAVIOR += f"RABORT"
+        else:
+            self.LOGGER.BEHAVIOR += f"A{ack.HEADER.WINDOW_NUMBER}"
 
         self.RECEIVED += 1
         return ack
