@@ -7,7 +7,7 @@ from Entities.exceptions import SCHCTimeoutError
 class Timer:
 
     def __init__(self):
-        self.THREAD = threading.Thread()
+        self.THREAD = threading.Thread(target=self.sleep)
         self.STOPPED = False
 
     def sleep(self, timeout: int, raise_exception: bool = False) -> None:

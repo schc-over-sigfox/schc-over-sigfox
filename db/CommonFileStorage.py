@@ -12,12 +12,12 @@ class CommonFileStorage(FileStorage):
             self.create_folder()
 
     def read(self, path: str) -> str:
-        with open(f"{self.ROOT}/{path}", 'r') as f:
+        with open(f"{self.ROOT}/{path}", 'r', encoding="utf-8") as f:
             data = f.read()
         return data
 
     def write(self, path: str, data: str) -> None:
-        with open(f"{self.ROOT}/{path}", 'w') as f:
+        with open(f"{self.ROOT}/{path}", 'w', encoding="utf-8") as f:
             f.write(data)
 
     def delete_file(self, path: str) -> None:

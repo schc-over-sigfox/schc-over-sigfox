@@ -41,7 +41,7 @@ class TestFragment(TestCase):
             "sent": False
         }
 
-        with open("debug/fragment", 'w') as f:
+        with open("debug/fragment", 'w', encoding="utf-8") as f:
             json.dump(fragment_data, f)
 
         fragment = Fragment.from_file("debug/fragment")

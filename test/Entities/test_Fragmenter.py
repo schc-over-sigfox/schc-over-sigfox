@@ -37,7 +37,7 @@ class TestFragmenter(unittest.TestCase):
         self.assertEqual('110', fragment.HEADER.FCN)
         self.assertEqual('', fragment.HEADER.RCS)
 
-        with open(f"debug/unittest/sd/rule_0/fragments/fragment_w0f0", 'r') as f:
+        with open("debug/unittest/sd/rule_0/fragments/fragment_w0f0", 'r', encoding="utf-8") as f:
             fragment_data = json.load(f)
 
         self.assertEqual({
@@ -116,7 +116,7 @@ class TestFragmenter(unittest.TestCase):
         rule_0 = Rule('000')
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule_0)
         fragmenter = Fragmenter(profile, "debug/unittest/sd")
-        fragments = fragmenter.fragment(packet)
+        _ = fragmenter.fragment(packet)
 
         self.assertTrue(fragmenter.STORAGE.list_files("fragments") != [])
         fragmenter.clear_fragment_directory()

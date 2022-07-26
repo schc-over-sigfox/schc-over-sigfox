@@ -6,7 +6,6 @@ class SenderAbort(Fragment):
 
     def __init__(self, header: FragmentHeader) -> None:
         profile = header.PROFILE
-        rule = profile.RULE
         dtag = header.DTAG
         w = '1' * profile.M
         fcn = '1' * profile.N

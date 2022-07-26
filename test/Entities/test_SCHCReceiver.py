@@ -24,7 +24,7 @@ class TestSCHCReceiver(TestCase):
         if os.path.exists(cls.PATH):
             shutil.rmtree(cls.PATH)
         os.makedirs(cls.PATH)
-        with open(f"{cls.PATH}/STORAGE.json", 'w') as j:
+        with open(f"{cls.PATH}/STORAGE.json", 'w', encoding="utf-8") as j:
             j.write(json.dumps({}))
 
     @classmethod
@@ -38,7 +38,7 @@ class TestSCHCReceiver(TestCase):
     def test_init(self):
         storage = LocalStorage()
         rule = Rule('000')
-        storage.change_root(f"simulator/1a2b3c")
+        storage.change_root("simulator/1a2b3c")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
 
@@ -82,7 +82,7 @@ class TestSCHCReceiver(TestCase):
             }
         }
 
-        with open(f"{self.PATH}/STORAGE.json", 'w') as f:
+        with open(f"{self.PATH}/STORAGE.json", 'w', encoding="utf-8") as f:
             f.write(json.dumps(j))
 
         storage = LocalStorage()
@@ -91,7 +91,7 @@ class TestSCHCReceiver(TestCase):
         self.assertEqual(j, storage.JSON)
 
         rule = Rule('000')
-        storage.change_root(f"simulator/1a2b3c")
+        storage.change_root("simulator/1a2b3c")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
 
@@ -112,7 +112,7 @@ class TestSCHCReceiver(TestCase):
             }
         }
 
-        with open(f"{self.PATH}/STORAGE.json", 'w') as f:
+        with open(f"{self.PATH}/STORAGE.json", 'w', encoding="utf-8") as f:
             f.write(json.dumps(j))
 
         storage = LocalStorage()
@@ -120,7 +120,7 @@ class TestSCHCReceiver(TestCase):
         storage.load()
 
         rule = Rule('000')
-        storage.change_root(f"simulator/1a2b3c")
+        storage.change_root("simulator/1a2b3c")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         profile.INACTIVITY_TIMEOUT = 10
         receiver = SCHCReceiver(profile, storage)
@@ -142,7 +142,7 @@ class TestSCHCReceiver(TestCase):
             }
         }
 
-        with open(f"{self.PATH}/STORAGE.json", 'w') as f:
+        with open(f"{self.PATH}/STORAGE.json", 'w', encoding="utf-8") as f:
             f.write(json.dumps(j))
 
         h = '15888888'
@@ -179,7 +179,7 @@ class TestSCHCReceiver(TestCase):
             }
         }
 
-        with open(f"{self.PATH}/STORAGE.json", 'w') as f:
+        with open(f"{self.PATH}/STORAGE.json", 'w', encoding="utf-8") as f:
             f.write(json.dumps(j))
 
         storage = LocalStorage()
@@ -187,7 +187,7 @@ class TestSCHCReceiver(TestCase):
         storage.load()
 
         rule = Rule('000')
-        storage.change_root(f"simulator/1a2b3c")
+        storage.change_root("simulator/1a2b3c")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
 
@@ -220,7 +220,7 @@ class TestSCHCReceiver(TestCase):
             }
         }
 
-        with open(f"{self.PATH}/STORAGE.json", 'w') as f:
+        with open(f"{self.PATH}/STORAGE.json", 'w', encoding="utf-8") as f:
             f.write(json.dumps(j))
 
         storage = LocalStorage()
@@ -320,14 +320,14 @@ class TestSCHCReceiver(TestCase):
                 }
             }
         }
-        with open(f"{self.PATH}/STORAGE.json", 'w') as f:
+        with open(f"{self.PATH}/STORAGE.json", 'w', encoding="utf-8") as f:
             f.write(json.dumps(j))
 
         storage = LocalStorage()
         storage.PATH = self.PATH
         storage.load()
         rule = Rule('000')
-        storage.change_root(f"simulator/1a2b3c")
+        storage.change_root("simulator/1a2b3c")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
 
@@ -364,14 +364,14 @@ class TestSCHCReceiver(TestCase):
                 }
             }
         }
-        with open(f"{self.PATH}/STORAGE.json", 'w') as f:
+        with open(f"{self.PATH}/STORAGE.json", 'w', encoding="utf-8") as f:
             f.write(json.dumps(j))
 
         storage = LocalStorage()
         storage.PATH = self.PATH
         storage.load()
         rule = Rule('000')
-        storage.change_root(f"simulator/1a2b3c")
+        storage.change_root("simulator/1a2b3c")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
 
@@ -457,14 +457,14 @@ class TestSCHCReceiver(TestCase):
                 }
             }
         }
-        with open(f"{self.PATH}/STORAGE.json", 'w') as f:
+        with open(f"{self.PATH}/STORAGE.json", 'w', encoding="utf-8") as f:
             f.write(json.dumps(j))
 
         storage = LocalStorage()
         storage.PATH = self.PATH
         storage.load()
         rule = Rule('000')
-        storage.change_root(f"simulator/1a2b3c")
+        storage.change_root("simulator/1a2b3c")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
 
@@ -490,14 +490,14 @@ class TestSCHCReceiver(TestCase):
                 }
             }
         }
-        with open(f"{self.PATH}/STORAGE.json", 'w') as f:
+        with open(f"{self.PATH}/STORAGE.json", 'w', encoding="utf-8") as f:
             f.write(json.dumps(j))
 
         storage = LocalStorage()
         storage.PATH = self.PATH
         storage.load()
         rule = Rule('000')
-        storage.change_root(f"simulator/1a2b3c")
+        storage.change_root("simulator/1a2b3c")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
 
@@ -567,14 +567,14 @@ class TestSCHCReceiver(TestCase):
                 }
             }
         }
-        with open(f"{self.PATH}/STORAGE.json", 'w') as f:
+        with open(f"{self.PATH}/STORAGE.json", 'w', encoding="utf-8") as f:
             f.write(json.dumps(j))
 
         storage = LocalStorage()
         storage.PATH = self.PATH
         storage.load()
         rule = Rule('000')
-        storage.change_root(f"simulator/1a2b3c")
+        storage.change_root("simulator/1a2b3c")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
 
@@ -618,14 +618,14 @@ class TestSCHCReceiver(TestCase):
                 }
             }
         }
-        with open(f"{self.PATH}/STORAGE.json", 'w') as f:
+        with open(f"{self.PATH}/STORAGE.json", 'w', encoding="utf-8") as f:
             f.write(json.dumps(j))
 
         storage = LocalStorage()
         storage.PATH = self.PATH
         storage.load()
         rule = Rule('000')
-        storage.change_root(f"simulator/1a2b3c")
+        storage.change_root("simulator/1a2b3c")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
 

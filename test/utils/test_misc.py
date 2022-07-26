@@ -1,6 +1,8 @@
+import os
 import unittest
 
-from utils.misc import *
+from utils.misc import zfill, zpad, replace_char, find, is_monochar, section_string, generate_packet, invert_dict, \
+    round_to_next_multiple
 
 
 class TestMisc(unittest.TestCase):
@@ -71,7 +73,7 @@ class TestMisc(unittest.TestCase):
 
         _ = generate_packet(1000, 'debug/packet')
 
-        with open("debug/packet", 'r') as f:
+        with open("debug/packet", 'r', encoding="utf-8") as f:
             p = f.read()
 
         self.assertEqual(1000, len(p))

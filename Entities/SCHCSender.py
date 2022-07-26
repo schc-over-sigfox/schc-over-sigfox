@@ -67,7 +67,7 @@ class SCHCSender:
                 return
 
         if fragment.is_sender_abort():
-            self.LOGGER.BEHAVIOR += f'SABORT'
+            self.LOGGER.BEHAVIOR += 'SABORT'
         else:
             self.LOGGER.BEHAVIOR += f'W{fragment.HEADER.WINDOW_NUMBER}F{fragment.INDEX}'
         self.SENT += 1
@@ -97,7 +97,7 @@ class SCHCSender:
                 raise SCHCTimeoutError
 
         if ack.is_receiver_abort():
-            self.LOGGER.BEHAVIOR += f"RABORT"
+            self.LOGGER.BEHAVIOR += "RABORT"
         else:
             self.LOGGER.BEHAVIOR += f"A{ack.HEADER.WINDOW_NUMBER}"
 
@@ -151,7 +151,7 @@ class SCHCSender:
                     raise ReceiverAbortError
 
                 if not fragment.expects_ack():
-                    self.LOGGER.error(f"ACK received but not requested.")
+                    self.LOGGER.error("ACK received but not requested.")
                     raise BadProfileError
 
                 for tup in ack.TUPLES:
@@ -208,7 +208,7 @@ class SCHCSender:
                     self.CURRENT_FRAGMENT_INDEX += 1
                     self.CURRENT_WINDOW_INDEX += 1
 
-        except SCHCTimeoutError:
+        except SCHCTimeoutError as exc:
             if fragment.is_all_1():
                 log.debug(f"ACK-REQ Attempts: {self.ATTEMPTS}")
                 if self.ATTEMPTS < self.PROFILE.MAX_ACK_REQUESTS:
@@ -225,7 +225,7 @@ class SCHCSender:
 
             else:
                 self.LOGGER.error("ERROR: Timeout reached.")
-                raise NetworkDownError
+                raise NetworkDownError from exc
 
     def start_session(self, schc_packet: bytes):
         """Performs the full SCHC Sender procedure for a given SCHC Packet."""

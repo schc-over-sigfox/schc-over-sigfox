@@ -26,12 +26,12 @@ class SCHCReceiver:
 
     def session_was_aborted(self) -> bool:
         """Checks if an "ABORT" node exists in the Storage."""
-        return self.STORAGE.exists(f"state/ABORT")
+        return self.STORAGE.exists("state/ABORT")
 
     def inactivity_timer_expired(self, current_timestamp) -> bool:
         """Checks if the difference between the current timestamp and the previous one exceeds the timeout value."""
-        if self.STORAGE.exists(f"state/TIMESTAMP"):
-            previous_timestamp = int(self.STORAGE.read(f"state/TIMESTAMP"))
+        if self.STORAGE.exists("state/TIMESTAMP"):
+            previous_timestamp = int(self.STORAGE.read("state/TIMESTAMP"))
             if abs(current_timestamp - previous_timestamp) > self.PROFILE.INACTIVITY_TIMEOUT:
                 return True
         return False
@@ -290,7 +290,7 @@ class SCHCReceiver:
 
         pending_ack = self.get_pending_ack(fragment)
         if pending_ack is not None:
-            self.LOGGER.info(f"Pending ACK retrieved.")
+            self.LOGGER.info("Pending ACK retrieved.")
             return pending_ack
 
         if not fragment.expects_ack():

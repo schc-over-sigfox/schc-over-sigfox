@@ -40,8 +40,8 @@ class SigfoxHTTPSocket(Socket):
             if response.status_code == 200:
                 if self.EXPECTS_ACK:
                     self.BUFFER.put(response.json()[self.DEVICE]["downlinkData"])
-        except requests.exceptions.ReadTimeout:
-            raise SCHCTimeoutError
+        except requests.exceptions.ReadTimeout as exc:
+            raise SCHCTimeoutError from exc
 
     def recv(self, bufsize: int) -> bytes:
         try:
@@ -50,8 +50,8 @@ class SigfoxHTTPSocket(Socket):
                 raise LengthMismatchError("Received data is larger than buffer size.")
             return hex_to_bytes(msg)
 
-        except Empty:
-            raise SCHCTimeoutError
+        except Empty as exc:
+            raise SCHCTimeoutError from exc
 
     def set_reception(self, flag: bool) -> None:
         self.EXPECTS_ACK = flag

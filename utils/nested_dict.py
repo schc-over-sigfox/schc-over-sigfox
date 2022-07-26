@@ -11,7 +11,7 @@ def deep_write(d: dict, value: object, path: list[str]) -> None:
             d.clear()
             return
         else:
-            raise ValueError(f"Value to write at the root was not a dictionary.")
+            raise ValueError("Value to write at the root was not a dictionary.")
 
     first_key = path[0]
 

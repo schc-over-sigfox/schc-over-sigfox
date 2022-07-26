@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from utils.nested_dict import *
+from utils.nested_dict import deep_write, deep_read, deep_delete
 
 
 class TestNestedDict(TestCase):

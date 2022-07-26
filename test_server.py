@@ -14,12 +14,8 @@ def test() -> tuple[object, int]:
         return '', 403
     request_dict = request.get_json()
 
-    device_type_id = request_dict["deviceTypeId"]
     device = request_dict["device"]
     data = request_dict["data"]
-    net_time = request_dict["time"]
-    seq_number = request_dict["seqNumber"]
-    ack = request_dict["ack"]
 
     fragment = Fragment.from_hex(data)
 

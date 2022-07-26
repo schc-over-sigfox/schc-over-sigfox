@@ -26,7 +26,7 @@ class TestCommonFileStorage(TestCase):
 
     def test_write(self):
         self.FS.write(path="test", data="test")
-        with open(f"{self.PATH}/test", 'r') as f:
+        with open(f"{self.PATH}/test", 'r', encoding="utf-8") as f:
             data = f.read()
 
         self.assertEqual(data, "test")

@@ -18,7 +18,7 @@ PORT = 1313
 class TestSCHCSender(TestCase):
 
     def test_send(self):
-        rule = Rule(0, 0)
+        rule = Rule("000")
         profile = SigfoxProfile(direction="UPLINK", mode="ACK ON ERROR", rule=rule)
         sender = SCHCSender(profile)
         sender.SOCKET.ENDPOINT = f'http://127.0.0.1:{PORT}/test'
@@ -32,7 +32,7 @@ class TestSCHCSender(TestCase):
         fragment = Fragment.from_hex(h)
 
         indices = fragment.get_indices()
-        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w') as f:
+        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w', encoding="utf-8") as f:
             f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
         sender.send(fragment)
@@ -48,7 +48,7 @@ class TestSCHCSender(TestCase):
         fragment = Fragment.from_hex(h)
 
         indices = fragment.get_indices()
-        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w') as f:
+        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w', encoding="utf-8") as f:
             f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
         sender.send(fragment)
@@ -69,7 +69,7 @@ class TestSCHCSender(TestCase):
         fragment = Fragment.from_hex(h)
 
         indices = fragment.get_indices()
-        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w') as f:
+        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w', encoding="utf-8") as f:
             f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
         sender.send(fragment)
@@ -86,7 +86,7 @@ class TestSCHCSender(TestCase):
         shutil.rmtree("debug/sd")
 
     def test_recv(self):
-        rule = Rule(0, 0)
+        rule = Rule("000")
         profile = SigfoxProfile(direction="UPLINK", mode="ACK ON ERROR", rule=rule)
         sender = SCHCSender(profile)
         sender.SOCKET.ENDPOINT = f'http://127.0.0.1:{PORT}/test'
@@ -101,7 +101,7 @@ class TestSCHCSender(TestCase):
         self.assertTrue(fragment.is_all_1())
 
         indices = fragment.get_indices()
-        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w') as f:
+        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w', encoding="utf-8") as f:
             f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
         sender.SOCKET.set_reception(True)
@@ -113,7 +113,7 @@ class TestSCHCSender(TestCase):
         self.assertEqual(1, sender.RECEIVED)
         self.assertTrue(sender.SOCKET.BUFFER.empty())
 
-        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w') as f:
+        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w', encoding="utf-8") as f:
             f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
         sender.send(fragment)
@@ -133,7 +133,7 @@ class TestSCHCSender(TestCase):
             }
         }
 
-        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w') as f:
+        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w', encoding="utf-8") as f:
             f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
         sender.send(fragment)
@@ -175,7 +175,7 @@ class TestSCHCSender(TestCase):
                     b'\x88\xe1\xaa\x07\x87\xf1X\xdak\x85\x1fMw&\x84\x08q(Q\xf3\xa1\xfe\n\xb6e\xdc\xf9\x9e\xebq}|\x9e' \
                     b'\x0e\x98\x81\xca\xaf\xf1\x07B\x83\x85\x8d4@v\x84\x87VV\x11\xb2\xb5\xc9p\xc9\xe5'
 
-        rule_0 = Rule(0, 0)
+        rule_0 = Rule("000")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule_0)
         profile.SIGFOX_DL_TIMEOUT = 1
         profile.SIGFOX_DL_TIMEOUT = 2
@@ -245,7 +245,7 @@ class TestSCHCSender(TestCase):
                     b'\x88\xe1\xaa\x07\x87\xf1X\xdak\x85\x1fMw&\x84\x08q(Q\xf3\xa1\xfe\n\xb6e\xdc\xf9\x9e\xebq}|\x9e' \
                     b'\x0e\x98\x81\xca\xaf\xf1\x07B\x83\x85\x8d4@v\x84\x87VV\x11\xb2\xb5\xc9p\xc9\xe5'
 
-        rule_0 = Rule(0, 0)
+        rule_0 = Rule("000")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule_0)
         profile.SIGFOX_DL_TIMEOUT = 1
         profile.SIGFOX_DL_TIMEOUT = 2

@@ -120,7 +120,7 @@ class Fragment:
     @staticmethod
     def from_file(path) -> 'Fragment':
         """Loads a stored fragment and parses it into a Fragment."""
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding="utf-8") as f:
             fragment_data = json.load(f)
         fragment = fragment_data["hex"]
         return Fragment.from_hex(fragment)

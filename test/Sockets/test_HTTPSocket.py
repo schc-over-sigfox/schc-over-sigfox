@@ -22,7 +22,6 @@ class TestHTTPSocket(TestCase):
 
         try:
             socket.send(fragment.to_bytes())
-            self.assertTrue(True)
         except SCHCTimeoutError:
             self.fail()
 
@@ -63,4 +62,4 @@ class TestHTTPSocket(TestCase):
         socket.ENDPOINT = f'http://127.0.0.1:{PORT}/test'
         socket.TIMEOUT = 1
         socket.set_timeout(100)
-        self.assertTrue(100, socket.TIMEOUT)
+        self.assertEqual(100, socket.TIMEOUT)

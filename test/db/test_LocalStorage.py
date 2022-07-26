@@ -37,7 +37,7 @@ class TestLocalStorage(TestCase):
             }
         }
 
-        with open(f"{self.PATH}/STORAGE.json", 'w') as f:
+        with open(f"{self.PATH}/STORAGE.json", 'w', encoding="utf-8") as f:
             f.write(json.dumps(saved))
 
         self.STORAGE.load()
