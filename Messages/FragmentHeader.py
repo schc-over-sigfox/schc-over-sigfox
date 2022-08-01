@@ -21,18 +21,17 @@ class FragmentHeader(Header):
 
         if len(fcn) != profile.N:
             raise LengthMismatchError("FCN must be of length N")
-        else:
-            self.FCN = fcn
+        self.FCN = fcn
 
         if rcs is None:
             self.RCS = ''
         else:
             if profile.U != 0 and len(rcs) != profile.U:
                 raise LengthMismatchError("RCS must be of length U")
-            elif not is_monochar(self.FCN, '1'):
-                raise BadProfileError("RCS was not None in a regular fragment (not All-1)")
-            else:
-                self.RCS = rcs
+            if not is_monochar(self.FCN, '1'):
+                raise BadProfileError(
+                    "RCS was not None in a regular fragment (not All-1)")
+            self.RCS = rcs
 
         self.PADDING = ''
         header_length = len(self.RULE_ID + self.DTAG + self.W + self.FCN + self.RCS) % L2_WORD_SIZE

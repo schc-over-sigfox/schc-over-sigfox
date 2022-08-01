@@ -3,67 +3,62 @@ Functions to handle nested dictionaries, using a list of keys used as a path to 
 """
 
 
-def deep_write(d: dict, value: object, path: list[str]) -> None:
+def deep_write(dic: dict, value: object, path: list[str]) -> None:
     """Searches for a key in a nested dictionary and writes the value for that key."""
 
     if not path:
         if isinstance(value, dict):
-            d.clear()
+            dic.clear()
             return
-        else:
-            raise ValueError("Value to write at the root was not a dictionary.")
+        raise ValueError("Value to write at the root was not a dictionary.")
 
     first_key = path[0]
 
     if len(path) == 1:
-        d[first_key] = value
+        dic[first_key] = value
         return
+    next_node = dic.get(first_key, None)
+    if next_node is not None:
+        if isinstance(next_node, dict):
+            return deep_write(next_node, value, path[1:])
+        raise ValueError(f"Value for {first_key} is not a dictionary.")
     else:
-        next_node = d.get(first_key, None)
-        if next_node is not None:
-            if isinstance(next_node, dict):
-                return deep_write(next_node, value, path[1:])
-            else:
-                raise ValueError(f"Value for {first_key} is not a dictionary.")
-        else:
-            d[first_key] = {}
-            return deep_write(d[first_key], value, path[1:])
+        dic[first_key] = {}
+        return deep_write(dic[first_key], value, path[1:])
 
 
-def deep_read(d: dict, path: list[str]) -> object:
+def deep_read(dic: dict, path: list[str]) -> object:
     """Searches for a key in a nested dictionary and returns the value for that key."""
 
     if not path:
-        return d
+        return dic
 
     first_key = path[0]
 
     if len(path) == 1:
-        return d.get(first_key, None)
-    else:
-        next_node = d.get(first_key, None)
-        if next_node is not None:
-            if isinstance(next_node, dict):
-                return deep_read(next_node, path[1:])
-            else:
-                raise ValueError(f"Value for {first_key} is not a dictionary.")
-        else:
-            raise ValueError(f"Cannot continue reading (value for {first_key} is None).")
+        return dic.get(first_key, None)
+    next_node = dic.get(first_key, None)
+    if next_node is not None:
+        if isinstance(next_node, dict):
+            return deep_read(next_node, path[1:])
+        raise ValueError(f"Value for {first_key} is not a dictionary.")
+    raise ValueError(
+        f"Cannot continue reading (value for {first_key} is None).")
 
 
-def deep_delete(d: dict, path: list[str]) -> None:
+def deep_delete(dic: dict, path: list[str]) -> None:
     """Searches for a key in a nested dictionary and deletes the value for that key."""
     first_key = path[0]
 
     if not path:
-        d = {}
+        dic = {}
     if len(path) == 1:
         try:
-            del d[first_key]
+            del dic[first_key]
         except KeyError:
             pass
     else:
-        next_node = d.get(first_key, None)
+        next_node = dic.get(first_key, None)
         if next_node is not None:
             if isinstance(next_node, dict):
                 deep_delete(next_node, path[1:])

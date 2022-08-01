@@ -1,7 +1,5 @@
 import json
 
-from flask import Flask, request
-
 from Entities.Logger import log
 from Entities.Reassembler import Reassembler
 from Entities.Rule import Rule
@@ -9,15 +7,13 @@ from Entities.SCHCReceiver import SCHCReceiver
 from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import SenderAbortError, ReceiverAbortError
 from Messages.Fragment import Fragment
-from db.LocalStorage import LocalStorage as Storage
-
-app = Flask(__name__)
+from db.FirebaseRTDB import FirebaseRTDB as Storage
 
 
-@app.post('/receive')
-def receive():
+def receive(request) -> tuple[object, int]:
     """
-    Parses a SCHC Fragment and saves it into the storage of the SCHC Receiver according to the SCHC receiving behavior.
+    Parses a SCHC Fragment and saves it into the storage of the SCHC Receiver
+    according to the SCHC receiving behavior.
     """
 
     request_dict = request.get_json()
@@ -37,7 +33,8 @@ def receive():
 
     last_request = storage.read("state/LAST_REQUEST")
     if last_request is not None and last_request == request_dict:
-        log.warning("Sigfox Callback has retried. Replying with previous response.")
+        log.warning("Sigfox Callback has retried. "
+                    "Replying with previous response.")
         previous_response = storage.read("state/LAST_RESPONSE")
         return previous_response["body"], previous_response["status_code"]
 
@@ -53,7 +50,9 @@ def receive():
 
         if comp_ack is not None:
             response = {
-                "body": json.dumps({device: {"downlinkData": comp_ack.to_hex()}}),
+                "body": json.dumps({
+                    device: {"downlinkData": comp_ack.to_hex()}
+                }),
                 "status_code": 200
             }
 
@@ -62,7 +61,9 @@ def receive():
 
             for w in storage.list_nodes("fragments"):
                 for f in storage.list_nodes(f"fragments/{w}"):
-                    fragments.append(Fragment.from_hex(storage.read(f"fragments/{w}/{f}")))
+                    fragments.append(
+                        Fragment.from_hex(storage.read(f"fragments/{w}/{f}"))
+                    )
 
             reassembler = Reassembler(profile, fragments)
             schc_packet = reassembler.reassemble()
@@ -90,7 +91,3 @@ def receive():
         storage.save()
         log.info(f"Replying with {response}")
         return response["body"], response["status_code"]
-
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0')

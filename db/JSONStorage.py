@@ -73,8 +73,7 @@ class JSONStorage:
         node = self.read(path)
         if isinstance(node, dict):
             return list(node.keys())
-        else:
-            return []
+        return []
 
     def reset(self) -> None:
         """Deletes all data in the self.JSON variable at the ROOT level."""

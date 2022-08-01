@@ -15,11 +15,9 @@ class Header:
         self.PROFILE = profile
 
         if len(profile.RULE.STR) != profile.RULE_ID_SIZE:
-
             raise LengthMismatchError(f"RULE must be of length RULE_ID_SIZE ({profile.RULE_ID_SIZE}). "
                                       f"Rule was {profile.RULE.STR}, length = {len(profile.RULE.STR)}. ")
-        else:
-            self.RULE_ID = profile.RULE.STR
+        self.RULE_ID = profile.RULE.STR
 
         if profile.T == "0":
             self.DTAG = ""
@@ -30,9 +28,8 @@ class Header:
 
         if len(w) != profile.M:
             raise LengthMismatchError("W must be of length M")
-        else:
-            self.W = w
-            self.WINDOW_NUMBER = int(self.W, 2)
+        self.W = w
+        self.WINDOW_NUMBER = int(self.W, 2)
 
     def to_binary(self) -> str:
         """Method to be implemented in child classes."""

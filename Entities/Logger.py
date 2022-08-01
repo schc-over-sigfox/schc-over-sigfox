@@ -27,23 +27,28 @@ class Logger:
         self.BEHAVIOR = ''
 
     def set_severity(self, severity):
+        """Configure the minimum severity of the messages displayed by the Logger."""
         self.SEVERITY = severity
 
     def debug(self, text):
+        """Display a debug-level message."""
         if self.SEVERITY <= self.DEBUG:
-            print(self, "[DEBUG] {}".format(text))
+            print(self, f"[DEBUG] {text}")
 
     def info(self, text):
+        """Display an info-level message."""
         if self.SEVERITY <= self.INFO:
-            print(self, "[INFO] {}".format(text))
+            print(self, f"[INFO] {text}")
 
     def warning(self, text):
+        """Display a warning-level message."""
         if self.SEVERITY <= self.WARNING:
-            print(self, "[WARNING] {}".format(text))
+            print(self, f"[WARNING] {text}")
 
     def error(self, text):
+        """Display an error-level message"""
         if self.SEVERITY <= self.ERROR:
-            print(self, "[ERROR] {}".format(text))
+            print(self, f"[ERROR] {text}")
 
     def save(self):
         """TODO: Implement how should the data of the logger attributes be written."""
