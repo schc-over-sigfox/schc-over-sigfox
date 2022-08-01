@@ -12,12 +12,14 @@ class FirebaseRTDB(JSONStorage):
     """Class to encapsulate storage operations in Firebase Realtime
      Database."""
 
-    def __init__(self, root: str) -> None:
+    def __init__(self) -> None:
         self.REF = db.reference()
         super().__init__()
-        self.change_root(root)
 
     def load(self):
+        if self.ROOT == "":
+            return {}
+
         obj = self.REF.child(self.ROOT).get()
         if obj is None:
             return {}

@@ -1,4 +1,5 @@
 import json
+import os
 
 from Entities.Logger import log
 from Entities.Reassembler import Reassembler
@@ -7,7 +8,10 @@ from Entities.SCHCReceiver import SCHCReceiver
 from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import SenderAbortError, ReceiverAbortError
 from Messages.Fragment import Fragment
+from config import gcp
 from db.FirebaseRTDB import FirebaseRTDB as Storage
+
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = gcp.CREDENTIALS_JSON
 
 
 def receive(request) -> tuple[object, int]:

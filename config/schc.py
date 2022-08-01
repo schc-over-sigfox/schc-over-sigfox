@@ -6,5 +6,4 @@ MAX_ACK_REQUESTS = 5
 L2_WORD_SIZE = 8
 DELAY_BETWEEN_FRAGMENTS = 10
 
-RECEIVER_URL = "http://localhost:5000/receive"
-REASSEMBLER_URL = "http://localhost:5000/reassemble"
+RECEIVER_URL = "https://us-central1-wyschc-2022-07.cloudfunctions.net/receive"
