@@ -18,9 +18,9 @@ class FirebaseRTDB(JSONStorage):
 
     def load(self):
         if self.ROOT == "":
-            return {}
-
-        obj = self.REF.child(self.ROOT).get()
+            obj = self.REF.get()
+        else:
+            obj = self.REF.child(self.ROOT).get()
         if obj is None:
             return {}
         return obj

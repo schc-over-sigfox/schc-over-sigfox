@@ -18,7 +18,8 @@ class JSONStorage:
             deep_write(self.JSON, {}, self.ROOT_PATH)
 
     def change_root(self, new_root: str, append: bool = False) -> None:
-        """Makes all the read and write operations start from a new root path."""
+        """Makes all the read and write operations start
+        from a new root path."""
 
         if append:
             new_root = self.ROOT + '/' + new_root
