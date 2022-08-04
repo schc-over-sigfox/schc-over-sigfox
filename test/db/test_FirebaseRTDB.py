@@ -14,8 +14,7 @@ class TestFirebaseRTDB(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.STORAGE.delete("debug")
-        cls.STORAGE.save()
+        cls.STORAGE.REF.child("debug").set({})
 
     def test_load(self):
         saved = {
