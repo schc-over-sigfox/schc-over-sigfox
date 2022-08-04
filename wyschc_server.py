@@ -29,7 +29,7 @@ def receive():
 
     storage = Storage()
     storage.load()
-    storage.change_root(f"{device_type_id}/{device}")
+    storage.change_ref(f"{device_type_id}/{device}")
     profile = SigfoxProfile("UPLINK", "ACK ON ERROR", Rule.from_hex(data))
     receiver = SCHCReceiver(profile, storage)
     fragment = Fragment.from_hex(data)
@@ -37,7 +37,8 @@ def receive():
 
     last_request = storage.read("state/LAST_REQUEST")
     if last_request is not None and last_request == request_dict:
-        log.warning("Sigfox Callback has retried. Replying with previous response.")
+        log.warning("Sigfox Callback has retried. "
+                    "Replying with previous response.")
         previous_response = storage.read("state/LAST_RESPONSE")
         return previous_response["body"], previous_response["status_code"]
 
