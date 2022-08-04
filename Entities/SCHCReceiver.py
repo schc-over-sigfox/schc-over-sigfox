@@ -19,7 +19,7 @@ class SCHCReceiver:
     def __init__(self, profile: SigfoxProfile, storage: JSONStorage):
         self.PROFILE = profile
         self.STORAGE = storage
-        self.STORAGE.change_root(f"rule_{self.PROFILE.RULE.ID}", append=True)
+        self.STORAGE.change_ref(f"rule_{self.PROFILE.RULE.ID}")
         self.LOGGER = Logger('', Logger.DEBUG)
 
         if self.STORAGE.is_empty():

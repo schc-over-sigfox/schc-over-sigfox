@@ -29,7 +29,7 @@ def receive(request) -> tuple[object, int]:
 
     storage = Storage()
     storage.load()
-    storage.change_root(f"{device_type_id}/{device}")
+    storage.change_ref(f"{device_type_id}/{device}", reset=True)
     profile = SigfoxProfile("UPLINK", "ACK ON ERROR", Rule.from_hex(data))
     receiver = SCHCReceiver(profile, storage)
     fragment = Fragment.from_hex(data)

@@ -1,30 +1,23 @@
-import json
-import os
-import shutil
 from unittest import TestCase
 
-from db.LocalStorage import LocalStorage
+from firebase_admin import db
+
+from db.FirebaseRTDB import FirebaseRTDB
 from utils.nested_dict import deep_read
 
 
-class TestLocalStorage(TestCase):
-    PATH = "debug/unittest"
-    STORAGE = LocalStorage()
-    STORAGE.PATH = PATH
+class TestFirebaseRTDB(TestCase):
+    ROOT = "debug/unittest"
+    STORAGE = FirebaseRTDB()
+    STORAGE.ROOT = ROOT
 
     @classmethod
     def setUpClass(cls) -> None:
-        if os.path.exists(cls.PATH):
-            shutil.rmtree(cls.PATH)
-        os.mkdir(cls.PATH)
+        pass
 
     @classmethod
     def tearDownClass(cls):
-        if os.path.exists(f"{cls.PATH}/STORAGE.json"):
-            os.remove(f"{cls.PATH}/STORAGE.json")
-
-        if os.path.exists(cls.PATH):
-            shutil.rmtree(cls.PATH)
+        pass
 
     def test_load(self):
         saved = {
@@ -37,8 +30,8 @@ class TestLocalStorage(TestCase):
             }
         }
 
-        with open(f"{self.PATH}/STORAGE.json", 'w', encoding="utf-8") as f:
-            f.write(json.dumps(saved))
+        ref = db.reference()
+        ref.child(self.ROOT).set(saved)
 
         self.STORAGE.load()
         self.assertEqual(saved, self.STORAGE.JSON)
@@ -53,6 +46,7 @@ class TestLocalStorage(TestCase):
                 }
             }
         }
+
         self.STORAGE.write(42, "b/d/f")
         self.assertEqual(42, deep_read(self.STORAGE.JSON, "b/d/f".split('/')))
 
@@ -188,15 +182,17 @@ class TestLocalStorage(TestCase):
             }
         }, self.STORAGE.JSON)
 
-        new_storage = LocalStorage()
-        new_storage.PATH = self.PATH
-        new_storage.load()
+        old_storage_json = self.STORAGE.JSON
 
-        self.assertEqual(self.STORAGE.JSON, new_storage.JSON)
+        self.STORAGE.JSON = {}
+        self.STORAGE.load()
+
+        self.assertEqual(old_storage_json, self.STORAGE.JSON)
 
     def test_change_root(self):
         self.STORAGE.reset()
         self.assertEqual({}, self.STORAGE.read())
+        self.assertEqual(self.ROOT, self.STORAGE.ROOT)
 
         self.STORAGE.write("test", "a/b/c")
 

@@ -23,7 +23,7 @@ class FirebaseRTDB(JSONStorage):
             obj = self.REF.child(self.ROOT).get()
         if obj is None:
             return {}
-        return obj
+        self.JSON = obj
 
     def save(self) -> None:
         obj = self.REF.child(self.ROOT)
