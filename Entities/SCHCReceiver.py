@@ -2,7 +2,8 @@ from typing import Optional
 
 from Entities.Logger import Logger
 from Entities.SigfoxProfile import SigfoxProfile
-from Entities.exceptions import ReceiverAbortError, LengthMismatchError, SenderAbortError
+from Entities.exceptions import ReceiverAbortError, LengthMismatchError, \
+    SenderAbortError
 from Messages.ACK import ACK
 from Messages.CompoundACK import CompoundACK
 from Messages.Fragment import Fragment
@@ -18,7 +19,7 @@ class SCHCReceiver:
     def __init__(self, profile: SigfoxProfile, storage: JSONStorage):
         self.PROFILE = profile
         self.STORAGE = storage
-        self.STORAGE.change_root(f"rule_{self.PROFILE.RULE.ID}", append=True)
+        self.STORAGE.change_ref(f"rule_{self.PROFILE.RULE.ID}")
         self.LOGGER = Logger('', Logger.DEBUG)
 
         if self.STORAGE.is_empty():
@@ -74,13 +75,15 @@ class SCHCReceiver:
         if not self.STORAGE.exists("state/LAST_FRAGMENT"):
             return True
 
-        last_fragment = Fragment.from_hex(self.STORAGE.read("state/LAST_FRAGMENT"))
+        last_fragment = Fragment.from_hex(
+            self.STORAGE.read("state/LAST_FRAGMENT"))
 
         if last_fragment is not None and last_fragment.is_sender_abort():
             return True
 
-        elif last_fragment.is_all_1():
-            last_ack = CompoundACK.from_hex(self.STORAGE.read("state/LAST_ACK"))
+        if last_fragment.is_all_1():
+            last_ack = CompoundACK.from_hex(
+                self.STORAGE.read("state/LAST_ACK"))
             if last_ack is not None and last_ack.is_complete():
                 return True
 
@@ -89,10 +92,10 @@ class SCHCReceiver:
 
         if fragment.WINDOW > last_fragment.WINDOW:
             return True
-        elif fragment.WINDOW == last_fragment.WINDOW:
+        if fragment.WINDOW == last_fragment.WINDOW:
             if fragment.INDEX > last_fragment.INDEX:
                 return True
-            elif fragment.INDEX == last_fragment.INDEX and fragment.is_all_1():
+            if fragment.INDEX == last_fragment.INDEX and fragment.is_all_1():
                 return True
 
         return False
@@ -217,7 +220,7 @@ class SCHCReceiver:
                 windows.append(int_to_bin(i, self.PROFILE.M))
                 bitmaps.append(bitmap)
 
-        losses_were_found = bitmaps != [] and windows != []
+        losses_were_found = bitmaps and windows
         ack = None
 
         if losses_were_found:

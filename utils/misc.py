@@ -5,79 +5,74 @@ from typing import Optional
 import requests
 
 
-def zfill(s: str, length: int) -> str:
+def zfill(string: str, length: int) -> str:
     """Adds zeroes at the begginning of a string until it completes the desired length."""
-    return '0' * (length - len(s)) + s
+    return '0' * (length - len(string)) + string
 
 
-def zpad(s: str, length: int) -> str:
+def zpad(string: str, length: int) -> str:
     """Adds zeroes at the end of a string until it completes the desired length."""
-    return s + '0' * (length - len(s))
+    return string + '0' * (length - len(string))
 
 
-def replace_char(s: str, position: int, new_char: str) -> str:
+def replace_char(string: str, position: int, new_char: str) -> str:
     """Replaces a single character in the specified position of a string."""
-    return "{p}{n}{s}".format(
-        p=s[:position],
-        n=new_char,
-        s=s[position + 1:]
-    )
+    return f"{string[:position]}{new_char}{string[position + 1:]}"
 
 
-def find(s: str, char: str) -> 'list[int]':
+def find(string: str, char: str) -> 'list[int]':
     """Lists all the occurrences of a character in a string."""
-    return [i for i, c in enumerate(s) if char == c]
+    return [i for i, c in enumerate(string) if char == c]
 
 
-def is_monochar(s: str, char: str = None) -> bool:
+def is_monochar(string: str, char: str = None) -> bool:
     """Checks if a string contains only repetitions of one character."""
-    monochar = len(set(s)) == 1
+    monochar = len(set(string)) == 1
 
     if char is not None:
-        return monochar and s[0] == char
+        return monochar and string[0] == char
 
     return monochar
 
 
-def section_string(s: str, indices: list[int]) -> list[str]:
+def section_string(string: str, indices: list[int]) -> list[str]:
     """Sections a string in the specified indices and returns a list of its sections."""
-    indices.append(len(s))
+    indices.append(len(string))
 
-    return [s[i:j] for i, j in zip(indices, indices[1:])]
+    return [string[i:j] for i, j in zip(indices, indices[1:])]
 
 
 def generate_packet(byte_size: int, path: str = None) -> bytes:
     """Generates a string of the specified byte size and optionally saves it into a file."""
 
-    s = '0'
+    string = '0'
     i = 0
-    while len(s) < byte_size:
+    while len(string) < byte_size:
         i = (i + 1) % 10
-        s += str(i)
+        string += str(i)
 
-    s = s.encode('utf-8')
+    string = string.encode('utf-8')
 
     if path is not None and not os.path.isfile(path):
-        with open(path, 'wb') as f:
-            f.write(s)
+        with open(path, 'wb') as fi:
+            fi.write(string)
 
-    return s
+    return string
 
 
-def invert_dict(d: dict) -> dict:
+def invert_dict(dic: dict) -> dict:
     """Inverts {key: value} pairs of a dictionary into {value: kay} pairs, only if no values are repeated."""
-    values = list(d.values())
+    values = list(dic.values())
 
     if len(values) != len(set(values)):
         raise ValueError("Dictionary cannot be inverted")
 
-    return {v: k for k, v in d.items()}
+    return {v: k for k, v in dic.items()}
 
 
-def round_to_next_multiple(n, factor):
+def round_to_next_multiple(num, factor):
     """Rounds a number to the next greater multiple of a specified factor."""
-
-    return -(n // (-factor)) * factor
+    return -(num // (-factor)) * factor
 
 
 def http_post(body: dict, endpoint: str, asynchronous: bool = False) -> Optional[requests.Response]:
@@ -94,4 +89,4 @@ def http_post(body: dict, endpoint: str, asynchronous: bool = False) -> Optional
         )
     except requests.exceptions.ReadTimeout:
         if asynchronous:
-            return
+            return None

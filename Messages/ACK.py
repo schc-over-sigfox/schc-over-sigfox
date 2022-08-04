@@ -42,8 +42,7 @@ class ACK:
                 if padding_start != '' and len(header) % config.L2_WORD_SIZE != 0:
                     return is_monochar(padding_start, '1') \
                            and (len(header) + len(padding_start)) % config.L2_WORD_SIZE == 0
-                else:
-                    return len(header) % config.L2_WORD_SIZE == 0
+                return len(header) % config.L2_WORD_SIZE == 0
         return False
 
     def is_compound_ack(self) -> bool:

@@ -53,13 +53,19 @@ class TestLocalStorage(TestCase):
                 }
             }
         }
+
         self.STORAGE.write(42, "b/d/f")
         self.assertEqual(42, deep_read(self.STORAGE.JSON, "b/d/f".split('/')))
 
-        self.STORAGE.ROOT += "b/d"
+        self.STORAGE.REL += "b/d"
+        self.STORAGE.REL_PATH.extend(["b", "d"])
         self.STORAGE.write(None, "g/h")
-        self.assertEqual(None, deep_read(self.STORAGE.JSON, "g/h".split('/')))
-        self.STORAGE.ROOT = ''
+        print(self.STORAGE.JSON)
+        self.assertEqual(
+            None, deep_read(self.STORAGE.JSON, "b/d/g/h".split('/'))
+        )
+        self.STORAGE.REL = ""
+        self.STORAGE.REL_PATH = []
 
     def test_read(self):
         self.STORAGE.JSON = {
@@ -195,9 +201,10 @@ class TestLocalStorage(TestCase):
         self.assertEqual(self.STORAGE.JSON, new_storage.JSON)
 
     def test_change_root(self):
-        new_storage = LocalStorage()
-        self.assertEqual({}, new_storage.read())
-        new_storage.write("test", "a/b/c")
+        self.STORAGE.reset()
+        self.assertEqual({}, self.STORAGE.read())
+
+        self.STORAGE.write("test", "a/b/c")
 
         self.assertEqual({
             'a': {
@@ -205,14 +212,32 @@ class TestLocalStorage(TestCase):
                     'c': 'test'
                 }
             }
-        }, new_storage.JSON)
+        }, self.STORAGE.JSON)
+        self.assertEqual("test", self.STORAGE.read("a/b/c"))
 
-        j = new_storage.JSON
+        json_i = self.STORAGE.JSON
+        self.STORAGE.change_ref("a/b")
+        json_f = self.STORAGE.JSON
 
-        self.assertEqual("test", new_storage.read("a/b/c"))
+        self.assertEqual(json_i, json_f)
+        self.assertEqual(["c"], self.STORAGE.list_nodes())
+        self.assertEqual("test", self.STORAGE.read("c"))
 
-        new_storage.change_root("a/b")
-        self.assertEqual(["c"], new_storage.list_nodes())
-        self.assertEqual("test", new_storage.read("c"))
+        self.STORAGE.write(42, "d/e")
+        self.assertEqual(["c", "d"], self.STORAGE.list_nodes())
+        self.assertEqual(42, self.STORAGE.read("d/e"))
 
-        self.assertEqual(j, new_storage.JSON)
+        json_i = self.STORAGE.JSON
+        self.STORAGE.change_ref("d")
+        json_f = self.STORAGE.JSON
+
+        self.assertEqual(json_i, json_f)
+        self.assertEqual(["e"], self.STORAGE.list_nodes())
+        self.assertEqual(42, self.STORAGE.read("e"))
+
+        json_i = self.STORAGE.JSON
+        self.STORAGE.change_ref("", reset=True)
+        json_f = self.STORAGE.JSON
+
+        self.assertEqual(json_i, json_f)
+        self.STORAGE.save()
