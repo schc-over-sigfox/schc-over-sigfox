@@ -10,14 +10,12 @@ class TestFirebaseRTDB(TestCase):
     ROOT = "debug/unittest"
     STORAGE = FirebaseRTDB()
     STORAGE.ROOT = ROOT
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        pass
+    STORAGE.load()
 
     @classmethod
     def tearDownClass(cls):
-        pass
+        cls.STORAGE.delete("debug")
+        cls.STORAGE.save()
 
     def test_load(self):
         saved = {
@@ -50,10 +48,15 @@ class TestFirebaseRTDB(TestCase):
         self.STORAGE.write(42, "b/d/f")
         self.assertEqual(42, deep_read(self.STORAGE.JSON, "b/d/f".split('/')))
 
-        self.STORAGE.ROOT += "b/d"
+        self.STORAGE.REL += "b/d"
+        self.STORAGE.REL_PATH.extend(["b", "d"])
         self.STORAGE.write(None, "g/h")
-        self.assertEqual(None, deep_read(self.STORAGE.JSON, "g/h".split('/')))
-        self.STORAGE.ROOT = ''
+        print(self.STORAGE.JSON)
+        self.assertEqual(
+            None, deep_read(self.STORAGE.JSON, "b/d/g/h".split('/'))
+        )
+        self.STORAGE.REL = ""
+        self.STORAGE.REL_PATH = []
 
     def test_read(self):
         self.STORAGE.JSON = {
@@ -189,7 +192,7 @@ class TestFirebaseRTDB(TestCase):
 
         self.assertEqual(old_storage_json, self.STORAGE.JSON)
 
-    def test_change_root(self):
+    def test_change_ref(self):
         self.STORAGE.reset()
         self.assertEqual({}, self.STORAGE.read())
         self.assertEqual(self.ROOT, self.STORAGE.ROOT)

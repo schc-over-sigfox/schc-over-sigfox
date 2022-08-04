@@ -53,13 +53,19 @@ class TestLocalStorage(TestCase):
                 }
             }
         }
+
         self.STORAGE.write(42, "b/d/f")
         self.assertEqual(42, deep_read(self.STORAGE.JSON, "b/d/f".split('/')))
 
-        self.STORAGE.ROOT += "b/d"
+        self.STORAGE.REL += "b/d"
+        self.STORAGE.REL_PATH.extend(["b", "d"])
         self.STORAGE.write(None, "g/h")
-        self.assertEqual(None, deep_read(self.STORAGE.JSON, "g/h".split('/')))
-        self.STORAGE.ROOT = ''
+        print(self.STORAGE.JSON)
+        self.assertEqual(
+            None, deep_read(self.STORAGE.JSON, "b/d/g/h".split('/'))
+        )
+        self.STORAGE.REL = ""
+        self.STORAGE.REL_PATH = []
 
     def test_read(self):
         self.STORAGE.JSON = {

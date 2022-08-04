@@ -26,5 +26,8 @@ class FirebaseRTDB(JSONStorage):
         self.JSON = obj
 
     def save(self) -> None:
-        obj = self.REF.child(self.ROOT)
-        obj.set(self.JSON)
+        if self.ROOT == '':
+            self.REF.set(self.JSON)
+        else:
+            obj = self.REF.child(self.ROOT)
+            obj.set(self.JSON)
