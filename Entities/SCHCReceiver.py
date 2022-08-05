@@ -30,15 +30,19 @@ class SCHCReceiver:
         return self.STORAGE.exists("state/ABORT")
 
     def inactivity_timer_expired(self, current_timestamp) -> bool:
-        """Checks if the difference between the current timestamp and the previous one exceeds the timeout value."""
+        """Checks if the difference between the current timestamp and the
+        previous one exceeds the timeout value."""
         if self.STORAGE.exists("state/TIMESTAMP"):
             previous_timestamp = int(self.STORAGE.read("state/TIMESTAMP"))
-            if abs(current_timestamp - previous_timestamp) > self.PROFILE.INACTIVITY_TIMEOUT:
+            if abs(
+                    current_timestamp - previous_timestamp
+            ) > self.PROFILE.INACTIVITY_TIMEOUT:
                 return True
         return False
 
     def generate_receiver_abort(self, header: Header) -> ReceiverAbort:
-        """Creates a Receiver-Abort, stores it in the Storage and returns it."""
+        """Creates a Receiver-Abort, stores it in the Storage
+        and returns it."""
         abort = ReceiverAbort(header)
         self.STORAGE.write(abort.to_hex(), "state/ABORT")
         return abort
@@ -46,30 +50,45 @@ class SCHCReceiver:
     def fragment_is_requested(self, fragment: Fragment) -> bool:
         """Checks if the fragment was requested for retransmission."""
         requested_fragments = self.STORAGE.read("state/requested")
+        if requested_fragments is None:
+            return False
         window = f"w{fragment.WINDOW}"
         index = fragment.INDEX
-        return window in requested_fragments.keys() and index in requested_fragments[window]
+
+        return window in requested_fragments.keys() \
+               and index in requested_fragments[window]
 
     def fragment_is_receivable(self, fragment: Fragment) -> bool:
         """
-        Checks if a fragment is expected according to the SCHC state machine. The checks to decide this are:
+        Checks if a fragment is expected according to the SCHC state machine.
+        The checks to decide this are:
 
-        * If the fragment is an All-1, and if it was already received, it can be processed again
-         (The only fragment that can be received more than once is the All-1) -> Receivable
-        * If there is no previous fragment, then there is no active SCHC session -> Receivable
-        * If the last fragment was a Sender-Abort, the previous SCHC session was terminated -> Receivable
-        * If the last fragment was an All-1 and the ACK it generated was complete,
+        * If the fragment is an All-1, and if it was already received, it can
+        be processed again
+         (The only fragment that can be received more than once is the All-1)
+         -> Receivable
+        * If there is no previous fragment, then there is no active SCHC
+        session -> Receivable
+        * If the last fragment was a Sender-Abort, the previous SCHC session
+        was terminated -> Receivable
+        * If the last fragment was an All-1 and the ACK it generated was
+        complete,
          the previous SCHC session was completed -> Receivable
-        * If the new fragment was requested to be retransmitted, it is expected to arrive -> Receivable
-        * If the new fragment is of a higher window than the last one, accept it -> Receivable
-        * If both fragments are part of the same window, but the new one has a fragment index greater than the last one,
+        * If the new fragment was requested to be retransmitted, it is
+        expected to arrive -> Receivable
+        * If the new fragment is of a higher window than the last one,
+        accept it -> Receivable
+        * If both fragments are part of the same window, but the new one
+        has a fragment index greater than the last one,
          accept it -> Receivable
-        * If both fragments have the same window and index, but they are an All-0 or an All-1, accept it since
+        * If both fragments have the same window and index, but they are
+        an All-0 or an All-1, accept it since
          ACK-REQs can be sent multiple times -> Receivable
         * Otherwise -> Not receivable.
         """
 
-        if not fragment.is_all_1() and self.fragment_was_already_received(fragment):
+        if not fragment.is_all_1() and self.fragment_was_already_received(
+                fragment):
             return False
 
         if not self.STORAGE.exists("state/LAST_FRAGMENT"):
@@ -101,7 +120,8 @@ class SCHCReceiver:
         return False
 
     def start_new_session(self, retain_state: bool) -> None:
-        """Deletes data of the SCHC session for the current Rule ID of the Receiver."""
+        """Deletes data of the SCHC session for the current Rule ID
+        of the Receiver."""
 
         if retain_state:
             state = self.STORAGE.read("state")
@@ -132,30 +152,36 @@ class SCHCReceiver:
         if last_ack is not None:
             if last_ack.is_complete():
                 if fragment.is_all_1():
-                    last_fragment = Fragment.from_hex(self.STORAGE.read("state/LAST_FRAGMENT"))
+                    last_fragment = Fragment.from_hex(
+                        self.STORAGE.read("state/LAST_FRAGMENT"))
                     if last_fragment is not None and last_fragment.is_all_1():
                         return last_ack
                 else:
                     self.STORAGE.delete("state/LAST_ACK")
                     self.STORAGE.delete("state/LAST_FRAGMENT")
             else:
-                self.LOGGER.warning("LAST_ACK was not complete. "
-                                    "Maybe the previous session was terminated abruptly?")
+                self.LOGGER.warning(
+                    "LAST_ACK was not complete. "
+                    "Maybe the previous session was terminated abruptly?"
+                )
 
         return None
 
     def get_receiver_abort(self) -> CompoundACK:
-        """Obtains a receiver abort from the state/ABORT node in the Storage."""
+        """Obtains a receiver abort from the state/ABORT node
+        in the Storage."""
         abort = CompoundACK.from_hex(self.STORAGE.read("state/ABORT"))
         self.STORAGE.delete("state/ABORT")
         return abort
 
     def update_bitmap(self, fragment: Fragment) -> None:
-        """Updates a stored bitmap according to the window and FCN of the fragment."""
+        """Updates a stored bitmap according to the window
+        and FCN of the fragment."""
 
         for i in range(fragment.WINDOW):
             if not self.STORAGE.exists(f"state/bitmaps/w{i}"):
-                self.STORAGE.write('0' * self.PROFILE.WINDOW_SIZE, f"state/bitmaps/w{i}")
+                self.STORAGE.write('0' * self.PROFILE.WINDOW_SIZE,
+                                   f"state/bitmaps/w{i}")
 
         bitmap = self.STORAGE.read(f"state/bitmaps/w{fragment.WINDOW}")
         if bitmap is None:
@@ -172,16 +198,19 @@ class SCHCReceiver:
             return True
 
         if fragment.is_all_1():
-            last_ack = CompoundACK.from_hex(self.STORAGE.read("state/LAST_ACK"))
+            last_ack = CompoundACK.from_hex(
+                self.STORAGE.read("state/LAST_ACK"))
             if last_ack is not None and last_ack.is_complete():
-                last_fragment = Fragment.from_hex(self.STORAGE.read("state/LAST_FRAGMENT"))
+                last_fragment = Fragment.from_hex(
+                    self.STORAGE.read("state/LAST_FRAGMENT"))
                 if fragment.to_hex() == last_fragment.to_hex():
                     return True
 
         return False
 
     def update_requested(self, ack: CompoundACK) -> None:
-        """Updates the dictionary of requested fragments, using the tuples of a Compound ACK."""
+        """Updates the dictionary of requested fragments,
+        using the tuples of a Compound ACK."""
         if not ack.is_complete():
             requested = self.STORAGE.read("state/requested")
 
@@ -191,13 +220,16 @@ class SCHCReceiver:
             for tup in ack.TUPLES:
                 window = tup[0]
                 bitmap = tup[1]
-                lost_fragments = [idx for (idx, bit) in enumerate(bitmap) if bit != '1']
-                requested.update({f"{bin_to_int(window)}": lost_fragments})
+                lost_fragments = [idx for (idx, bit) in enumerate(bitmap) if
+                                  bit != '1']
+                requested.update({f"w{bin_to_int(window)}": lost_fragments})
 
             self.STORAGE.write(requested, "state/requested")
 
-    def generate_compound_ack(self, fragment: Fragment) -> Optional[CompoundACK]:
-        """Reads data from the stored bitmaps and generates (or not) an ACK accordingly."""
+    def generate_compound_ack(self, fragment: Fragment) -> Optional[
+        CompoundACK]:
+        """Reads data from the stored bitmaps and generates (or not)
+        an ACK accordingly."""
         current_window = fragment.WINDOW
         windows = []
         bitmaps = []
@@ -208,9 +240,10 @@ class SCHCReceiver:
 
             if fragment.is_all_1() and i == current_window:
                 expected_fragments = bin_to_int(fragment.HEADER.RCS)
-                expected_bitmap = f"{'1' * (expected_fragments - 1)}" \
-                                  f"{'0' * (self.PROFILE.WINDOW_SIZE - expected_fragments)}" \
-                                  f"1"
+                expected_bitmap = \
+                    f"{'1' * (expected_fragments - 1)}" \
+                    f"{'0' * (self.PROFILE.WINDOW_SIZE - expected_fragments)}" \
+                    f"1"
                 if bitmap != expected_bitmap:
                     lost = True
             elif '0' in bitmap:
@@ -252,11 +285,16 @@ class SCHCReceiver:
         """Uploads the hex representation of a fragment into the Storage."""
 
         if self.fragment_was_already_received(fragment):
-            self.LOGGER.info(f"Fragment W{fragment.WINDOW}F{fragment.INDEX} was already received")
+            self.LOGGER.info(
+                f"Fragment W{fragment.WINDOW}F{fragment.INDEX} "
+                f"was already received"
+            )
             return
 
         self.STORAGE.write(
-            fragment.to_hex(), f"fragments/w{fragment.get_indices()[0]}/f{fragment.get_indices()[1]}"
+            fragment.to_hex(),
+            f"fragments/w{fragment.get_indices()[0]}/"
+            f"f{fragment.get_indices()[1]}"
         )
 
     def schc_recv(self, fragment: Fragment, timestamp: int) -> Optional[ACK]:
@@ -280,10 +318,13 @@ class SCHCReceiver:
         self.STORAGE.write(timestamp, "state/TIMESTAMP")
 
         if fragment.is_sender_abort():
-            self.LOGGER.error(f"[Sender-Abort] Aborting session for rule {self.PROFILE.RULE.ID}")
+            self.LOGGER.error(
+                f"[Sender-Abort] Aborting session for rule "
+                f"{self.PROFILE.RULE.ID}")
             raise SenderAbortError
 
-        self.LOGGER.info(f"Received fragment W{fragment.WINDOW}F{fragment.INDEX}")
+        self.LOGGER.info(
+            f"Received fragment W{fragment.WINDOW}F{fragment.INDEX}")
 
         if not self.fragment_is_receivable(fragment):
             self.start_new_session(retain_state=False)
@@ -296,7 +337,7 @@ class SCHCReceiver:
             self.LOGGER.info("Pending ACK retrieved.")
             return pending_ack
 
-        if not fragment.expects_ack():
+        if not fragment.expects_ack() or self.fragment_is_requested(fragment):
             return None
 
         return self.generate_compound_ack(fragment)
