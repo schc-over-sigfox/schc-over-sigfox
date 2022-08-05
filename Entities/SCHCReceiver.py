@@ -49,10 +49,7 @@ class SCHCReceiver:
 
     def fragment_is_requested(self, fragment: Fragment) -> bool:
         """Checks if the fragment was requested for retransmission."""
-        print("[fragment_is_requested]")
         requested_fragments = self.STORAGE.read("state/requested")
-        print(
-            f"[fragment_is_requested] requested fragments: {requested_fragments}")
         if requested_fragments is None:
             return False
         window = f"w{fragment.WINDOW}"
