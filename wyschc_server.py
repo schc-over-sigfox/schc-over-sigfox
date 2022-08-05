@@ -9,7 +9,7 @@ from Entities.SCHCReceiver import SCHCReceiver
 from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import SenderAbortError, ReceiverAbortError
 from Messages.Fragment import Fragment
-from db.LocalStorage import LocalStorage as Storage
+from db.FirebaseRTDB import FirebaseRTDB as Storage
 
 app = Flask(__name__)
 
@@ -17,7 +17,8 @@ app = Flask(__name__)
 @app.post('/receive')
 def receive():
     """
-    Parses a SCHC Fragment and saves it into the storage of the SCHC Receiver according to the SCHC receiving behavior.
+    Parses a SCHC Fragment and saves it into the storage of the SCHC Receiver
+    according to the SCHC receiving behavior.
     """
 
     request_dict = request.get_json()
@@ -54,7 +55,9 @@ def receive():
 
         if comp_ack is not None:
             response = {
-                "body": json.dumps({device: {"downlinkData": comp_ack.to_hex()}}),
+                "body": json.dumps({
+                    device: {"downlinkData": comp_ack.to_hex()}
+                }),
                 "status_code": 200
             }
 
@@ -63,7 +66,9 @@ def receive():
 
             for w in storage.list_nodes("fragments"):
                 for f in storage.list_nodes(f"fragments/{w}"):
-                    fragments.append(Fragment.from_hex(storage.read(f"fragments/{w}/{f}")))
+                    fragments.append(
+                        Fragment.from_hex(storage.read(f"fragments/{w}/{f}"))
+                    )
 
             reassembler = Reassembler(profile, fragments)
             schc_packet = reassembler.reassemble()
