@@ -20,7 +20,7 @@ class SCHCReceiver:
         self.PROFILE = profile
         self.STORAGE = storage
         self.STORAGE.change_ref(f"rule_{self.PROFILE.RULE.ID}")
-        self.LOGGER = Logger('', Logger.DEBUG)
+        self.LOGGER = Logger(Logger.DEBUG)
 
         if self.STORAGE.is_empty():
             self.start_new_session(retain_state=False)

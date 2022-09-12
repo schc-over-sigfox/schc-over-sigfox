@@ -29,28 +29,32 @@ class SCHCSender:
         self.CURRENT_WINDOW_INDEX = 0
         self.LAST_WINDOW = 0
         self.DELAY: float = config.DELAY_BETWEEN_FRAGMENTS
-        self.LOGGER = Logger('', Logger.DEBUG)
+        self.LOGGER = Logger(Logger.DEBUG)
         self.SOCKET = Socket()
 
         self.LOSS_MASK = {}
-        self.LOSS_RATE = 0
+        self.UPLINK_LOSS_RATE = 0
+        self.DOWNLINK_LOSS_RATE = 0
 
     def send(self, fragment: Fragment) -> None:
         """Send a fragment towards the receiver end."""
 
         as_bytes = fragment.to_bytes()
+        w_index, f_index = fragment.get_indices()
+        fragment_info, fragment_pk = self.load_fragment_info(fragment)
 
         if not fragment.is_sender_abort():
-            w_index, f_index = fragment.get_indices()
             path = f"fragments/fragment_w{w_index}f{f_index}"
             f_json = json.loads(self.STORAGE.read(path))
             f_json["sent"] = True
             self.STORAGE.write(path, json.dumps(f_json))
 
-        if self.LOSS_RATE > 0:
-            if random.random() * 100 <= self.LOSS_RATE:
+        if self.UPLINK_LOSS_RATE > 0:
+            if random.random() * 100 <= self.UPLINK_LOSS_RATE:
                 self.SOCKET.SEQNUM += 1
                 log.debug("Fragment lost (rate)")
+                fragment_info[fragment_pk]["losses"] += 1
+                self.LOGGER.FRAGMENTS_INFO.update(fragment_info)
                 return
 
         elif self.LOSS_MASK != {}:
@@ -67,15 +71,19 @@ class SCHCSender:
                     str(int(window_mask[fragment.INDEX]) - 1)
                 )
                 self.SOCKET.SEQNUM += 1
+                fragment_info[fragment_pk]["losses"] += 1
+                self.LOGGER.FRAGMENTS_INFO.update(fragment_info)
                 return
 
         if fragment.is_sender_abort():
             self.LOGGER.BEHAVIOR += 'SABORT'
+            fragment_info[fragment_pk]["abort"] = True
         else:
             self.LOGGER.BEHAVIOR += f'W{fragment.HEADER.WINDOW_NUMBER}' \
                                     f'F{fragment.INDEX}'
         self.LOGGER.SENT += 1
 
+        self.LOGGER.FRAGMENTS_INFO.update(fragment_info)
         return self.SOCKET.send(as_bytes)
 
     def recv(self, bufsize: int) -> Optional[CompoundACK]:
@@ -88,8 +96,8 @@ class SCHCSender:
         received = self.SOCKET.recv(bufsize)
         ack = CompoundACK.from_hex(bytes_to_hex(received))
 
-        if self.LOSS_RATE > 0:
-            if random.random() * 100 <= self.LOSS_RATE:
+        if self.DOWNLINK_LOSS_RATE > 0:
+            if random.random() * 100 <= self.DOWNLINK_LOSS_RATE:
                 log.debug("ACK lost (rate)")
                 raise SCHCTimeoutError
         elif self.LOSS_MASK != {}:
@@ -153,7 +161,8 @@ class SCHCSender:
                 return
 
             if ack is not None:
-                log.info(f"[ACK] Received ACK {ack.to_hex()} (hex). "
+                log.info(f"[ACK] ACK received {ack.to_hex()} (hex). "
+                         f"Tuples: {ack.TUPLES} "
                          f"Ressetting attempts counter to 0.")
                 self.ATTEMPTS = 0
 
@@ -238,21 +247,23 @@ class SCHCSender:
                 log.debug(f"ACK-REQ Attempts: {self.ATTEMPTS}")
                 if self.ATTEMPTS < self.PROFILE.MAX_ACK_REQUESTS:
                     self.LOGGER.info(
-                        "SCHC Timeout reached while waiting for an ACK. "
+                        "All-1 timeout reached. "
                         "Sending the ACK Request again...")
                     self.schc_send(fragment)
                 else:
                     self.LOGGER.error("MAX_ACK_REQUESTS reached.")
                     self.schc_send(SenderAbort(fragment.HEADER))
 
-            if fragment.is_all_0():
+            elif fragment.is_all_0():
                 self.LOGGER.info("All-0 timeout reached. "
                                  "Proceeding to next window.")
                 self.CURRENT_FRAGMENT_INDEX += 1
                 self.CURRENT_WINDOW_INDEX += 1
 
             else:
-                self.LOGGER.error("ERROR: Timeout reached.")
+                self.LOGGER.error("ERROR: Timeout reached at fragment "
+                                  f"W{fragment.HEADER.WINDOW_NUMBER}"
+                                  f"F{fragment.INDEX}")
                 raise NetworkDownError from exc
 
     def start_session(self, schc_packet: bytes):
@@ -263,9 +274,38 @@ class SCHCSender:
         self.FRAGMENT_LIST = fragmenter.fragment(schc_packet)
         self.LAST_WINDOW = self.FRAGMENT_LIST[-1].HEADER.WINDOW_NUMBER
 
+        self.LOGGER.PACKET_SIZE = len(schc_packet)
+        self.LOGGER.NB_FRAGMENTS = len(self.FRAGMENT_LIST)
+        self.LOGGER.UPLINK_LOSS_RATE = self.UPLINK_LOSS_RATE
+        self.LOGGER.DOWNLINK_LOSS_RATE = self.DOWNLINK_LOSS_RATE
+
         while self.CURRENT_FRAGMENT_INDEX < len(self.FRAGMENT_LIST):
             fragment = self.FRAGMENT_LIST[self.CURRENT_FRAGMENT_INDEX]
             try:
                 self.schc_send(fragment)
             except SCHCError:
                 break
+
+    def load_fragment_info(self, fragment: Fragment) -> tuple[dict, str]:
+        """
+        Loads the information of the fragment depending on if the Logger
+        has registered something previously.
+        """
+
+        w_index, f_index = fragment.get_indices()
+        fragment_pk = f"W{w_index}F{f_index}"
+
+        if fragment_pk in self.LOGGER.FRAGMENTS_INFO.keys():
+            fragment_info = {
+                fragment_pk: self.LOGGER.FRAGMENTS_INFO[fragment_pk]
+            }
+        else:
+            fragment_info = {
+                fragment_pk: {
+                    "data": fragment.to_hex(),
+                    "losses": 0,
+                    "abort": False
+                }
+            }
+
+        return fragment_info, fragment_pk
