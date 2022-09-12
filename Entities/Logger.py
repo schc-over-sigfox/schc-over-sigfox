@@ -13,6 +13,8 @@ class Logger:
         self.JSON_FILE = json_file
         self.TOTAL_SIZE = 0
         self.CHRONO = Timer()
+        self.SENT = 0
+        self.RECEIVED = 0
         self.LOGGING_TIME = 0
         self.LAPS = []
         self.FRAGMENTS_INFO_ARRAY = []
