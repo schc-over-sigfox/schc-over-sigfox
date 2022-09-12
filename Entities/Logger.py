@@ -1,3 +1,6 @@
+import json
+import os
+
 from Entities.Timer import Timer
 
 
@@ -7,17 +10,19 @@ class Logger:
     WARNING = 2
     ERROR = 3
 
-    def __init__(self, filename, json_file):
+    def __init__(self, severity):
 
-        self.FILENAME = filename
-        self.JSON_FILE = json_file
-        self.TOTAL_SIZE = 0
         self.CHRONO = Timer()
+        self.PACKET_SIZE = 0
+        self.NB_FRAGMENTS = 0
+        self.UPLINK_LOSS_RATE = 0
+        self.DOWNLINK_LOSS_RATE = 0
         self.SENT = 0
         self.RECEIVED = 0
         self.LOGGING_TIME = 0
+        self.FRAGMENTS_INFO = {}
+
         self.LAPS = []
-        self.FRAGMENTS_INFO_ARRAY = []
         self.FRAGMENTATION_TIME = 0
         self.START_SENDING_TIME = 0
         self.END_SENDING_TIME = 0
@@ -25,36 +30,54 @@ class Logger:
         self.FINISHED = False
         self.SENDER_ABORTED = False
         self.RECEIVER_ABORTED = False
-        self.SEVERITY = Logger.DEBUG
+        self.SEVERITY = severity
         self.BEHAVIOR = ''
 
-    def set_severity(self, severity):
-        """Configure the minimum severity of the messages displayed by the Logger."""
+    def set_severity(self, severity) -> None:
+        """Configure the minimum severity of the messages displayed
+        by the Logger."""
         self.SEVERITY = severity
 
-    def debug(self, text):
+    def debug(self, text) -> None:
         """Display a debug-level message."""
         if self.SEVERITY <= self.DEBUG:
             print(self, f"[DEBUG] {text}")
 
-    def info(self, text):
+    def info(self, text) -> None:
         """Display an info-level message."""
         if self.SEVERITY <= self.INFO:
             print(self, f"[INFO] {text}")
 
-    def warning(self, text):
+    def warning(self, text) -> None:
         """Display a warning-level message."""
         if self.SEVERITY <= self.WARNING:
             print(self, f"[WARNING] {text}")
 
-    def error(self, text):
+    def error(self, text) -> None:
         """Display an error-level message"""
         if self.SEVERITY <= self.ERROR:
             print(self, f"[ERROR] {text}")
 
-    def save(self):
-        """TODO: Implement how should the data of the logger attributes be written."""
-        raise NotImplementedError
+    def export(self, filename) -> None:
+        """Exports the data recorded in the Logger into a JSON file."""
+
+        j = {
+            "packet_size": self.PACKET_SIZE,
+            "nb_fragments": self.NB_FRAGMENTS,
+            "sent": self.SENT,
+            "received": self.RECEIVED,
+            "sender-aborted": self.SENDER_ABORTED,
+            "receiver-aborted": self.RECEIVER_ABORTED,
+            "uplink-loss-rate": self.UPLINK_LOSS_RATE,
+            "downlink-loss-rate": self.DOWNLINK_LOSS_RATE,
+            "fragments": self.FRAGMENTS_INFO
+        }
+
+        if not os.path.isdir("export"):
+            os.mkdir("export")
+
+        with open(f"export/{filename}", 'w') as fi:
+            fi.write(json.dumps(j, indent=2))
 
 
-log = Logger('', Logger.DEBUG)
+log = Logger(Logger.DEBUG)

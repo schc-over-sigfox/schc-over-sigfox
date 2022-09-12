@@ -111,8 +111,11 @@ class Fragment:
         return Fragment(header, payload)
 
     def get_indices(self) -> tuple[str, str]:
-        """Returns a tuple of the indices (window, fragment) of the fragment, formatted to be used as filenames."""
-        w_index = zfill(str(self.HEADER.WINDOW_NUMBER), (2 ** self.PROFILE.M - 1) // 10 + 1)
+        """Returns a tuple of the indices (window, fragment) of the fragment,
+        formatted to be used as filenames."""
+        w_index = zfill(
+            str(self.HEADER.WINDOW_NUMBER), (2 ** self.PROFILE.M - 1) // 10 + 1
+        )
         f_index = zfill(str(self.INDEX), self.PROFILE.WINDOW_SIZE // 10 + 1)
 
         return w_index, f_index
