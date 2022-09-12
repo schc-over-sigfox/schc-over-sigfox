@@ -29,8 +29,6 @@ class SCHCSender:
         self.CURRENT_WINDOW_INDEX = 0
         self.LAST_WINDOW = 0
         self.DELAY: float = config.DELAY_BETWEEN_FRAGMENTS
-        self.SENT = 0
-        self.RECEIVED = 0
         self.LOGGER = Logger('', Logger.DEBUG)
         self.SOCKET = Socket()
 
@@ -56,9 +54,9 @@ class SCHCSender:
                 return
 
         elif self.LOSS_MASK != {}:
-            window_mask = self.LOSS_MASK["fragment"][
-                str(fragment.HEADER.WINDOW_NUMBER)
-            ]
+            window_mask = self.LOSS_MASK["fragment"][str(
+                fragment.HEADER.WINDOW_NUMBER
+            )]
             if window_mask[fragment.INDEX] != '0':
                 log.debug("Fragment lost (mask)")
                 self.LOSS_MASK["fragment"][
@@ -76,13 +74,13 @@ class SCHCSender:
         else:
             self.LOGGER.BEHAVIOR += f'W{fragment.HEADER.WINDOW_NUMBER}' \
                                     f'F{fragment.INDEX}'
-        self.SENT += 1
+        self.LOGGER.SENT += 1
 
         return self.SOCKET.send(as_bytes)
 
     def recv(self, bufsize: int) -> Optional[CompoundACK]:
-        """Receives a message from the socket and parses it as a
-        Compound ACK."""
+        """Receives a message from the socket and parses it
+        as a Compound ACK."""
 
         if not self.SOCKET.EXPECTS_ACK:
             return None
@@ -99,9 +97,9 @@ class SCHCSender:
             loss = ack_mask != '0'
 
             if loss:
-                self.LOSS_MASK["ack"][
-                    str(ack.HEADER.WINDOW_NUMBER)
-                ] = str(int(ack_mask) - 1)
+                self.LOSS_MASK["ack"][str(ack.HEADER.WINDOW_NUMBER)] = str(
+                    int(ack_mask) - 1
+                )
                 log.debug("ACK lost (mask)")
                 raise SCHCTimeoutError
 
@@ -110,7 +108,7 @@ class SCHCSender:
         else:
             self.LOGGER.BEHAVIOR += f"A{ack.HEADER.WINDOW_NUMBER}"
 
-        self.RECEIVED += 1
+        self.LOGGER.RECEIVED += 1
         return ack
 
     def schc_send(self, fragment: Fragment, retransmit: bool = False) -> None:
@@ -190,15 +188,15 @@ class SCHCSender:
 
                                 bitmap_has_only_all1 = last_bitmap == '' and \
                                                        bitmap[-1] == '1'
-                                bitmap_is_all_1s = is_monochar(
-                                    last_bitmap, '1'
-                                )
+                                bitmap_is_all_1s = is_monochar(last_bitmap,
+                                                               '1')
                                 fragments_arent_missing = bitmap_has_only_all1 or bitmap_is_all_1s
 
                                 if fragments_arent_missing:
-                                    self.LOGGER.error("SCHC ACK shows no "
-                                                      "missing tile at the "
-                                                      "receiver.")
+                                    self.LOGGER.error(
+                                        "SCHC ACK shows no missing tile "
+                                        "at the receiver."
+                                    )
                                     self.schc_send(
                                         SenderAbort(fragment.HEADER)
                                     )
@@ -215,7 +213,9 @@ class SCHCSender:
 
                     for j in range(len(bitmap_to_retransmit)):
                         if bitmap_to_retransmit[j] == '0':
-                            fragment_id = self.PROFILE.WINDOW_SIZE * ack_window_number + j
+                            fragment_id = self.PROFILE.WINDOW_SIZE \
+                                          * ack_window_number \
+                                          + j
                             w_index = zfill(
                                 str(fragment_id // self.PROFILE.WINDOW_SIZE),
                                 (2 ** self.PROFILE.M - 1) // 10 + 1
@@ -224,8 +224,8 @@ class SCHCSender:
                                 str(fragment_id % self.PROFILE.WINDOW_SIZE),
                                 self.PROFILE.WINDOW_SIZE // 10 + 1
                             )
-                            path = f"{self.STORAGE.ROOT}/fragments/" \
-                                   f"fragment_w{w_index}f{f_index}"
+                            path = f"{self.STORAGE.ROOT}/" \
+                                   f"fragments/fragment_w{w_index}f{f_index}"
                             self.schc_send(
                                 Fragment.from_file(path), retransmit=True
                             )
@@ -240,9 +240,9 @@ class SCHCSender:
             if fragment.is_all_1():
                 log.debug(f"ACK-REQ Attempts: {self.ATTEMPTS}")
                 if self.ATTEMPTS < self.PROFILE.MAX_ACK_REQUESTS:
-                    self.LOGGER.info("SCHC Timeout reached while waiting for "
-                                     "an ACK. "
-                                     "Sending the ACK Request again...")
+                    self.LOGGER.info(
+                        "SCHC Timeout reached while waiting for an ACK. "
+                        "Sending the ACK Request again...")
                     self.schc_send(fragment)
                 else:
                     self.LOGGER.error("MAX_ACK_REQUESTS reached.")
