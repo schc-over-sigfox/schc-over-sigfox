@@ -9,9 +9,9 @@ PACKET = generate_packet(256)
 
 loss_rates = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
 
-for lr in loss_rates:
-    print(f"LOSS RATE = {lr}")
-    for repetition in range(1):
+for repetition in range(100):
+    for lr in loss_rates:
+        print(f"LOSS RATE = {lr}")
         print(f"(Repetition {repetition})")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", Rule('000'))
         sender = SCHCSender(profile)
@@ -24,6 +24,6 @@ for lr in loss_rates:
         sender.start_session(PACKET)
 
         sender.LOGGER.export(f"{str(lr).zfill(2)}_"
-                             f"rep{str(repetition).zfill(2)}")
+                             f"rep{str(repetition).zfill(3)}")
 
 print("All experiments complete")
