@@ -35,6 +35,7 @@ class SCHCSender:
         self.LOSS_MASK = {}
         self.UPLINK_LOSS_RATE = 0
         self.DOWNLINK_LOSS_RATE = 0
+        self.ENABLE_MAX_ACK_REQUESTS = True
 
     def send(self, fragment: Fragment) -> None:
         """Send a fragment towards the receiver end."""
@@ -42,6 +43,8 @@ class SCHCSender:
         as_bytes = fragment.to_bytes()
         w_index, f_index = fragment.get_indices()
         fragment_info, fragment_pk = self.load_fragment_info(fragment)
+
+        self.LOGGER.SENT += 1
 
         if not fragment.is_sender_abort():
             path = f"fragments/fragment_w{w_index}f{f_index}"
@@ -81,7 +84,6 @@ class SCHCSender:
         else:
             self.LOGGER.BEHAVIOR += f'W{fragment.HEADER.WINDOW_NUMBER}' \
                                     f'F{fragment.INDEX}'
-        self.LOGGER.SENT += 1
 
         self.LOGGER.FRAGMENTS_INFO.update(fragment_info)
         return self.SOCKET.send(as_bytes)
@@ -245,14 +247,15 @@ class SCHCSender:
         except SCHCTimeoutError as exc:
             if fragment.is_all_1():
                 log.debug(f"ACK-REQ Attempts: {self.ATTEMPTS}")
-                if self.ATTEMPTS < self.PROFILE.MAX_ACK_REQUESTS:
+                if self.ATTEMPTS >= self.PROFILE.MAX_ACK_REQUESTS and \
+                        self.ENABLE_MAX_ACK_REQUESTS:
+                    self.LOGGER.error("MAX_ACK_REQUESTS reached.")
+                    self.schc_send(SenderAbort(fragment.HEADER))
+                else:
                     self.LOGGER.info(
                         "All-1 timeout reached. "
                         "Sending the ACK Request again...")
                     self.schc_send(fragment)
-                else:
-                    self.LOGGER.error("MAX_ACK_REQUESTS reached.")
-                    self.schc_send(SenderAbort(fragment.HEADER))
 
             elif fragment.is_all_0():
                 self.LOGGER.info("All-0 timeout reached. "

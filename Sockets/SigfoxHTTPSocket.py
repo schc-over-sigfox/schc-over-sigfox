@@ -55,7 +55,6 @@ class SigfoxHTTPSocket(Socket):
             return hex_to_bytes(msg)
 
         except Empty as exc:
-            print("empty queue")
             raise SCHCTimeoutError from exc
 
     def set_reception(self, flag: bool) -> None:
