@@ -52,7 +52,7 @@ class SCHCSender:
             f_json["sent"] = True
             self.STORAGE.write(path, json.dumps(f_json))
 
-        if self.UPLINK_LOSS_RATE > 0:
+        if self.UPLINK_LOSS_RATE > 0 and not fragment.is_sender_abort():
             if random.random() * 100 <= self.UPLINK_LOSS_RATE:
                 self.SOCKET.SEQNUM += 1
                 log.debug("Fragment lost (rate)")
