@@ -59,7 +59,7 @@ class Fragmenter:
             )
         if len(bytes_to_bin(payload)) > payload_max_length:
             raise LengthMismatchError(
-                f"Payload is larger than its maximum size {(len(bytes_to_bin(payload)))} > {payload_max_length}."
+                f"Payload is larger than its maximum size ({(len(bytes_to_bin(payload)))} > {payload_max_length})."
             )
 
         fragment = Fragment(header, payload)

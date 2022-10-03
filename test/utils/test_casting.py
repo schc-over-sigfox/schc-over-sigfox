@@ -1,6 +1,7 @@
 import unittest
 
-from utils.casting import bin_to_int, bin_to_hex, bin_to_bytes, bin_to_string, hex_to_bin, hex_to_bytes, bytes_to_bin, \
+from utils.casting import bin_to_int, bin_to_hex, bin_to_bytes, bin_to_string, \
+    hex_to_bin, hex_to_bytes, bytes_to_bin, \
     bytes_to_hex, int_to_bin, int_to_hex, int_to_bytes, string_to_bin
 
 
@@ -37,6 +38,8 @@ class TestCasting(unittest.TestCase):
     def test_bytes_to_bin(self):
         by = b'\xd2'
         self.assertEqual('11010010', bytes_to_bin(by))
+        by = b''
+        self.assertEqual('', bytes_to_bin(by))
 
     def test_bytes_to_hex(self):
         by = b'\xaa\xac\xad\xcc'

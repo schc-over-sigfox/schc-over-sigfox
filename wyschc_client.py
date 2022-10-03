@@ -5,15 +5,16 @@ from Entities.SCHCSender import SCHCSender
 from Entities.SigfoxProfile import SigfoxProfile
 from utils.misc import generate_packet
 
-
-sizes = [11, 54, 96, 139, 181, 224, 266, 308]
-loss_rates = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
+# sizes = [11, 54, 96, 139, 181, 224, 266, 308]
+sizes = [11]
+# loss_rates = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
+loss_rates = [90]
 
 for size in sizes:
 
     PACKET = generate_packet(size)
 
-    for repetition in range(0, 1000):
+    for repetition in range(0, 10):
         for lr in loss_rates:
             print(f"PACKET SIZE = {size}")
             print(f"LOSS RATE = {lr}")
@@ -27,6 +28,8 @@ for size in sizes:
             # sender.ENABLE_MAX_ACK_REQUESTS = False
 
             sender.start_session(PACKET)
+
+            print(f"total sent: {sender.LOGGER.SENT}")
 
             sender.LOGGER.export(
                 f"size_{size}_"

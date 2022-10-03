@@ -18,6 +18,7 @@ class Reassembler:
         """Merges all the SCHC Fragments into the original SCHC Packet."""
 
         self.FRAGMENTS = sorted(self.FRAGMENTS, key=(lambda f: (f.WINDOW, f.INDEX)))
+        print(f"self.FRAGMENTS: {self.FRAGMENTS}")
         self.SCHC_PACKET = b''.join([fragment.PAYLOAD for fragment in self.FRAGMENTS])
         self.COMPLETE = True
 
