@@ -54,7 +54,8 @@ def receive():
 
         if comp_ack is not None:
             response = {
-                "body": json.dumps({device: {"downlinkData": comp_ack.to_hex()}}),
+                "body": json.dumps(
+                    {device: {"downlinkData": comp_ack.to_hex()}}),
                 "status_code": 200
             }
 

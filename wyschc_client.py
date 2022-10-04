@@ -29,6 +29,8 @@ for size in sizes:
 
             sender.start_session(PACKET)
 
+            print(f"total sent: {sender.LOGGER.SENT}")
+
             sender.LOGGER.export(
                 f"size_{size}_"
                 f"{str(lr).zfill(2)}_"
