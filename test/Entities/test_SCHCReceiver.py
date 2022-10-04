@@ -332,19 +332,19 @@ class TestSCHCReceiver(TestCase):
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
 
-        receiver.start_new_session(retain_state=True)
+        receiver.start_new_session(retain_previous_data=True)
         self.assertTrue(receiver.STORAGE.exists("fragments"))
         self.assertTrue(receiver.STORAGE.is_empty("fragments"))
         self.assertTrue(receiver.STORAGE.exists("reassembly"))
         self.assertTrue(receiver.STORAGE.is_empty("reassembly"))
         self.assertTrue(receiver.STORAGE.exists("state"))
-        self.assertFalse(receiver.STORAGE.exists("state/requested"))
+        self.assertTrue(receiver.STORAGE.exists("state/requested"))
         self.assertTrue(receiver.STORAGE.exists("state/LAST_FRAGMENT"))
         self.assertTrue(receiver.STORAGE.exists("state/LAST_ACK"))
         self.assertTrue(receiver.STORAGE.exists("state/bitmaps"))
-        self.assertFalse(receiver.STORAGE.is_empty("state/bitmaps"))
+        self.assertTrue(receiver.STORAGE.is_empty("state/bitmaps"))
 
-        receiver.start_new_session(retain_state=False)
+        receiver.start_new_session(retain_previous_data=False)
         self.assertTrue(receiver.STORAGE.exists("fragments"))
         self.assertTrue(receiver.STORAGE.is_empty("fragments"))
         self.assertTrue(receiver.STORAGE.exists("reassembly"))
@@ -391,7 +391,7 @@ class TestSCHCReceiver(TestCase):
                         "fragments": {},
                         "reassembly": {},
                         "state": {
-                            "LAST_ACK": complete_ack.to_hex()
+                            "LAST_ACK": complete_ack.to_hex(),
                         }
                     }
                 }
@@ -485,7 +485,8 @@ class TestSCHCReceiver(TestCase):
                             "bitmaps": {
                                 "w0": '1111111',
                                 "w1": '1110010'
-                            }
+                            },
+                            "LAST_RESPONSE": {}
                         }
                     }
                 }

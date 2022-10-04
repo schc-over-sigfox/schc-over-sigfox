@@ -9,6 +9,7 @@ from Entities.SCHCReceiver import SCHCReceiver
 from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import SenderAbortError, ReceiverAbortError
 from Messages.Fragment import Fragment
+from config import schc as config
 from db.LocalStorage import LocalStorage as Storage
 
 app = Flask(__name__)
@@ -17,7 +18,8 @@ app = Flask(__name__)
 @app.post('/receive')
 def receive():
     """
-    Parses a SCHC Fragment and saves it into the storage of the SCHC Receiver according to the SCHC receiving behavior.
+    Parses a SCHC Fragment and saves it into the storage of the SCHC Receiver
+    according to the SCHC receiving behavior.
     """
 
     request_dict = request.get_json()
@@ -48,6 +50,7 @@ def receive():
         "body": '',
         "status_code": 204
     }
+    schc_packet = None
 
     try:
         comp_ack = receiver.schc_recv(fragment, net_time)
@@ -64,24 +67,26 @@ def receive():
 
             for w in storage.list_nodes("fragments"):
                 for f in storage.list_nodes(f"fragments/{w}"):
-                    fragments.append(Fragment.from_hex(storage.read(f"fragments/{w}/{f}")))
+                    fragments.append(
+                        Fragment.from_hex(storage.read(f"fragments/{w}/{f}"))
+                    )
 
             reassembler = Reassembler(profile, fragments)
             schc_packet = reassembler.reassemble()
             log.info(f"Reassembled SCHC Packet: {schc_packet}")
             storage.write(schc_packet, "reassembly/SCHC_PACKET")
-            receiver.start_new_session(retain_state=True)
+            receiver.start_new_session(retain_previous_data=True)
 
     except SenderAbortError:
         log.info("Sender-Abort received")
-        receiver.start_new_session(retain_state=True)
+        receiver.start_new_session(retain_previous_data=True)
         storage.write(response, "state/LAST_RESPONSE")
         return response["body"], response["status_code"]
 
     except ReceiverAbortError:
         if ack:
             abort = receiver.get_receiver_abort()
-            receiver.start_new_session(retain_state=True)
+            receiver.start_new_session(retain_previous_data=True)
             response = {
                 "body": json.dumps({device: {"downlinkData": abort.to_hex()}}),
                 "status_code": 200
@@ -89,8 +94,13 @@ def receive():
 
     finally:
         storage.write(response, "state/LAST_RESPONSE")
+        storage.write(fragment.to_hex(), "state/LAST_FRAGMENT")
         storage.save()
         log.info(f"Replying with {response}")
+
+        if schc_packet is not None and config.RESET_DATA_AFTER_REASSEMBLY:
+            receiver.start_new_session(retain_previous_data=False)
+
         return response["body"], response["status_code"]
 
 

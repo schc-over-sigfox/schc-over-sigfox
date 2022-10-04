@@ -5,10 +5,8 @@ from Entities.SCHCSender import SCHCSender
 from Entities.SigfoxProfile import SigfoxProfile
 from utils.misc import generate_packet
 
-# sizes = [11, 54, 96, 139, 181, 224, 266, 308]
-sizes = [11]
-# loss_rates = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
-loss_rates = [70]
+sizes = [11, 54, 96, 139, 181, 224, 266, 308]
+loss_rates = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
 
 for size in sizes:
 
@@ -25,7 +23,6 @@ for size in sizes:
             sender.UPLINK_LOSS_RATE = lr
             sender.PROFILE.SIGFOX_DL_TIMEOUT = 1
             sender.PROFILE.RETRANSMISSION_TIMEOUT = 1
-            sender.ENABLE_MAX_ACK_REQUESTS = False
 
             sender.start_session(PACKET)
 

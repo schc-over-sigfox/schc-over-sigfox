@@ -79,7 +79,7 @@ class Fragment:
     def from_hex(hex_string: str) -> Optional['Fragment']:
         """Parses a hex string into a Fragment, using the specified Profile"""
 
-        if hex_string is None:
+        if hex_string is None or hex_string == '':
             return None
 
         as_bin = hex_to_bin(hex_string)

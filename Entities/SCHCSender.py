@@ -248,7 +248,7 @@ class SCHCSender:
             if fragment.is_all_1():
                 log.debug(f"ACK-REQ Attempts: {self.ATTEMPTS}")
                 if self.ATTEMPTS >= self.PROFILE.MAX_ACK_REQUESTS and \
-                        self.ENABLE_MAX_ACK_REQUESTS:
+                        config.ENABLE_MAX_ACK_REQUESTS:
                     self.LOGGER.error("MAX_ACK_REQUESTS reached.")
                     self.schc_send(SenderAbort(fragment.HEADER))
                 else:

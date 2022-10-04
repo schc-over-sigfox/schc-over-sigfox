@@ -31,6 +31,17 @@ The [`receiver`](receiver) directory contains the code meant to be deployed in G
 * **Diego Wistuba**: Profile coauthor, developer
 * **Juan Carlos Zúñiga**: Profile coauthor, advisor
 
+## Known issues:
+
+* After successfully completing a SCHC Session of n SCHC Fragments, if the next
+  session uses the same Rule ID as the previous one, is composed of the same
+  umber of SCHC Fragments in its last window, and if the first delivered
+  message of that session is an All-1, the Receiver will interpret that All-1
+  as a retransmission of the last All-1 of the previous section, responding
+  with the corresponding complete Compound ACK. Selecting different Rule IDs
+  for consecutive SCHC transmissions is suggested in order to avoid this issue.
+
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file
+for details.
