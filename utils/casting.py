@@ -47,6 +47,9 @@ def hex_to_bytes(hexa: str) -> bytes:
 
 def bytes_to_bin(byt: bytes, length: int = None) -> str:
     """Transforms a byte string into its binary representation."""
+    if byt == b'':
+        return ''
+
     if length is None:
         length = len(byt) * 8
 

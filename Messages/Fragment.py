@@ -46,7 +46,14 @@ class Fragment:
 
     def is_all_1(self) -> bool:
         """Checks if the fragment is an All-1"""
-        return is_monochar(self.HEADER.FCN, '1') and not self.PAYLOAD == b''
+
+        if not is_monochar(self.HEADER.FCN, '1'):
+            return False
+
+        if self.PAYLOAD == b'':
+            return len(self.to_bin()) == self.PROFILE.RULE.ALL1_HEADER_LENGTH
+
+        return True
 
     def is_all_0(self) -> bool:
         """Checks if the fragment is an All-0"""
@@ -58,7 +65,15 @@ class Fragment:
 
     def is_sender_abort(self) -> bool:
         """Checks if the fragment is a SCHC Sender-Abort."""
-        return is_monochar(self.HEADER.FCN, '1') and is_monochar(self.HEADER.W, '1') and self.PAYLOAD == b''
+
+        if not is_monochar(self.HEADER.FCN, '1') or not is_monochar(
+                self.HEADER.W, '1'):
+            return False
+
+        if self.PAYLOAD == b'':
+            return len(self.to_bin()) < self.PROFILE.RULE.ALL1_HEADER_LENGTH
+
+        return False
 
     @staticmethod
     def from_hex(hex_string: str) -> Optional['Fragment']:

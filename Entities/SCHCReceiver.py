@@ -331,7 +331,6 @@ class SCHCReceiver:
 
         self.upload_fragment(fragment)
         self.update_bitmap(fragment)
-
         pending_ack = self.get_pending_ack(fragment)
         if pending_ack is not None:
             self.LOGGER.info("Pending ACK retrieved.")
@@ -339,5 +338,4 @@ class SCHCReceiver:
 
         if not fragment.expects_ack() or self.fragment_is_requested(fragment):
             return None
-
         return self.generate_compound_ack(fragment)
