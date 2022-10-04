@@ -8,7 +8,7 @@ from utils.misc import generate_packet
 # sizes = [11, 54, 96, 139, 181, 224, 266, 308]
 sizes = [11]
 # loss_rates = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
-loss_rates = [90]
+loss_rates = [70]
 
 for size in sizes:
 

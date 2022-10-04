@@ -127,7 +127,6 @@ class SCHCReceiver:
             state = self.STORAGE.read("state")
             try:
                 _ = state.pop("requested")
-                _ = state.pop("bitmaps")
             except KeyError:
                 pass
         else:
