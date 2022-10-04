@@ -49,8 +49,6 @@ def receive():
         "status_code": 204
     }
 
-    print(f"starting with storage = {storage.JSON}")
-
     try:
         comp_ack = receiver.schc_recv(fragment, net_time)
 
