@@ -21,8 +21,8 @@ for size in sizes:
             sender = SCHCSender(profile)
 
             sender.UPLINK_LOSS_RATE = lr
-            sender.PROFILE.SIGFOX_DL_TIMEOUT = 1
-            sender.PROFILE.RETRANSMISSION_TIMEOUT = 1
+            sender.PROFILE.SIGFOX_DL_TIMEOUT = 0.1
+            sender.PROFILE.RETRANSMISSION_TIMEOUT = 0.1
 
             sender.start_session(PACKET)
 

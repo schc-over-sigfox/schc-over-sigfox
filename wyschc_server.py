@@ -38,7 +38,8 @@ def receive():
     log.debug(f"Received {data}. Rule {receiver.PROFILE.RULE.ID}")
 
     last_request = storage.read("state/LAST_REQUEST")
-    if last_request is not None and last_request == request_dict:
+    if config.CHECK_FOR_CALLBACK_RETRIES and last_request is not None \
+            and last_request == request_dict:
         log.warning("Sigfox Callback has retried. "
                     "Replying with previous response.")
         previous_response = storage.read("state/LAST_RESPONSE")
