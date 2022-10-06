@@ -12,7 +12,7 @@ for size in sizes:
 
     PACKET = generate_packet(size)
 
-    for repetition in range(10):
+    for repetition in range(1000):
         for lr in loss_rates:
             print(f"PACKET SIZE = {size}")
             print(f"LOSS RATE = {lr}")
@@ -29,7 +29,7 @@ for size in sizes:
             print(f"total sent: {sender.LOGGER.SENT}")
 
             sender.LOGGER.export(
-                f"size_{size}_"
+                f"s{size}_"
                 f"{str(lr).zfill(2)}_"
                 f"rep{str(repetition).zfill(3)}"
             )
