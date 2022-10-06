@@ -30,7 +30,7 @@ for size in sizes:
 
             sender.LOGGER.export(
                 f"s{size}_"
-                f"{str(lr).zfill(2)}_"
+                f"lr{str(lr).zfill(2)}_"
                 f"rep{str(repetition).zfill(3)}"
             )
 
