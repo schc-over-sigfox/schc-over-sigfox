@@ -33,13 +33,14 @@ The [`receiver`](receiver) directory contains the code meant to be deployed in G
 
 ## Known issues:
 
-* After successfully completing a SCHC Session of n SCHC Fragments, if the next
-  session uses the same Rule ID as the previous one, is composed of the same
-  umber of SCHC Fragments in its last window, and if the first delivered
-  message of that session is an All-1, the Receiver will interpret that All-1
-  as a retransmission of the last All-1 of the previous section, responding
-  with the corresponding complete Compound ACK. Selecting different Rule IDs
-  for consecutive SCHC transmissions is suggested in order to avoid this issue.
+* After successfully completing a SCHC Session of n SCHC Fragments, if the next session uses the same Rule ID as the
+  previous one, is composed of the same umber of SCHC Fragments in its last window, and if the first delivered message
+  of that session is an All-1, the Receiver will interpret that All-1 as a retransmission of the last All-1 of the
+  previous section, responding with the corresponding complete Compound ACK. Selecting different Rule IDs for
+  consecutive SCHC transmissions is suggested in order to avoid this issue.
+* Under high packet loss rates, it is posible that the SCHCSender.send() method reaches the system's maximum recursion
+  depth. It is proposed to refactor the sending algorithm in an iterative way, creating transmission and retransmission
+  queues.
 
 ## License
 
