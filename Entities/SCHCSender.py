@@ -282,6 +282,22 @@ class SCHCSender:
         self.LOGGER.UPLINK_LOSS_RATE = self.UPLINK_LOSS_RATE
         self.LOGGER.DOWNLINK_LOSS_RATE = self.DOWNLINK_LOSS_RATE
 
+        # TODO: Make sending fragments iterative.
+        # change FRAGMENT_LIST for a fragment queue or similar.
+        # create a retransmission queue
+        # Use logic from the paper (transmission and retransmission queue):
+        # while both queues are not empty:
+        # 1 Send head of transmission queue until an ACK-REQ
+        # 2 Add any missing fragments to the retransmission queue
+        # 3 send all fragments of the retransmission queue
+        # 4 repeat from 1 until transmission queue is empty (all-1 was sent)
+        # 5 if fragments are reported in the ACK, add the all-1 back to the transmission queue
+        # 6 add fragments to the retransmission queue
+        # 7 send all fragments of the retransmission queue
+        # 8 repeat from 5 until both queues are empty
+
+        # schc_send() should have the mission of transmitting the fragments via send() and update the queues.
+
         while self.CURRENT_FRAGMENT_INDEX < len(self.FRAGMENT_LIST):
             fragment = self.FRAGMENT_LIST[self.CURRENT_FRAGMENT_INDEX]
             try:
