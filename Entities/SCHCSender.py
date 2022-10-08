@@ -23,14 +23,18 @@ class SCHCSender:
         self.PROFILE = profile
         self.FRAGMENTER = Fragmenter(self.PROFILE)
         self.STORAGE = self.FRAGMENTER.STORAGE
-        self.FRAGMENT_LIST = []
         self.ATTEMPTS = 0
-        self.CURRENT_FRAGMENT_INDEX = 0
-        self.CURRENT_WINDOW_INDEX = 0
+        # self.CURRENT_FRAGMENT_INDEX = 0
+        # self.CURRENT_WINDOW_INDEX = 0
+        self.NB_FRAGMENTS = 0
         self.LAST_WINDOW = 0
         self.DELAY: float = config.DELAY_BETWEEN_FRAGMENTS
         self.LOGGER = Logger(Logger.DEBUG)
         self.SOCKET = Socket()
+
+        self.TRANSMISSION_QUEUE = []
+        self.RETRANSMISSION_QUEUE = []
+        self.RT = False
 
         self.LOSS_MASK = {}
         self.UPLINK_LOSS_RATE = 0
@@ -121,9 +125,9 @@ class SCHCSender:
         self.LOGGER.RECEIVED += 1
         return ack
 
-    def schc_send(self, fragment: Fragment, retransmit: bool = False) -> None:
+    def schc_send(self, fragment: Fragment) -> None:
         """Uses the SCHC Sender behavior to send a SCHC Fragment."""
-        if fragment.is_all_0() and not retransmit:
+        if fragment.is_all_0() and not self.RT:
             log.debug("[SEND] [All-0] "
                       "Using All-0 SIGFOX_DL_TIMEOUT as timeout.")
             self.SOCKET.set_timeout(self.PROFILE.SIGFOX_DL_TIMEOUT)
@@ -143,7 +147,7 @@ class SCHCSender:
                  f"F{fragment.INDEX}")
 
         try:
-            enable_reception = fragment.expects_ack() and not retransmit
+            enable_reception = fragment.expects_ack() and not self.RT
             self.SOCKET.set_reception(enable_reception)
             self.send(fragment)
 
@@ -152,14 +156,14 @@ class SCHCSender:
             else:
                 ack = None
 
+            self.update_rt()
+
             if fragment.is_sender_abort():
                 log.error("[SENDER-ABORT]")
                 self.LOGGER.SENDER_ABORTED = True
                 raise SenderAbortError
 
             if not fragment.expects_ack():
-                if not retransmit:
-                    self.CURRENT_FRAGMENT_INDEX += 1
                 return
 
             if ack is not None:
@@ -188,13 +192,13 @@ class SCHCSender:
                             self.LOGGER.info("ACK received with C = 1. "
                                              "End of transmission.")
                             self.LOGGER.FINISHED = True
-                            self.CURRENT_FRAGMENT_INDEX += 1
                             self.FRAGMENTER.clear_fragment_directory()
                             return
 
                         else:
                             if fragment.is_all_1():
-                                last_bitmap = bitmap[:(len(self.FRAGMENT_LIST) - 1) % self.PROFILE.WINDOW_SIZE]
+                                last_bitmap = bitmap[:(
+                                                                  self.NB_FRAGMENTS - 1) % self.PROFILE.WINDOW_SIZE]
 
                                 bitmap_has_only_all1 = last_bitmap == '' and bitmap[-1] == '1'
                                 bitmap_is_all_1s = is_monochar(last_bitmap, '1')
@@ -205,8 +209,8 @@ class SCHCSender:
                                         "SCHC ACK shows no missing tile "
                                         "at the receiver."
                                     )
-                                    self.schc_send(
-                                        SenderAbort(fragment.HEADER)
+                                    self.TRANSMISSION_QUEUE.insert(
+                                        0, SenderAbort(fragment.HEADER)
                                     )
 
                                 else:
@@ -219,8 +223,8 @@ class SCHCSender:
                     else:
                         bitmap_to_retransmit = bitmap
 
-                    for j in range(len(bitmap_to_retransmit)):
-                        if bitmap_to_retransmit[j] == '0':
+                    for j, bit in enumerate(bitmap_to_retransmit):
+                        if bit == '0':
                             fragment_id = self.PROFILE.WINDOW_SIZE \
                                           * ack_window_number \
                                           + j
@@ -234,15 +238,16 @@ class SCHCSender:
                             )
                             path = f"{self.STORAGE.ROOT}/" \
                                    f"fragments/fragment_w{w_index}f{f_index}"
-                            self.schc_send(
-                                Fragment.from_file(path), retransmit=True
+
+                            self.RETRANSMISSION_QUEUE.append(
+                                fragment.from_file(path)
                             )
 
                 if fragment.is_all_1():
-                    self.schc_send(fragment)
-                elif fragment.is_all_0():
-                    self.CURRENT_FRAGMENT_INDEX += 1
-                    self.CURRENT_WINDOW_INDEX += 1
+                    self.TRANSMISSION_QUEUE.append(fragment)
+
+            self.update_rt()
+            return
 
         except SCHCTimeoutError as exc:
             if fragment.is_all_1():
@@ -250,18 +255,19 @@ class SCHCSender:
                 if self.ATTEMPTS >= self.PROFILE.MAX_ACK_REQUESTS and \
                         config.ENABLE_MAX_ACK_REQUESTS:
                     self.LOGGER.error("MAX_ACK_REQUESTS reached.")
-                    self.schc_send(SenderAbort(fragment.HEADER))
+                    self.TRANSMISSION_QUEUE.insert(
+                        0, SenderAbort(fragment.HEADER)
+                    )
                 else:
                     self.LOGGER.info(
                         "All-1 timeout reached. "
-                        "Sending the ACK Request again...")
-                    self.schc_send(fragment)
+                        "Sending the ACK Request again..."
+                    )
+                    self.TRANSMISSION_QUEUE.append(fragment)
 
             elif fragment.is_all_0():
                 self.LOGGER.info("All-0 timeout reached. "
                                  "Proceeding to next window.")
-                self.CURRENT_FRAGMENT_INDEX += 1
-                self.CURRENT_WINDOW_INDEX += 1
 
             else:
                 self.LOGGER.error("ERROR: Timeout reached at fragment "
@@ -274,32 +280,20 @@ class SCHCSender:
 
         log.info(f"SCHC Packet: {schc_packet}")
         fragmenter = Fragmenter(self.PROFILE)
-        self.FRAGMENT_LIST = fragmenter.fragment(schc_packet)
-        self.LAST_WINDOW = self.FRAGMENT_LIST[-1].HEADER.WINDOW_NUMBER
+        self.TRANSMISSION_QUEUE = fragmenter.fragment(schc_packet)
+        self.NB_FRAGMENTS = len(self.TRANSMISSION_QUEUE)
+        self.LAST_WINDOW = self.TRANSMISSION_QUEUE[-1].HEADER.WINDOW_NUMBER
 
         self.LOGGER.PACKET_SIZE = len(schc_packet)
-        self.LOGGER.NB_FRAGMENTS = len(self.FRAGMENT_LIST)
+        self.LOGGER.NB_FRAGMENTS = self.NB_FRAGMENTS
         self.LOGGER.UPLINK_LOSS_RATE = self.UPLINK_LOSS_RATE
         self.LOGGER.DOWNLINK_LOSS_RATE = self.DOWNLINK_LOSS_RATE
 
-        # TODO: Make sending fragments iterative.
-        # change FRAGMENT_LIST for a fragment queue or similar.
-        # create a retransmission queue
-        # Use logic from the paper (transmission and retransmission queue):
-        # while both queues are not empty:
-        # 1 Send head of transmission queue until an ACK-REQ
-        # 2 Add any missing fragments to the retransmission queue
-        # 3 send all fragments of the retransmission queue
-        # 4 repeat from 1 until transmission queue is empty (all-1 was sent)
-        # 5 if fragments are reported in the ACK, add the all-1 back to the transmission queue
-        # 6 add fragments to the retransmission queue
-        # 7 send all fragments of the retransmission queue
-        # 8 repeat from 5 until both queues are empty
-
-        # schc_send() should have the mission of transmitting the fragments via send() and update the queues.
-
-        while self.CURRENT_FRAGMENT_INDEX < len(self.FRAGMENT_LIST):
-            fragment = self.FRAGMENT_LIST[self.CURRENT_FRAGMENT_INDEX]
+        while self.TRANSMISSION_QUEUE != [] or self.RETRANSMISSION_QUEUE != []:
+            if not self.RT:
+                fragment = self.TRANSMISSION_QUEUE.pop(0)
+            else:
+                fragment = self.RETRANSMISSION_QUEUE.pop(0)
             try:
                 self.schc_send(fragment)
             except SCHCError:
@@ -328,3 +322,6 @@ class SCHCSender:
             }
 
         return fragment_info, fragment_pk
+
+    def update_rt(self) -> None:
+        self.RT = self.RETRANSMISSION_QUEUE != []

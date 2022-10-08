@@ -6,7 +6,7 @@ from utils.misc import generate_packet
 
 print("Start the server and press any key afterwards.")
 
-for loss_mask in loss_masks:
+for loss_mask in loss_masks[15:]:
 
     packet = generate_packet(300)
     profile = SigfoxProfile("UPLINK", "ACK ON ERROR", Rule('000'))
