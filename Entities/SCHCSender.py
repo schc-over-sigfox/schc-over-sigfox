@@ -27,7 +27,7 @@ class SCHCSender:
         self.NB_FRAGMENTS = 0
         self.LAST_WINDOW = 0
         self.DELAY: float = config.DELAY_BETWEEN_FRAGMENTS
-        self.LOGGER = Logger(Logger.DEBUG)
+        self.LOGGER = Logger(Logger.WARNING)
         self.SOCKET = Socket()
 
         self.TRANSMISSION_QUEUE = []
