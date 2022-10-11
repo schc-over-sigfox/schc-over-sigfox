@@ -16,9 +16,9 @@ for loss_mask in loss_masks:
     sender.LOSS_MASK = loss_mask
     sender.start_session(packet)
 
-    print("Actual: " + sender.LOGGER.BEHAVIOR)
+    print("Actual: " + sender.LOGGER.SEQUENCE)
     print("Expect: " + sender.LOSS_MASK["expected"])
-    success = sender.LOGGER.BEHAVIOR == sender.LOSS_MASK["expected"]
+    success = sender.LOGGER.SEQUENCE == sender.LOSS_MASK["expected"]
 
     if success:
         print("Success!")

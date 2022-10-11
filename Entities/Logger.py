@@ -31,7 +31,7 @@ class Logger:
         self.SENDER_ABORTED = False
         self.RECEIVER_ABORTED = False
         self.SEVERITY = severity
-        self.BEHAVIOR = ''
+        self.SEQUENCE = ''
 
     def set_severity(self, severity) -> None:
         """Configure the minimum severity of the messages displayed
@@ -68,8 +68,10 @@ class Logger:
             "received": self.RECEIVED,
             "sender-aborted": self.SENDER_ABORTED,
             "receiver-aborted": self.RECEIVER_ABORTED,
+            "finished": self.FINISHED,
             "uplink-loss-rate": self.UPLINK_LOSS_RATE,
             "downlink-loss-rate": self.DOWNLINK_LOSS_RATE,
+            "sequence": self.SEQUENCE,
             "fragments": self.FRAGMENTS_INFO
         }
 

@@ -24,8 +24,6 @@ class SCHCSender:
         self.FRAGMENTER = Fragmenter(self.PROFILE)
         self.STORAGE = self.FRAGMENTER.STORAGE
         self.ATTEMPTS = 0
-        # self.CURRENT_FRAGMENT_INDEX = 0
-        # self.CURRENT_WINDOW_INDEX = 0
         self.NB_FRAGMENTS = 0
         self.LAST_WINDOW = 0
         self.DELAY: float = config.DELAY_BETWEEN_FRAGMENTS
@@ -83,10 +81,10 @@ class SCHCSender:
                 return
 
         if fragment.is_sender_abort():
-            self.LOGGER.BEHAVIOR += 'SABORT'
+            self.LOGGER.SEQUENCE += 'SABORT'
             fragment_info[fragment_pk]["abort"] = True
         else:
-            self.LOGGER.BEHAVIOR += f'W{fragment.HEADER.WINDOW_NUMBER}' \
+            self.LOGGER.SEQUENCE += f'W{fragment.HEADER.WINDOW_NUMBER}' \
                                     f'F{fragment.INDEX}'
 
         self.LOGGER.FRAGMENTS_INFO.update(fragment_info)
@@ -118,9 +116,9 @@ class SCHCSender:
                 raise SCHCTimeoutError
 
         if ack.is_receiver_abort():
-            self.LOGGER.BEHAVIOR += "RABORT"
+            self.LOGGER.SEQUENCE += "RABORT"
         else:
-            self.LOGGER.BEHAVIOR += f"A{ack.HEADER.WINDOW_NUMBER}"
+            self.LOGGER.SEQUENCE += f"A{ack.HEADER.WINDOW_NUMBER}"
 
         self.LOGGER.RECEIVED += 1
         return ack
