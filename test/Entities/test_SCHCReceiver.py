@@ -4,6 +4,7 @@ import shutil
 import time
 from unittest import TestCase
 
+import config.schc
 from Entities.Rule import Rule
 from Entities.SCHCReceiver import SCHCReceiver
 from Entities.SigfoxProfile import SigfoxProfile
@@ -126,7 +127,8 @@ class TestSCHCReceiver(TestCase):
         profile.INACTIVITY_TIMEOUT = 10
         receiver = SCHCReceiver(profile, storage)
 
-        self.assertTrue(receiver.inactivity_timer_expired(1652923050))
+        if not config.schc.DISABLE_INACTIVITY_TIMEOUT:
+            self.assertTrue(receiver.inactivity_timer_expired(1652923050))
 
     def test_generate_receiver_abort(self):
         j = {
@@ -346,19 +348,19 @@ class TestSCHCReceiver(TestCase):
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule)
         receiver = SCHCReceiver(profile, storage)
 
-        receiver.start_new_session(retain_state=True)
+        receiver.start_new_session(retain_previous_data=True)
         self.assertTrue(receiver.STORAGE.exists("fragments"))
         self.assertTrue(receiver.STORAGE.is_empty("fragments"))
         self.assertTrue(receiver.STORAGE.exists("reassembly"))
         self.assertTrue(receiver.STORAGE.is_empty("reassembly"))
         self.assertTrue(receiver.STORAGE.exists("state"))
-        self.assertFalse(receiver.STORAGE.exists("state/requested"))
+        self.assertTrue(receiver.STORAGE.exists("state/requested"))
         self.assertTrue(receiver.STORAGE.exists("state/LAST_FRAGMENT"))
         self.assertTrue(receiver.STORAGE.exists("state/LAST_ACK"))
         self.assertTrue(receiver.STORAGE.exists("state/bitmaps"))
-        self.assertFalse(receiver.STORAGE.is_empty("state/bitmaps"))
+        self.assertTrue(receiver.STORAGE.is_empty("state/bitmaps"))
 
-        receiver.start_new_session(retain_state=False)
+        receiver.start_new_session(retain_previous_data=False)
         self.assertTrue(receiver.STORAGE.exists("fragments"))
         self.assertTrue(receiver.STORAGE.is_empty("fragments"))
         self.assertTrue(receiver.STORAGE.exists("reassembly"))
@@ -407,7 +409,7 @@ class TestSCHCReceiver(TestCase):
                         "fragments": {},
                         "reassembly": {},
                         "state": {
-                            "LAST_ACK": complete_ack.to_hex()
+                            "LAST_ACK": complete_ack.to_hex(),
                         }
                     }
                 }
@@ -503,7 +505,8 @@ class TestSCHCReceiver(TestCase):
                             "bitmaps": {
                                 "w0": '1111111',
                                 "w1": '1110010'
-                            }
+                            },
+                            "LAST_RESPONSE": {}
                         }
                     }
                 }
@@ -674,9 +677,10 @@ class TestSCHCReceiver(TestCase):
             }
         }
 
-        receiver.PROFILE.INACTIVITY_TIMEOUT = 10
-        ack = receiver.schc_recv(fragment, int(time.time()))
-        self.assertTrue(ack.is_receiver_abort())
+        if not config.schc.DISABLE_INACTIVITY_TIMEOUT:
+            receiver.PROFILE.INACTIVITY_TIMEOUT = 10
+            ack = receiver.schc_recv(fragment, int(time.time()))
+            self.assertTrue(ack.is_receiver_abort())
 
         receiver.STORAGE.delete("state/ABORT")
 
