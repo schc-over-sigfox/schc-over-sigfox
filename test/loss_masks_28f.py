@@ -187,7 +187,7 @@ loss_masks = [
     }
     ,
     # Loss mask 8
-    # This loss mask needs RESET_DATA_AFTER_REASSEMBLY set to False
+    # This loss mask requires RESET_DATA_AFTER_REASSEMBLY set to False
     {
         "fragment": {
             "0": "0000000",

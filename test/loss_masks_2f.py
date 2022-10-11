@@ -18,6 +18,8 @@ loss_masks = [
         "expected": "W0F0W0F6A0"
     },
     # Loss mask 1
+    # This loss mask, when executed after loss mask 0, requires
+    # RESET_DATA_AFTER_REASSEMBLY set to False
     {
         "fragment": {
             "0": "1000000"
