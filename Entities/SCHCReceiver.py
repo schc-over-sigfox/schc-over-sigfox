@@ -9,6 +9,7 @@ from Messages.CompoundACK import CompoundACK
 from Messages.Fragment import Fragment
 from Messages.Header import Header
 from Messages.ReceiverAbort import ReceiverAbort
+from config import schc as config
 from db.JSONStorage import JSONStorage
 from utils.casting import int_to_bin, bin_to_int
 from utils.misc import replace_char
@@ -32,6 +33,8 @@ class SCHCReceiver:
     def inactivity_timer_expired(self, current_timestamp) -> bool:
         """Checks if the difference between the current timestamp and the
         previous one exceeds the timeout value."""
+        if config.DISABLE_INACTIVITY_TIMEOUT:
+            return False
         if self.STORAGE.exists("state/TIMESTAMP"):
             previous_timestamp = int(self.STORAGE.read("state/TIMESTAMP"))
             if abs(
