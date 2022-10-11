@@ -38,6 +38,8 @@ class TestCasting(unittest.TestCase):
     def test_bytes_to_bin(self):
         by = b'\xd2'
         self.assertEqual('11010010', bytes_to_bin(by))
+        by = b''
+        self.assertEqual('', bytes_to_bin(by))
 
     def test_bytes_to_hex(self):
         by = b'\xaa\xac\xad\xcc'
