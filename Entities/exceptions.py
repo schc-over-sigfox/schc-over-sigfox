@@ -4,7 +4,8 @@ class SCHCError(Exception):
 
 
 class LengthMismatchError(SCHCError):
-    """Raised when the value of any SCHC field, object or structure doesn't match its expected size."""
+    """Raised when the value of any SCHC field, object or structure
+    doesn't match its expected size."""
     pass
 
 
@@ -14,7 +15,8 @@ class SCHCTimeoutError(SCHCError):
 
 
 class RuleSelectionError(SCHCError):
-    """Raised when a Rule ID cannot be selected according to the SCHC Profile."""
+    """Raised when a Rule ID cannot be selected
+    according to the SCHC Profile."""
     pass
 
 
@@ -29,7 +31,8 @@ class ReceiverAbortError(SCHCError):
 
 
 class BadProfileError(SCHCError):
-    """Raised when the behavior of the SCHC Sender or Receiver does not match the behavior specified by the profile."""
+    """Raised when the behavior of the SCHC Sender or Receiver
+    does not match the behavior specified by the profile."""
     pass
 
 

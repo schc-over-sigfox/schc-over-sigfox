@@ -60,7 +60,6 @@ class TestLocalStorage(TestCase):
         self.STORAGE.REL += "b/d"
         self.STORAGE.REL_PATH.extend(["b", "d"])
         self.STORAGE.write(None, "g/h")
-        print(self.STORAGE.JSON)
         self.assertEqual(
             None, deep_read(self.STORAGE.JSON, "b/d/g/h".split('/'))
         )
