@@ -5,11 +5,35 @@ from Entities.SCHCSender import SCHCSender
 from Entities.SigfoxProfile import SigfoxProfile
 from utils.misc import generate_packet
 
-PACKET = generate_packet(100)
+sizes = [11, 54, 96, 139, 181, 224, 266, 307]
+loss_rates = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 
-profile = SigfoxProfile("UPLINK", "ACK ON ERROR", Rule('000'))
-sender = SCHCSender(profile)
+for repetition in range(100000):
+    for size in sizes:
 
-sender.start_session(PACKET)
+        PACKET = generate_packet(size)
 
-input("Press Enter to exit.")
+        for lr in loss_rates:
+            print(f"PACKET SIZE = {size}")
+            print(f"LOSS RATE = {lr}")
+            print(f"(Repetition {repetition})")
+            profile = SigfoxProfile("UPLINK", "ACK ON ERROR", Rule('000'))
+            sender = SCHCSender(profile)
+
+            sender.UPLINK_LOSS_RATE = lr
+            sender.PROFILE.SIGFOX_DL_TIMEOUT = 0.1
+            sender.PROFILE.RETRANSMISSION_TIMEOUT = 0.1
+
+            sender.start_session(PACKET)
+
+            print(f"total sent: {sender.LOGGER.SENT}")
+            if sender.LOGGER.SENT < sender.NB_FRAGMENTS:
+                exit(1)
+
+            sender.LOGGER.export(
+                f"s{size}_"
+                f"lr{str(lr).zfill(2)}_"
+                f"rep{str(repetition).zfill(9)}"
+            )
+
+print("All experiments complete")
