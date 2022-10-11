@@ -33,7 +33,7 @@ for repetition in range(100000):
             sender.LOGGER.export(
                 f"s{size}_"
                 f"lr{str(lr).zfill(2)}_"
-                f"rep{str(repetition).zfill(3)}"
+                f"rep{str(repetition).zfill(9)}"
             )
 
 print("All experiments complete")
