@@ -6,9 +6,9 @@ from utils.misc import generate_packet
 
 print("Start the server and press any key afterwards.")
 
-for loss_mask in loss_masks[15:]:
+for loss_mask in loss_masks:
 
-    packet = generate_packet(300)
+    packet = generate_packet(307)
     profile = SigfoxProfile("UPLINK", "ACK ON ERROR", Rule('000'))
     sender = SCHCSender(profile)
     sender.PROFILE.SIGFOX_DL_TIMEOUT = 2

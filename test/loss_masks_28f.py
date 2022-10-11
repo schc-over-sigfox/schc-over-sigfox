@@ -362,6 +362,25 @@ loss_masks = [
                     "W2F0W2F1W2F2W2F3W2F4W2F5W2F6"
                     "W3F0W3F1W3F2W3F3W3F4W3F5W3F6"
                     "A3"
+    },
+    # Loss mask 16
+    {
+        "fragment": {
+            "0": "1111111",
+            "1": "1111111",
+            "2": "1111010",
+            "3": "1111110"
+        },
+        "ack": {
+            "0": "0",
+            "1": "0",
+            "2": "0",
+            "3": "0"
+        },
+        "expected": "W2F4W2F6A0"
+                    "W0F0W0F1W0F2W0F3W0F4W0F5W0F6W1F0W1F1W1F2W1F3W1F4W1F5W1F6W2F0W2F1W2F2W2F3W2F5W3F6"
+                    "A3W3F0W3F1W3F2W3F3W3F4W3F5W3F6"
+                    "A3"
     }
 
 ]
