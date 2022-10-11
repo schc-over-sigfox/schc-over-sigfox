@@ -80,14 +80,15 @@ class Fragmenter:
         """
         Generates a list of SCHC Fragments.
         """
+        header_len = self.PROFILE.RULE.HEADER_LENGTH
+        all_1_header_len = self.PROFILE.RULE.ALL1_HEADER_LENGTH
+        max_fragment_number = self.PROFILE.MAX_FRAGMENT_NUMBER
 
-        payload_max_length = (
-                                         self.PROFILE.UPLINK_MTU - self.PROFILE.RULE.HEADER_LENGTH) // 8
-        all_1_payload = (
-                                    self.PROFILE.UPLINK_MTU - self.PROFILE.RULE.ALL1_HEADER_LENGTH) // 8
+        payload_max_length = (self.PROFILE.UPLINK_MTU - header_len) // 8
+        all_1_payload = (self.PROFILE.UPLINK_MTU - all_1_header_len) // 8
 
         maximum_packet_size = payload_max_length * (
-                    self.PROFILE.MAX_FRAGMENT_NUMBER - 1) + all_1_payload
+                max_fragment_number - 1) + all_1_payload
 
         if len(schc_packet) > maximum_packet_size:
             raise LengthMismatchError(
