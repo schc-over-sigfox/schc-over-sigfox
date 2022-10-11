@@ -105,8 +105,9 @@ class Fragmenter:
         for i in range(number_of_fragments):
             payload = schc_packet[
                       i * payload_max_length:(i + 1) * payload_max_length]
-            fragment = self.generate_fragment(payload, all_1=(
-                    i == number_of_fragments - 1))
+            fragment = self.generate_fragment(
+                payload, all_1=(i == number_of_fragments - 1)
+            )
             fragments.append(fragment)
 
         self.CURRENT_FRAGMENT_NUMBER = 0

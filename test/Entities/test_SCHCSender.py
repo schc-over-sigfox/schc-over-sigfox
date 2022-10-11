@@ -25,7 +25,7 @@ class TestSCHCSender(TestCase):
 
         self.assertEqual(0, sender.LOGGER.SENT)
         self.assertEqual(0, sender.SOCKET.SEQNUM)
-        self.assertEqual('', sender.LOGGER.BEHAVIOR)
+        self.assertEqual('', sender.LOGGER.SEQUENCE)
 
         b = '00010110100010001000100010001000'
         h = bin_to_hex(b)
@@ -39,7 +39,7 @@ class TestSCHCSender(TestCase):
 
         self.assertEqual(1, sender.LOGGER.SENT)
         self.assertEqual(1, sender.SOCKET.SEQNUM)
-        self.assertEqual('W2F0', sender.LOGGER.BEHAVIOR)
+        self.assertEqual('W2F0', sender.LOGGER.SEQUENCE)
 
         sender.LOSS_RATE = 100
 
@@ -55,7 +55,7 @@ class TestSCHCSender(TestCase):
 
         self.assertEqual(1, sender.LOGGER.SENT)
         self.assertEqual(2, sender.SOCKET.SEQNUM)
-        self.assertEqual('W2F0', sender.LOGGER.BEHAVIOR)
+        self.assertEqual('W2F0', sender.LOGGER.SEQUENCE)
 
         sender.LOSS_RATE = 0
         sender.LOSS_MASK = {
@@ -76,7 +76,7 @@ class TestSCHCSender(TestCase):
 
         self.assertEqual(1, sender.LOGGER.SENT)
         self.assertEqual(3, sender.SOCKET.SEQNUM)
-        self.assertEqual('W2F0', sender.LOGGER.BEHAVIOR)
+        self.assertEqual('W2F0', sender.LOGGER.SEQUENCE)
         self.assertEqual({
             "fragment": {
                 "2": "0000000"
@@ -93,7 +93,7 @@ class TestSCHCSender(TestCase):
 
         self.assertEqual(0, sender.LOGGER.SENT)
         self.assertEqual(0, sender.SOCKET.SEQNUM)
-        self.assertEqual('', sender.LOGGER.BEHAVIOR)
+        self.assertEqual('', sender.LOGGER.SEQUENCE)
 
         b = '00011111100000000100010001000100'
         h = bin_to_hex(b)
