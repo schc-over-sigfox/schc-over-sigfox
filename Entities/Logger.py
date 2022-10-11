@@ -12,6 +12,7 @@ class Logger:
 
     def __init__(self, severity):
 
+        self.SEVERITY = severity
         self.CHRONO = Timer()
         self.PACKET_SIZE = 0
         self.NB_FRAGMENTS = 0
@@ -30,7 +31,6 @@ class Logger:
         self.FINISHED = False
         self.SENDER_ABORTED = False
         self.RECEIVER_ABORTED = False
-        self.SEVERITY = severity
         self.SEQUENCE = ''
 
     def set_severity(self, severity) -> None:
@@ -82,4 +82,4 @@ class Logger:
             fi.write(json.dumps(j, indent=2))
 
 
-log = Logger(Logger.DEBUG)
+log = Logger(Logger.WARNING)

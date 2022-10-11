@@ -27,7 +27,7 @@ class SCHCSender:
         self.NB_FRAGMENTS = 0
         self.LAST_WINDOW = 0
         self.DELAY: float = config.DELAY_BETWEEN_FRAGMENTS
-        self.LOGGER = Logger(Logger.WARNING)
+        self.LOGGER = Logger(Logger.INFO)
         self.SOCKET = Socket()
 
         self.TRANSMISSION_QUEUE = []
@@ -276,6 +276,7 @@ class SCHCSender:
     def start_session(self, schc_packet: bytes):
         """Performs the full SCHC Sender procedure for a given SCHC Packet."""
 
+        print(f"logger: {self.LOGGER.SEVERITY}")
         log.info(f"SCHC Packet: {schc_packet}")
         fragmenter = Fragmenter(self.PROFILE)
         self.TRANSMISSION_QUEUE = fragmenter.fragment(schc_packet)
