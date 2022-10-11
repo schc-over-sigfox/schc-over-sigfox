@@ -9,6 +9,7 @@ from Messages.CompoundACK import CompoundACK
 from Messages.Fragment import Fragment
 from Messages.Header import Header
 from Messages.ReceiverAbort import ReceiverAbort
+from config import schc as config
 from db.JSONStorage import JSONStorage
 from utils.casting import int_to_bin, bin_to_int
 from utils.misc import replace_char
@@ -23,7 +24,7 @@ class SCHCReceiver:
         self.LOGGER = Logger(Logger.DEBUG)
 
         if self.STORAGE.is_empty():
-            self.start_new_session(retain_state=False)
+            self.start_new_session(retain_previous_data=False)
 
     def session_was_aborted(self) -> bool:
         """Checks if an "ABORT" node exists in the Storage."""
@@ -32,6 +33,8 @@ class SCHCReceiver:
     def inactivity_timer_expired(self, current_timestamp) -> bool:
         """Checks if the difference between the current timestamp and the
         previous one exceeds the timeout value."""
+        if config.DISABLE_INACTIVITY_TIMEOUT:
+            return False
         if self.STORAGE.exists("state/TIMESTAMP"):
             previous_timestamp = int(self.STORAGE.read("state/TIMESTAMP"))
             if abs(
@@ -95,7 +98,8 @@ class SCHCReceiver:
             return True
 
         last_fragment = Fragment.from_hex(
-            self.STORAGE.read("state/LAST_FRAGMENT"))
+            self.STORAGE.read("state/LAST_FRAGMENT")
+        )
 
         if last_fragment is not None and last_fragment.is_sender_abort():
             return True
@@ -119,14 +123,15 @@ class SCHCReceiver:
 
         return False
 
-    def start_new_session(self, retain_state: bool) -> None:
+    def start_new_session(self, retain_previous_data: bool) -> None:
         """Deletes data of the SCHC session for the current Rule ID
         of the Receiver."""
 
-        if retain_state:
+        if retain_previous_data:
             state = self.STORAGE.read("state")
             try:
-                _ = state.pop("requested")
+                state["bitmaps"] = {}
+                state["requested"] = {}
             except KeyError:
                 pass
         else:
@@ -153,7 +158,8 @@ class SCHCReceiver:
             if last_ack.is_complete():
                 if fragment.is_all_1():
                     last_fragment = Fragment.from_hex(
-                        self.STORAGE.read("state/LAST_FRAGMENT"))
+                        self.STORAGE.read("state/LAST_FRAGMENT")
+                    )
                     if last_fragment is not None and last_fragment.is_all_1():
                         return last_ack
                 else:
@@ -202,10 +208,10 @@ class SCHCReceiver:
                 self.STORAGE.read("state/LAST_ACK"))
             if last_ack is not None and last_ack.is_complete():
                 last_fragment = Fragment.from_hex(
-                    self.STORAGE.read("state/LAST_FRAGMENT"))
+                    self.STORAGE.read("state/LAST_FRAGMENT")
+                )
                 if fragment.to_hex() == last_fragment.to_hex():
                     return True
-
         return False
 
     def update_requested(self, ack: CompoundACK) -> None:
@@ -301,7 +307,7 @@ class SCHCReceiver:
         """Receives a SCHC Fragment and processes it accordingly."""
 
         if self.STORAGE.is_empty():
-            self.start_new_session(retain_state=False)
+            self.start_new_session(retain_previous_data=False)
 
         if self.session_was_aborted():
             self.LOGGER.error("Session aborted.")
@@ -327,11 +333,10 @@ class SCHCReceiver:
             f"Received fragment W{fragment.WINDOW}F{fragment.INDEX}")
 
         if not self.fragment_is_receivable(fragment):
-            self.start_new_session(retain_state=False)
+            self.start_new_session(retain_previous_data=False)
 
         self.upload_fragment(fragment)
         self.update_bitmap(fragment)
-
         pending_ack = self.get_pending_ack(fragment)
         if pending_ack is not None:
             self.LOGGER.info("Pending ACK retrieved.")
@@ -339,5 +344,4 @@ class SCHCReceiver:
 
         if not fragment.expects_ack() or self.fragment_is_requested(fragment):
             return None
-
         return self.generate_compound_ack(fragment)
