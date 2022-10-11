@@ -8,6 +8,7 @@ from Entities.Rule import Rule
 from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import LengthMismatchError
 from utils.casting import bin_to_hex, bin_to_bytes
+from utils.misc import generate_packet
 
 
 class TestFragmenter(unittest.TestCase):
@@ -107,15 +108,37 @@ class TestFragmenter(unittest.TestCase):
         fragments = fragmenter.fragment(multiple_eleven)
 
         payload_max_length = (
-                                         profile.UPLINK_MTU - profile.RULE.HEADER_LENGTH) // 8
+                                     profile.UPLINK_MTU - profile.RULE.HEADER_LENGTH) // 8
         number_of_fragments = -(
-                    len(multiple_eleven) // -payload_max_length) + 1
+                len(multiple_eleven) // -payload_max_length) + 1
+
+        self.assertEqual(22, len(multiple_eleven))
+        self.assertEqual(3, number_of_fragments)
+        self.assertEqual(len(fragments), number_of_fragments)
+        self.assertTrue(fragments[-1].is_all_1())
 
         for i in range(number_of_fragments):
             if i == len(fragments) - 1:
                 self.assertEqual(0, len(fragments[i].PAYLOAD))
             else:
                 self.assertEqual(11, len(fragments[i].PAYLOAD))
+
+        eleven = b'01234567890'
+        fragmenter = Fragmenter(profile, "debug/unittest/sd")
+        fragments = fragmenter.fragment(eleven)
+
+        payload_max_length = (
+                                     profile.UPLINK_MTU - profile.RULE.HEADER_LENGTH) // 8
+        number_of_fragments = -(len(multiple_eleven) // -payload_max_length)
+
+        self.assertEqual(2, number_of_fragments)
+        self.assertTrue(fragments[-1].is_all_1())
+        self.assertFalse(fragments[-1].is_sender_abort())
+
+        long_packet = generate_packet(308)
+        fragmenter = Fragmenter(profile, "debug/unittest/sd")
+        with self.assertRaises(LengthMismatchError):
+            _ = fragmenter.fragment(long_packet)
 
     def test_clear_fragment_directory(self):
         packet = b'-\xf2}\x1d\x01\xefg\xe7+\xb3\x16\x12\xedf\xdf^\xe65\xcd\x144f'

@@ -64,7 +64,7 @@ class Fragmenter:
             )
         if len(bytes_to_bin(payload)) > payload_max_length:
             raise LengthMismatchError(
-                f"Payload is larger than its maximum size {(len(bytes_to_bin(payload)))} > {payload_max_length}."
+                f"Payload is larger than its maximum size ({(len(bytes_to_bin(payload)))} > {payload_max_length})."
             )
 
         fragment = Fragment(header, payload)
@@ -87,9 +87,22 @@ class Fragmenter:
         """
         Generates a list of SCHC Fragments.
         """
+        header_len = self.PROFILE.RULE.HEADER_LENGTH
+        all_1_header_len = self.PROFILE.RULE.ALL1_HEADER_LENGTH
+        max_fragment_number = self.PROFILE.MAX_FRAGMENT_NUMBER
 
-        payload_max_length = (
-                                         self.PROFILE.UPLINK_MTU - self.PROFILE.RULE.HEADER_LENGTH) // 8
+        payload_max_length = (self.PROFILE.UPLINK_MTU - header_len) // 8
+        all_1_payload = (self.PROFILE.UPLINK_MTU - all_1_header_len) // 8
+
+        maximum_packet_size = payload_max_length * (
+                max_fragment_number - 1) + all_1_payload
+
+        if len(schc_packet) > maximum_packet_size:
+            raise LengthMismatchError(
+                "SCHC Packet is larger than allowed"
+                f"by Rule {self.PROFILE.RULE.ID}"
+            )
+
         number_of_fragments = -(len(schc_packet) // -payload_max_length)
         fragments = []
 
