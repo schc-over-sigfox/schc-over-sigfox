@@ -81,7 +81,20 @@ class Fragmenter:
         Generates a list of SCHC Fragments.
         """
 
-        payload_max_length = (self.PROFILE.UPLINK_MTU - self.PROFILE.RULE.HEADER_LENGTH) // 8
+        payload_max_length = (
+                                         self.PROFILE.UPLINK_MTU - self.PROFILE.RULE.HEADER_LENGTH) // 8
+        all_1_payload = (
+                                    self.PROFILE.UPLINK_MTU - self.PROFILE.RULE.ALL1_HEADER_LENGTH) // 8
+
+        maximum_packet_size = payload_max_length * (
+                    self.PROFILE.MAX_FRAGMENT_NUMBER - 1) + all_1_payload
+
+        if len(schc_packet) > maximum_packet_size:
+            raise LengthMismatchError(
+                "SCHC Packet is larger than allowed"
+                f"by Rule {self.PROFILE.RULE.ID}"
+            )
+
         number_of_fragments = -(len(schc_packet) // -payload_max_length)
         fragments = []
 
@@ -89,8 +102,10 @@ class Fragmenter:
             number_of_fragments += 1
 
         for i in range(number_of_fragments):
-            payload = schc_packet[i * payload_max_length:(i + 1) * payload_max_length]
-            fragment = self.generate_fragment(payload, all_1=(i == number_of_fragments - 1))
+            payload = schc_packet[
+                      i * payload_max_length:(i + 1) * payload_max_length]
+            fragment = self.generate_fragment(payload, all_1=(
+                        i == number_of_fragments - 1))
             fragments.append(fragment)
 
         self.CURRENT_FRAGMENT_NUMBER = 0

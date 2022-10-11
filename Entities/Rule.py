@@ -50,7 +50,8 @@ class Rule:
 
     @staticmethod
     def from_hex(h: str) -> 'Rule':
-        """Parses the Rule ID of the given hex string, assuming that it is located in the leftmost bits."""
+        """Parses the Rule ID of the given hex string,
+         assuming that it is located in the leftmost bits."""
         as_bin = hex_to_bin(h)
         first_byte = as_bin[:8]
         rule_id = first_byte[:3]

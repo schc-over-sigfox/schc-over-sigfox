@@ -4,6 +4,7 @@ import shutil
 import time
 from unittest import TestCase
 
+import config.schc
 from Entities.Rule import Rule
 from Entities.SCHCReceiver import SCHCReceiver
 from Entities.SigfoxProfile import SigfoxProfile
@@ -126,7 +127,8 @@ class TestSCHCReceiver(TestCase):
         profile.INACTIVITY_TIMEOUT = 10
         receiver = SCHCReceiver(profile, storage)
 
-        self.assertTrue(receiver.inactivity_timer_expired(1652923050))
+        if not config.schc.DISABLE_INACTIVITY_TIMEOUT:
+            self.assertTrue(receiver.inactivity_timer_expired(1652923050))
 
     def test_generate_receiver_abort(self):
         j = {
@@ -650,9 +652,10 @@ class TestSCHCReceiver(TestCase):
             }
         }
 
-        receiver.PROFILE.INACTIVITY_TIMEOUT = 10
-        ack = receiver.schc_recv(fragment, int(time.time()))
-        self.assertTrue(ack.is_receiver_abort())
+        if not config.schc.DISABLE_INACTIVITY_TIMEOUT:
+            receiver.PROFILE.INACTIVITY_TIMEOUT = 10
+            ack = receiver.schc_recv(fragment, int(time.time()))
+            self.assertTrue(ack.is_receiver_abort())
 
         receiver.STORAGE.delete("state/ABORT")
 

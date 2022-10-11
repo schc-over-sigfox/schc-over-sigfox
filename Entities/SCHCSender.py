@@ -169,7 +169,7 @@ class SCHCSender:
             if ack is not None:
                 log.info(f"[ACK] ACK received {ack.to_hex()} (hex). "
                          f"Tuples: {ack.TUPLES} "
-                         f"Ressetting attempts counter to 0.")
+                         f"Resetting attempts counter to 0.")
                 self.ATTEMPTS = 0
 
                 if ack.is_receiver_abort():
