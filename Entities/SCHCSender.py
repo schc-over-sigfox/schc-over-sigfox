@@ -171,12 +171,12 @@ class SCHCSender:
                 self.ATTEMPTS = 0
 
                 if ack.is_receiver_abort():
-                    self.LOGGER.error("[RECEIVER-ABORT]")
+                    log.error("[RECEIVER-ABORT]")
                     self.LOGGER.RECEIVER_ABORTED = True
                     raise ReceiverAbortError
 
                 if not fragment.expects_ack():
-                    self.LOGGER.error("ACK received but not requested.")
+                    log.error("ACK received but not requested.")
                     raise BadProfileError
 
                 for tup in ack.TUPLES:
@@ -187,8 +187,8 @@ class SCHCSender:
                     if ack_window_number == self.LAST_WINDOW:
 
                         if ack.HEADER.C == '1':
-                            self.LOGGER.info("ACK received with C = 1. "
-                                             "End of transmission.")
+                            log.info("ACK received with C = 1. "
+                                     "End of transmission.")
                             self.LOGGER.FINISHED = True
                             self.FRAGMENTER.clear_fragment_directory()
                             return
@@ -203,7 +203,7 @@ class SCHCSender:
                                 fragments_arent_missing = bitmap_has_only_all1 or bitmap_is_all_1s
 
                                 if fragments_arent_missing:
-                                    self.LOGGER.error(
+                                    log.error(
                                         "SCHC ACK shows no missing tile "
                                         "at the receiver."
                                     )
@@ -252,23 +252,23 @@ class SCHCSender:
                 log.debug(f"ACK-REQ Attempts: {self.ATTEMPTS}")
                 if self.ATTEMPTS >= self.PROFILE.MAX_ACK_REQUESTS and \
                         config.ENABLE_MAX_ACK_REQUESTS:
-                    self.LOGGER.error("MAX_ACK_REQUESTS reached.")
+                    log.error("MAX_ACK_REQUESTS reached.")
                     self.TRANSMISSION_QUEUE.insert(
                         0, SenderAbort(fragment.HEADER)
                     )
                 else:
-                    self.LOGGER.info(
+                    log.info(
                         "All-1 timeout reached. "
                         "Sending the ACK Request again..."
                     )
                     self.TRANSMISSION_QUEUE.append(fragment)
 
             elif fragment.is_all_0():
-                self.LOGGER.info("All-0 timeout reached. "
+                log.info("All-0 timeout reached. "
                                  "Proceeding to next window.")
 
             else:
-                self.LOGGER.error("ERROR: Timeout reached at fragment "
+                log.error("ERROR: Timeout reached at fragment "
                                   f"W{fragment.HEADER.WINDOW_NUMBER}"
                                   f"F{fragment.INDEX}")
                 raise NetworkDownError from exc
@@ -276,7 +276,6 @@ class SCHCSender:
     def start_session(self, schc_packet: bytes):
         """Performs the full SCHC Sender procedure for a given SCHC Packet."""
 
-        print(f"logger: {self.LOGGER.SEVERITY}")
         log.info(f"SCHC Packet: {schc_packet}")
         fragmenter = Fragmenter(self.PROFILE)
         self.TRANSMISSION_QUEUE = fragmenter.fragment(schc_packet)
