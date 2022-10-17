@@ -15,4 +15,3 @@ CHECK_FOR_CALLBACK_RETRIES = False
 DISABLE_INACTIVITY_TIMEOUT = True
 
 RECEIVER_URL = "http://localhost:5000/receive"
-REASSEMBLER_URL = "http://localhost:5000/reassemble"
