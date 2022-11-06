@@ -21,7 +21,7 @@ def receive(request) -> tuple[object, int]:
     """
 
     request_dict = request.get_json()
-    device_type_id = request_dict["deviceTypeId"]
+    device_type_id = request_dict["deviceType"]
     device = request_dict["device"]
     data = request_dict["data"]
     net_time = int(request_dict["time"])

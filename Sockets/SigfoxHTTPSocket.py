@@ -22,7 +22,7 @@ class SigfoxHTTPSocket(Socket):
         self.SEQNUM += 1
 
         http_body = {
-            'deviceTypeId': "simulator",
+            'deviceType': "simulator",
             'device': self.DEVICE,
             'data': bytes_to_hex(message),
             'time': str(int(time.time())),
