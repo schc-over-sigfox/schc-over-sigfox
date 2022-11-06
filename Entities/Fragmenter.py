@@ -25,7 +25,9 @@ class Fragmenter:
             fragment_dir: (str) Directory where to store the fragments,
         """
         self.PROFILE = profile
-        self.STORAGE = Storage(f"{fragment_dir}/rule_{self.PROFILE.RULE.ID}")
+        self.STORAGE = Storage(
+            "{}/rule_{}".format(fragment_dir, self.PROFILE.RULE.ID)
+        )
         self.CURRENT_FRAGMENT_NUMBER = 0
 
         if not self.STORAGE.folder_exists("fragments"):
@@ -55,11 +57,14 @@ class Fragmenter:
 
         if len(header.to_binary()) > header_length:
             raise LengthMismatchError(
-                f"Header is larger than its maximum size ({len(header.to_binary())} > {header_length})."
+                "Header is larger than its maximum size ({} > {})."
+                    .format(len(header.to_binary()), header_length)
             )
         if len(bytes_to_bin(payload)) > payload_max_length:
             raise LengthMismatchError(
-                f"Payload is larger than its maximum size ({(len(bytes_to_bin(payload)))} > {payload_max_length})."
+                "Payload is larger than its maximum size ({} > {}).".format(
+                    (len(bytes_to_bin(payload))), payload_max_length
+                )
             )
 
         fragment = Fragment(header, payload)
@@ -70,7 +75,8 @@ class Fragmenter:
         w_index, f_index = fragment.get_indices()
 
         self.STORAGE.write(
-            f"fragments/fragment_w{w_index}f{f_index}", json.dumps(fragment_data)
+            "fragments/fragment_w{}f{}".format(w_index, f_index),
+            json.dumps(fragment_data)
         )
         self.CURRENT_FRAGMENT_NUMBER = (self.CURRENT_FRAGMENT_NUMBER + 1) % self.PROFILE.MAX_FRAGMENT_NUMBER
 
@@ -92,8 +98,8 @@ class Fragmenter:
 
         if len(schc_packet) > maximum_packet_size:
             raise LengthMismatchError(
-                "SCHC Packet is larger than allowed"
-                f"by Rule {self.PROFILE.RULE.ID}"
+                "SCHC Packet is larger than allowed "
+                "by Rule {}".format(self.PROFILE.RULE.ID)
             )
 
         number_of_fragments = -(len(schc_packet) // -payload_max_length)
@@ -114,4 +120,4 @@ class Fragmenter:
 
     def clear_fragment_directory(self) -> None:
         for file in self.STORAGE.list_files("fragments"):
-            self.STORAGE.delete_file(f"fragments/{file}")
+            self.STORAGE.delete_file("fragments/{}".format(file))

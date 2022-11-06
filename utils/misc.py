@@ -1,23 +1,26 @@
 """Module of miscellaneous functions used in the project."""
 import os
-from typing import Optional
-
-import requests
 
 
 def zfill(string: str, length: int) -> str:
-    """Adds zeroes at the begginning of a string until it completes the desired length."""
+    """Adds zeroes at the begginning of a string
+    until it completes the desired length."""
     return '0' * (length - len(string)) + string
 
 
 def zpad(string: str, length: int) -> str:
-    """Adds zeroes at the end of a string until it completes the desired length."""
+    """Adds zeroes at the end of a string
+    until it completes the desired length."""
     return string + '0' * (length - len(string))
 
 
 def replace_char(string: str, position: int, new_char: str) -> str:
     """Replaces a single character in the specified position of a string."""
-    return f"{string[:position]}{new_char}{string[position + 1:]}"
+    return "{}{}{}".format(
+        string[:position],
+        new_char,
+        string[position + 1:]
+    )
 
 
 def find(string: str, char: str) -> 'list[int]':

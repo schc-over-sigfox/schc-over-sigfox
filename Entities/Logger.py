@@ -41,22 +41,22 @@ class Logger:
     def debug(self, text) -> None:
         """Display a debug-level message."""
         if self.SEVERITY <= self.DEBUG:
-            print(self, f"[DEBUG] {text}")
+            print(self, "[DEBUG] {}".format(text))
 
     def info(self, text) -> None:
         """Display an info-level message."""
         if self.SEVERITY <= self.INFO:
-            print(self, f"[INFO] {text}")
+            print(self, "[INFO] {}".format(text))
 
     def warning(self, text) -> None:
         """Display a warning-level message."""
         if self.SEVERITY <= self.WARNING:
-            print(self, f"[WARNING] {text}")
+            print(self, "[WARNING] {}".format(text))
 
     def error(self, text) -> None:
         """Display an error-level message"""
         if self.SEVERITY <= self.ERROR:
-            print(self, f"[ERROR] {text}")
+            print(self, "[ERROR] {}".format(text))
 
     def export(self, filename) -> None:
         """Exports the data recorded in the Logger into a JSON file."""
@@ -78,7 +78,7 @@ class Logger:
         if not os.path.isdir("export"):
             os.mkdir("export")
 
-        with open(f"export/{filename}", 'w') as fi:
+        with open("export/{}".format(filename), 'w') as fi:
             fi.write(json.dumps(j, indent=2))
 
 

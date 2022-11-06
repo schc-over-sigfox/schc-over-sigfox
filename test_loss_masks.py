@@ -24,5 +24,5 @@ for loss_mask in loss_masks:
         print("Success!")
         # input("Press Enter to continue.")
     else:
-        print(f"Failure in loss mask {loss_masks.index(loss_mask)}")
+        print("Failure in loss mask {}".format(loss_masks.index(loss_mask)))
         break

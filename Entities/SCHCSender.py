@@ -12,7 +12,7 @@ from Entities.exceptions import SCHCTimeoutError, SenderAbortError, \
 from Messages.CompoundACK import CompoundACK
 from Messages.Fragment import Fragment
 from Messages.SenderAbort import SenderAbort
-from Sockets.SigfoxHTTPSocket import SigfoxHTTPSocket as Socket
+from Sockets.SigfoxSocket import SigfoxSocket as Socket
 from utils.casting import bytes_to_hex, bin_to_int
 from utils.misc import replace_char, is_monochar, zfill
 
@@ -26,7 +26,7 @@ class SCHCSender:
         self.ATTEMPTS = 0
         self.NB_FRAGMENTS = 0
         self.LAST_WINDOW = 0
-        self.DELAY: float = config.DELAY_BETWEEN_FRAGMENTS
+        self.DELAY = config.DELAY_BETWEEN_FRAGMENTS
         self.LOGGER = Logger(Logger.INFO)
         self.SOCKET = Socket()
 
@@ -49,7 +49,7 @@ class SCHCSender:
         self.LOGGER.SENT += 1
 
         if not fragment.is_sender_abort():
-            path = f"fragments/fragment_w{w_index}f{f_index}"
+            path = "fragments/fragment_w{}f{}".format(w_index, f_index)
             f_json = json.loads(self.STORAGE.read(path))
             f_json["sent"] = True
             self.STORAGE.write(path, json.dumps(f_json))
@@ -84,8 +84,10 @@ class SCHCSender:
             self.LOGGER.SEQUENCE += 'SABORT'
             fragment_info[fragment_pk]["abort"] = True
         else:
-            self.LOGGER.SEQUENCE += f'W{fragment.HEADER.WINDOW_NUMBER}' \
-                                    f'F{fragment.INDEX}'
+            self.LOGGER.SEQUENCE += 'W{}' \
+                                    'F{}'.format(
+                fragment.HEADER.WINDOW_NUMBER, fragment.INDEX
+            )
 
         self.LOGGER.FRAGMENTS_INFO.update(fragment_info)
         return self.SOCKET.send(as_bytes)
@@ -118,7 +120,7 @@ class SCHCSender:
         if ack.is_receiver_abort():
             self.LOGGER.SEQUENCE += "RABORT"
         else:
-            self.LOGGER.SEQUENCE += f"A{ack.HEADER.WINDOW_NUMBER}"
+            self.LOGGER.SEQUENCE += "A{}".format(ack.HEADER.WINDOW_NUMBER)
 
         self.LOGGER.RECEIVED += 1
         return ack
@@ -127,11 +129,18 @@ class SCHCSender:
         """Uses the SCHC Sender behavior to send a SCHC Fragment."""
         self.update_timeout(fragment)
 
-        log.info(f"[SEND] Sending fragment: "
-                 f"Rule {fragment.PROFILE.RULE.ID} "
-                 f"({fragment.PROFILE.RULE.STR}), "
-                 f"W{fragment.HEADER.WINDOW_NUMBER}"
-                 f"F{fragment.INDEX}")
+        log.info(
+            "[SEND] Sending fragment: "
+            "Rule {} "
+            "({}), "
+            "W{}"
+            "F{}".format(
+                fragment.PROFILE.RULE.ID,
+                fragment.PROFILE.RULE.STR,
+                fragment.HEADER.WINDOW_NUMBER,
+                fragment.INDEX
+            )
+        )
 
         try:
             enable_reception = fragment.expects_ack() and not self.RT
@@ -154,9 +163,14 @@ class SCHCSender:
                 return
 
             if ack is not None:
-                log.info(f"[ACK] ACK received {ack.to_hex()} (hex). "
-                         f"Tuples: {ack.TUPLES} "
-                         f"Resetting attempts counter to 0.")
+                log.info(
+                    "[ACK] ACK received {} (hex). "
+                    "Tuples: {} "
+                    "Resetting attempts counter to 0.".format(
+                        ack.to_hex(),
+                        ack.TUPLES
+                    )
+                )
                 self.ATTEMPTS = 0
 
                 if ack.is_receiver_abort():
@@ -183,7 +197,7 @@ class SCHCSender:
 
         except SCHCTimeoutError as exc:
             if fragment.is_all_1():
-                log.debug(f"ACK-REQ Attempts: {self.ATTEMPTS}")
+                log.debug("ACK-REQ Attempts: {}".format(self.ATTEMPTS))
                 if self.ATTEMPTS >= self.PROFILE.MAX_ACK_REQUESTS and \
                         config.ENABLE_MAX_ACK_REQUESTS:
                     log.error("MAX_ACK_REQUESTS reached.")
@@ -202,15 +216,20 @@ class SCHCSender:
                          "Proceeding to next window.")
 
             else:
-                log.error("ERROR: Timeout reached at fragment "
-                          f"W{fragment.HEADER.WINDOW_NUMBER}"
-                          f"F{fragment.INDEX}")
+                log.error(
+                    "ERROR: Timeout reached at fragment "
+                    "W{}"
+                    "F{}".format(
+                        fragment.HEADER.WINDOW_NUMBER,
+                        fragment.INDEX
+                    )
+                )
                 raise NetworkDownError from exc
 
     def start_session(self, schc_packet: bytes):
         """Performs the full SCHC Sender procedure for a given SCHC Packet."""
 
-        log.info(f"SCHC Packet: {schc_packet}")
+        log.info("SCHC Packet: {}".format(schc_packet))
         fragmenter = Fragmenter(self.PROFILE)
         self.TRANSMISSION_QUEUE = fragmenter.fragment(schc_packet)
         self.NB_FRAGMENTS = len(self.TRANSMISSION_QUEUE)
@@ -238,7 +257,7 @@ class SCHCSender:
         """
 
         w_index, f_index = fragment.get_indices()
-        fragment_pk = f"W{w_index}F{f_index}"
+        fragment_pk = "W{}F{}".format(w_index, f_index)
 
         if fragment_pk in self.LOGGER.FRAGMENTS_INFO.keys():
             fragment_info = {
@@ -308,8 +327,9 @@ class SCHCSender:
                         str(fragment_id % self.PROFILE.WINDOW_SIZE),
                         self.PROFILE.WINDOW_SIZE // 10 + 1
                     )
-                    path = f"{self.STORAGE.ROOT}/" \
-                           f"fragments/fragment_w{w_index}f{f_index}"
+                    path = "{}/" \
+                           "fragments/fragment_w{}f{}" \
+                        .format(self.STORAGE.ROOT, w_index, f_index)
 
                     self.RETRANSMISSION_QUEUE.append(
                         fragment.from_file(path)

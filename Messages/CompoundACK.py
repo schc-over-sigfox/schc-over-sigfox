@@ -23,9 +23,11 @@ class CompoundACK(ACK):
         self.TUPLES = []
 
         if len(windows) != len(bitmaps):
-            raise BadProfileError("Window and bitmap arrays must be of same length. "
-                                  f"(Window array has length {len(windows)}, "
-                                  f"bitmap array has length {len(bitmaps)})")
+            raise BadProfileError(
+                "Window and bitmap arrays must be of same length. "
+                "(Window array has length {}, "
+                "bitmap array has length {})"
+                    .format(len(windows), len(bitmaps)))
 
         first_window = windows[0]
         first_bitmap = bitmaps[0]
@@ -34,7 +36,8 @@ class CompoundACK(ACK):
         for i in range(len(windows[:-1])):
             self.TUPLES.append((windows[i + 1], bitmaps[i + 1]))
 
-        payload = ''.join(f"{t[0]}{t[1]}" for t in self.TUPLES[1:]) + padding
+        payload = ''.join(
+            "{}{}".format({t[0]}, t[1]) for t in self.TUPLES[1:]) + padding
 
         super().__init__(
             profile,
