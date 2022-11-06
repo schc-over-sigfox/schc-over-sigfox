@@ -82,4 +82,4 @@ class Logger:
             fi.write(json.dumps(j, indent=2))
 
 
-log = Logger(Logger.WARNING)
+log = Logger(Logger.DEBUG)

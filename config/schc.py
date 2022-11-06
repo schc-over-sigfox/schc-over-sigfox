@@ -14,4 +14,4 @@ RESET_DATA_AFTER_REASSEMBLY = True
 CHECK_FOR_CALLBACK_RETRIES = False
 DISABLE_INACTIVITY_TIMEOUT = True
 
-RECEIVER_URL = "https://us-central1-wyschc-2022-07.cloudfunctions.net/receive"
+RECEIVER_URL = "https://us-central1-wyschc-2022-11.cloudfunctions.net/receive"

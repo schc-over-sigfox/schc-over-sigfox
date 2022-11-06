@@ -5,10 +5,10 @@ from Entities.SCHCSender import SCHCSender
 from Entities.SigfoxProfile import SigfoxProfile
 from utils.misc import generate_packet
 
-sizes = [11, 54, 96, 139, 181, 224, 266, 307]
+sizes = [1, 45, 88, 132, 176, 220, 263, 307]
 loss_rates = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 
-for repetition in range(100000):
+for repetition in range(1):
     for size in sizes:
 
         PACKET = generate_packet(size)
@@ -21,8 +21,8 @@ for repetition in range(100000):
             sender = SCHCSender(profile)
 
             sender.UPLINK_LOSS_RATE = lr
-            sender.PROFILE.SIGFOX_DL_TIMEOUT = 0.1
-            sender.PROFILE.RETRANSMISSION_TIMEOUT = 0.1
+            sender.PROFILE.SIGFOX_DL_TIMEOUT = 10
+            sender.PROFILE.RETRANSMISSION_TIMEOUT = 10
 
             sender.start_session(PACKET)
 
