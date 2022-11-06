@@ -1,6 +1,10 @@
-"""This file contains the paths to credential and GCP utilities used in the
+"""
+This file contains the paths to credential and GCP utilities used in the
 project.
-Do not commit this file, since it may contain sensitive information."""
+Do not commit this file, since it may contain sensitive information.
+You can avoid committing the file using the following Git command:
+git update-index --assume-unchanged config/gcp.py
+"""
 
 CREDENTIALS_JSON = ''
 FIREBASE_RTDB_URL = ''
