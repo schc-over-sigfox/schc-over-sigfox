@@ -6,7 +6,8 @@ from Entities.SigfoxProfile import SigfoxProfile
 from utils.misc import generate_packet, zfill
 
 sizes = [1, 45, 88, 132, 176, 220, 263, 307]
-loss_rates = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
+# loss_rates = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
+loss_rates = [0]
 
 input("Press enter to start :^)")
 
@@ -36,7 +37,7 @@ for repetition in range(1):
                 "rep{}".format(
                     size,
                     zfill(str(lr), 2),
-                    str(repetition).zfill(9)
+                    zfill(str(repetition), 9)
                 )
             )
 

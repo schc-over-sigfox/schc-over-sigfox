@@ -340,12 +340,14 @@ class SCHCSender:
         """Updates the socket timeout according to the SCHC Fragment."""
         if fragment.is_all_0() and not self.RT:
             log.debug("[SEND] [All-0] "
-                      "Using All-0 SIGFOX_DL_TIMEOUT as timeout.")
+                      "Using All-0 SIGFOX_DL_TIMEOUT as timeout ({}s)."
+                      .format(self.PROFILE.SIGFOX_DL_TIMEOUT))
             self.SOCKET.set_timeout(self.PROFILE.SIGFOX_DL_TIMEOUT)
         elif fragment.is_all_1():
             log.debug("[SEND] [All-1] "
-                      "Using RETRANSMISSION_TIMER_VALUE as timeout. "
-                      "Increasing ACK attempts.")
+                      "Using RETRANSMISSION_TIMEOUT as timeout ({}s)."
+                      "Increasing ACK attempts."
+                      .format(self.PROFILE.RETRANSMISSION_TIMEOUT))
             self.ATTEMPTS += 1
             self.SOCKET.set_timeout(self.PROFILE.RETRANSMISSION_TIMEOUT)
         else:

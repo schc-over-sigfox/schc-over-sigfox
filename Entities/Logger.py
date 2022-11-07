@@ -1,5 +1,6 @@
 import json
-import os
+
+from db.CommonFileStorage import CommonFileStorage
 
 
 class Logger:
@@ -19,6 +20,7 @@ class Logger:
         self.RECEIVED = 0
         self.LOGGING_TIME = 0
         self.FRAGMENTS_INFO = {}
+        self.STORAGE = CommonFileStorage("export")
 
         self.LAPS = []
         self.FRAGMENTATION_TIME = 0
@@ -72,11 +74,7 @@ class Logger:
             "fragments": self.FRAGMENTS_INFO
         }
 
-        if not os.path.isdir("export"):
-            os.mkdir("export")
-
-        with open("export/{}".format(filename), 'w') as fi:
-            fi.write(json.dumps(j, indent=2))
+        self.STORAGE.write(filename, json.dumps(j))
 
 
-log = Logger(Logger.WARNING)
+log = Logger(Logger.DEBUG)
