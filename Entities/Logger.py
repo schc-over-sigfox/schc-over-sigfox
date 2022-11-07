@@ -1,8 +1,6 @@
 import json
 import os
 
-from Entities.Timer import Timer
-
 
 class Logger:
     DEBUG = 0
@@ -13,7 +11,6 @@ class Logger:
     def __init__(self, severity):
 
         self.SEVERITY = severity
-        self.CHRONO = Timer()
         self.PACKET_SIZE = 0
         self.NB_FRAGMENTS = 0
         self.UPLINK_LOSS_RATE = 0
