@@ -1,6 +1,8 @@
 """Module of miscellaneous functions used in the project."""
 import os
 
+import uos
+
 
 def zfill(string: str, length: int) -> str:
     """Adds zeroes at the begginning of a string
@@ -64,7 +66,8 @@ def generate_packet(byte_size: int, path: str = None) -> bytes:
 
 
 def invert_dict(dic: dict) -> dict:
-    """Inverts {key: value} pairs of a dictionary into {value: kay} pairs, only if no values are repeated."""
+    """Inverts {key: value} pairs of a dictionary into {value: kay} pairs,
+    only if no values are repeated."""
     values = list(dic.values())
 
     if len(values) != len(set(values)):
@@ -78,18 +81,6 @@ def round_to_next_multiple(num, factor):
     return -(num // (-factor)) * factor
 
 
-def http_post(body: dict, endpoint: str, asynchronous: bool = False) -> Optional[requests.Response]:
-    """Makes a HTTP POST request, which wait for its response or not."""
-
-    timeout = .1 if asynchronous else 60
-
-    try:
-        return requests.post(
-            url=endpoint,
-            json=body,
-            headers={},
-            timeout=timeout
-        )
-    except requests.exceptions.ReadTimeout:
-        if asynchronous:
-            return None
+def urand(inf=0, sup=100) -> float:
+    """Obtains a random float using the Pycom uos.urandom() function."""
+    return inf + uos.urandom(1)[0] / 256 * (sup - inf)
