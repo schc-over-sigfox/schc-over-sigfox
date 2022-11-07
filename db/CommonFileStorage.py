@@ -34,46 +34,79 @@ class CommonFileStorage(FileStorage):
                         self.delete_folder("{}/{}".format(path, e))
         os.rmdir("{}/{}".format(self.ROOT, path))
 
-    def create_folder(self, path: str = ''):
-        if not self.folder_exists(path):
-            if path == '':
-                full_path = self.ROOT
-            else:
-                full_path = "{}/{}".format(self.ROOT, path)
+    def create_folder(self, path: str = '') -> None:
+        if path == '':
+            full_path = self.ROOT
+        else:
+            full_path = "{}/{}".format(self.ROOT, path)
+
+        print("Trying to create: {}".format(full_path))
+
+        if not self.folder_exists(full_path):
             folders = full_path.split('/')
             curr_path = folders[0]
-            if not self.folder_exists(curr_path):
+            print("folders: {}".format(folders))
+            print("curr_path: {}".format(curr_path))
+
+            try:
+                _ = os.stat(curr_path)
+                f_exists = True
+            except:
+                f_exists = False
+
+            print("folder_exists? {}".format(f_exists))
+
+            if not f_exists:
+                print("NFE creating {}".format(curr_path))
                 os.mkdir(curr_path)
             for folder in folders[1:]:
                 curr_path += "/{}".format(folder)
-                if not self.folder_exists(curr_path):
+
+                try:
+                    _ = os.stat(curr_path)
+                    f_exists = True
+                except:
+                    f_exists = False
+
+                if not f_exists:
+                    print(curr_path)
                     os.mkdir(curr_path)
 
     def list_files(self, path: str = '') -> 'list[str]':
+        if path == '':
+            full_path = self.ROOT
+        else:
+            full_path = "{}/{}".format(self.ROOT, path)
+
         if self.folder_exists(path):
-            return os.listdir("{}/{}".format(self.ROOT, path))
+            return os.listdir("{}/{}".format(full_path))
         else:
             return []
 
     def file_exists(self, path: str) -> bool:
         try:
-            _ = os.stat(path)
+            _ = os.stat("{}/{}".format(self.ROOT, path))
             return True
         except OSError:
             return False
 
     def folder_exists(self, path: str = '') -> bool:
+        if path == '':
+            full_path = self.ROOT
+        else:
+            full_path = "{}/{}".format(self.ROOT, path)
+
         try:
-            _ = os.stat(path)
+            _ = os.stat(full_path)
             return True
         except OSError:
             return False
 
     def is_file(self, path: str) -> bool:
-        return os.stat(path)[6] > 0
+        return os.stat("{}/{}".format(self.ROOT, path))[6] > 0
 
     def is_folder(self, path: str) -> bool:
-        return os.stat(path)[6] == 0
+        return os.stat("{}/{}".format(self.ROOT, path))[6] == 0
 
 
-fs = CommonFileStorage("debug/sd")
+fs = CommonFileStorage("")
