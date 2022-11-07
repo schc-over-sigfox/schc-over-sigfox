@@ -1,5 +1,4 @@
 import json
-from typing import Optional
 
 import config.schc as config
 from Entities.Rule import Rule
@@ -76,7 +75,7 @@ class Fragment:
         return False
 
     @staticmethod
-    def from_hex(hex_string: str) -> Optional['Fragment']:
+    def from_hex(hex_string: str) -> 'Fragment':
         """Parses a hex string into a Fragment, using the specified Profile"""
 
         if hex_string is None or hex_string == '':

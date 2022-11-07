@@ -1,6 +1,4 @@
 import json
-import random
-from typing import Optional
 
 import config.schc as config
 from Entities.Fragmenter import Fragmenter
@@ -14,7 +12,7 @@ from Messages.Fragment import Fragment
 from Messages.SenderAbort import SenderAbort
 from Sockets.SigfoxSocket import SigfoxSocket as Socket
 from utils.casting import bytes_to_hex, bin_to_int
-from utils.misc import replace_char, is_monochar, zfill
+from utils.misc import replace_char, is_monochar, zfill, urand
 
 
 class SCHCSender:
@@ -55,7 +53,7 @@ class SCHCSender:
             self.STORAGE.write(path, json.dumps(f_json))
 
         if self.UPLINK_LOSS_RATE > 0 and not fragment.is_sender_abort():
-            if random.random() * 100 <= self.UPLINK_LOSS_RATE:
+            if urand() <= self.UPLINK_LOSS_RATE:
                 self.SOCKET.SEQNUM += 1
                 log.debug("Fragment lost (rate)")
                 fragment_info[fragment_pk]["losses"] += 1
@@ -92,7 +90,7 @@ class SCHCSender:
         self.LOGGER.FRAGMENTS_INFO.update(fragment_info)
         return self.SOCKET.send(as_bytes)
 
-    def recv(self, bufsize: int) -> Optional[CompoundACK]:
+    def recv(self, bufsize: int) -> CompoundACK:
         """Receives a message from the socket and parses it
         as a Compound ACK."""
 
@@ -103,7 +101,7 @@ class SCHCSender:
         ack = CompoundACK.from_hex(bytes_to_hex(received))
 
         if self.DOWNLINK_LOSS_RATE > 0:
-            if random.random() * 100 <= self.DOWNLINK_LOSS_RATE:
+            if urand() <= self.DOWNLINK_LOSS_RATE:
                 log.debug("ACK lost (rate)")
                 raise SCHCTimeoutError
         elif self.LOSS_MASK != {}:
