@@ -10,14 +10,14 @@ loss_rates = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
 
 input("Press enter to start :^)")
 
-for repetition in range():
+for repetition in range(1):
     for size in sizes:
 
         PACKET = generate_packet(size)
 
         for lr in loss_rates:
             print("PACKET SIZE = {}".format(size))
-            print("LOSS RATE = {}".format(size))
+            print("LOSS RATE = {}".format(lr))
             print("(Repetition {})".format(repetition))
             profile = SigfoxProfile("UPLINK", "ACK ON ERROR", Rule('000'))
             sender = SCHCSender(profile)

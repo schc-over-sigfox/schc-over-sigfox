@@ -53,7 +53,7 @@ def bytes_to_bin(byt: bytes, length: int = None) -> str:
     if length is None:
         length = len(byt) * 8
 
-    as_int = int.from_bytes(byt, byteorder='big')
+    as_int = int.from_bytes(byt, 'big')
     as_bin = bin(as_int)[2:]
 
     return zfill(as_bin, length)

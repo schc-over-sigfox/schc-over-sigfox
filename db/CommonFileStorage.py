@@ -37,9 +37,17 @@ class CommonFileStorage(FileStorage):
     def create_folder(self, path: str = ''):
         if not self.folder_exists(path):
             if path == '':
-                os.makedirs(self.ROOT)
+                full_path = self.ROOT
             else:
-                os.makedirs("{}/{}".format(self.ROOT, path))
+                full_path = "{}/{}".format(self.ROOT, path)
+            folders = full_path.split('/')
+            curr_path = folders[0]
+            if not self.folder_exists(curr_path):
+                os.mkdir(curr_path)
+            for folder in folders[1:]:
+                curr_path += "/{}".format(folder)
+                if not self.folder_exists(curr_path):
+                    os.mkdir(curr_path)
 
     def list_files(self, path: str = '') -> 'list[str]':
         if self.folder_exists(path):
