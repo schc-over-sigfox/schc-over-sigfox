@@ -100,20 +100,32 @@ class Fragment:
             if rcs == '':
                 rcs = None
 
-            if round_to_next_multiple(rcs_idx + profile.U, config.L2_WORD_SIZE) != header_length:
-                raise LengthMismatchError(f"All-1 Header length mismatch: "
-                                          f"Expected {header_length}, actual {rcs_idx + profile.U}")
+            if round_to_next_multiple(rcs_idx + profile.U,
+                                      config.L2_WORD_SIZE) != header_length:
+                raise LengthMismatchError(
+                    "All-1 Header length mismatch: "
+                    "Expected {}, actual {}".format(
+                        header_length, rcs_idx + profile.U
+                    )
+                )
 
             header_padding = as_bin[header_padding_index:header_length]
             if not is_monochar(header_padding, '0') and header_padding != '':
-                raise BadProfileError(f"Padding was not all zeroes nor empty ({header_padding})")
+                raise BadProfileError(
+                    "Padding was not all zeroes nor empty ({})"
+                        .format(header_padding)
+                )
         else:
             header_length = profile.RULE.HEADER_LENGTH
             rcs = None
 
-            if round_to_next_multiple(rcs_idx, config.L2_WORD_SIZE) != header_length:
-                raise LengthMismatchError(f"Header length mismatch: "
-                                          f"Expected {header_length}, actual {rcs_idx}")
+            if round_to_next_multiple(rcs_idx,
+                                      config.L2_WORD_SIZE) != header_length:
+                raise LengthMismatchError(
+                    "Header length mismatch: "
+                    "Expected {}, actual {}"
+                        .format(header_length, rcs_idx)
+                )
 
         dtag = as_bin[dtag_idx:dtag_idx + profile.T]
         w = as_bin[w_idx:w_idx + profile.M]

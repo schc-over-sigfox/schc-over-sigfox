@@ -8,7 +8,9 @@ from utils.misc import generate_packet, zfill
 sizes = [1, 45, 88, 132, 176, 220, 263, 307]
 loss_rates = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
 
-for repetition in range(10000):
+input("Press enter to start :^)")
+
+for repetition in range():
     for size in sizes:
 
         PACKET = generate_packet(size)
@@ -21,8 +23,8 @@ for repetition in range(10000):
             sender = SCHCSender(profile)
 
             sender.UPLINK_LOSS_RATE = lr
-            sender.PROFILE.SIGFOX_DL_TIMEOUT = 0.1
-            sender.PROFILE.RETRANSMISSION_TIMEOUT = 0.1
+            sender.PROFILE.SIGFOX_DL_TIMEOUT = 20
+            sender.PROFILE.RETRANSMISSION_TIMEOUT = 20
 
             sender.start_session(PACKET)
             if sender.LOGGER.SENT < sender.NB_FRAGMENTS:

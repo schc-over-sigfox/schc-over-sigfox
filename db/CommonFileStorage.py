@@ -48,16 +48,24 @@ class CommonFileStorage(FileStorage):
             return []
 
     def file_exists(self, path: str) -> bool:
-        return os.path.exists("{}/{}".format(self.ROOT, path))
+        try:
+            _ = os.stat(path)
+            return True
+        except OSError:
+            return False
 
     def folder_exists(self, path: str = '') -> bool:
-        return os.path.exists("{}/{}".format(self.ROOT, path))
+        try:
+            _ = os.stat(path)
+            return True
+        except OSError:
+            return False
 
     def is_file(self, path: str) -> bool:
-        return os.path.isfile("{}/{}".format(self.ROOT, path))
+        return os.stat(path)[6] > 0
 
     def is_folder(self, path: str) -> bool:
-        return os.path.isdir("{}/{}".format(self.ROOT, path))
+        return os.stat(path)[6] == 0
 
 
 fs = CommonFileStorage("debug/sd")
