@@ -58,6 +58,8 @@ class SCHCSender:
                 log.debug("Fragment lost (rate)")
                 fragment_info[fragment_pk]["losses"] += 1
                 self.LOGGER.FRAGMENTS_INFO.update(fragment_info)
+                if fragment.expects_ack():
+                    raise SCHCTimeoutError
                 return
 
         elif self.LOSS_MASK != {}:
@@ -76,6 +78,8 @@ class SCHCSender:
                 self.SOCKET.SEQNUM += 1
                 fragment_info[fragment_pk]["losses"] += 1
                 self.LOGGER.FRAGMENTS_INFO.update(fragment_info)
+                if fragment.expects_ack():
+                    raise SCHCTimeoutError
                 return
 
         if fragment.is_sender_abort():

@@ -24,8 +24,8 @@ for repetition in range(1):
             sender = SCHCSender(profile)
 
             sender.UPLINK_LOSS_RATE = lr
-            sender.PROFILE.SIGFOX_DL_TIMEOUT = 20
-            sender.PROFILE.RETRANSMISSION_TIMEOUT = 20
+            sender.PROFILE.SIGFOX_DL_TIMEOUT = 60
+            sender.PROFILE.RETRANSMISSION_TIMEOUT = 60
 
             sender.start_session(PACKET)
             if sender.LOGGER.SENT < sender.NB_FRAGMENTS:

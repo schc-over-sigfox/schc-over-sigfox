@@ -40,24 +40,17 @@ class CommonFileStorage(FileStorage):
         else:
             full_path = "{}/{}".format(self.ROOT, path)
 
-        print("Trying to create: {}".format(full_path))
-
         if not self.folder_exists(full_path):
             folders = full_path.split('/')
             curr_path = folders[0]
-            print("folders: {}".format(folders))
-            print("curr_path: {}".format(curr_path))
 
             try:
                 _ = os.stat(curr_path)
                 f_exists = True
-            except:
+            except OSError:
                 f_exists = False
 
-            print("folder_exists? {}".format(f_exists))
-
             if not f_exists:
-                print("NFE creating {}".format(curr_path))
                 os.mkdir(curr_path)
             for folder in folders[1:]:
                 curr_path += "/{}".format(folder)
@@ -65,11 +58,10 @@ class CommonFileStorage(FileStorage):
                 try:
                     _ = os.stat(curr_path)
                     f_exists = True
-                except:
+                except OSError:
                     f_exists = False
 
                 if not f_exists:
-                    print(curr_path)
                     os.mkdir(curr_path)
 
     def list_files(self, path: str = '') -> 'list[str]':
