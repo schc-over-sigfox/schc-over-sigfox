@@ -5,7 +5,8 @@ from Entities.SCHCSender import SCHCSender
 from Entities.SigfoxProfile import SigfoxProfile
 from utils.misc import generate_packet, zfill
 
-sizes = [1, 45, 88, 132, 176, 220, 263, 307]
+# sizes = [1, 45, 88, 132, 176, 220, 263, 307]
+sizes = [176]
 # loss_rates = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
 loss_rates = [0]
 
