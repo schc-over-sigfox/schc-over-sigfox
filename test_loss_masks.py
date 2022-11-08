@@ -4,7 +4,6 @@ from Entities.SigfoxProfile import SigfoxProfile
 from test.loss_masks_28f import loss_masks
 from utils.misc import generate_packet
 
-print("Start the server and press any key afterwards.")
 
 for loss_mask in loss_masks:
 
