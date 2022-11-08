@@ -29,6 +29,7 @@ class SigfoxSocket(Socket):
     def set_reception(self, flag: bool) -> None:
         """Configures the reception flag of the Sigfox Socket."""
         self.SOCKET.setsockopt(socket.SOL_SIGFOX, socket.SO_RX, flag)
+        self.EXPECTS_ACK = flag
 
     def set_timeout(self, timeout: float) -> None:
         """Configures the timeout value of the Sigfox socket."""

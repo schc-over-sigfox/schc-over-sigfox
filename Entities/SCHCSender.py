@@ -348,7 +348,6 @@ class SCHCSender:
         self.LOGGER.DOWNLINK_LOSS_RATE = self.DOWNLINK_LOSS_RATE
 
         while self.TRANSMISSION_QUEUE != [] or self.RETRANSMISSION_QUEUE != []:
-            input("press enter to send new fragment")
             if not self.RT:
                 fragment = self.TRANSMISSION_QUEUE.pop(0)
             else:

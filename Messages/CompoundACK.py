@@ -35,7 +35,7 @@ class CompoundACK(ACK):
             self.TUPLES.append((windows[i + 1], bitmaps[i + 1]))
 
         payload = ''.join(
-            "{}{}".format({t[0]}, t[1]) for t in self.TUPLES[1:]) + padding
+            "{}{}".format(t[0], t[1]) for t in self.TUPLES[1:]) + padding
 
         super().__init__(
             profile,

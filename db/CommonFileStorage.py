@@ -71,7 +71,7 @@ class CommonFileStorage(FileStorage):
             full_path = "{}/{}".format(self.ROOT, path)
 
         if self.folder_exists(path):
-            return os.listdir("{}/{}".format(full_path))
+            return os.listdir(full_path)
         else:
             return []
 
