@@ -216,30 +216,6 @@ class SCHCSender:
                           f"F{fragment.INDEX}")
                 raise NetworkDownError from exc
 
-    def start_session(self, schc_packet: bytes):
-        """Performs the full SCHC Sender procedure for a given SCHC Packet."""
-
-        log.info(f"SCHC Packet: {schc_packet}")
-        fragmenter = Fragmenter(self.PROFILE)
-        self.TRANSMISSION_QUEUE = fragmenter.fragment(schc_packet)
-        self.NB_FRAGMENTS = len(self.TRANSMISSION_QUEUE)
-        self.LAST_WINDOW = self.TRANSMISSION_QUEUE[-1].HEADER.WINDOW_NUMBER
-
-        self.LOGGER.PACKET_SIZE = len(schc_packet)
-        self.LOGGER.NB_FRAGMENTS = self.NB_FRAGMENTS
-        self.LOGGER.UPLINK_LOSS_RATE = self.UPLINK_LOSS_RATE
-        self.LOGGER.DOWNLINK_LOSS_RATE = self.DOWNLINK_LOSS_RATE
-
-        while self.TRANSMISSION_QUEUE != [] or self.RETRANSMISSION_QUEUE != []:
-            if not self.RT:
-                fragment = self.TRANSMISSION_QUEUE.pop(0)
-            else:
-                fragment = self.RETRANSMISSION_QUEUE.pop(0)
-            try:
-                self.schc_send(fragment)
-            except SCHCError:
-                break
-
     def load_fragment_info(self, fragment: Fragment) -> tuple[dict, str]:
         """
         Loads the information of the fragment depending on if the Logger
@@ -341,3 +317,27 @@ class SCHCSender:
             self.SOCKET.set_timeout(self.PROFILE.RETRANSMISSION_TIMEOUT)
         else:
             self.SOCKET.set_timeout(60)
+
+    def start_session(self, schc_packet: bytes):
+        """Performs the full SCHC Sender procedure for a given SCHC Packet."""
+
+        log.info(f"SCHC Packet: {schc_packet}")
+        fragmenter = Fragmenter(self.PROFILE)
+        self.TRANSMISSION_QUEUE = fragmenter.fragment(schc_packet)
+        self.NB_FRAGMENTS = len(self.TRANSMISSION_QUEUE)
+        self.LAST_WINDOW = self.TRANSMISSION_QUEUE[-1].HEADER.WINDOW_NUMBER
+
+        self.LOGGER.PACKET_SIZE = len(schc_packet)
+        self.LOGGER.NB_FRAGMENTS = self.NB_FRAGMENTS
+        self.LOGGER.UPLINK_LOSS_RATE = self.UPLINK_LOSS_RATE
+        self.LOGGER.DOWNLINK_LOSS_RATE = self.DOWNLINK_LOSS_RATE
+
+        while self.TRANSMISSION_QUEUE != [] or self.RETRANSMISSION_QUEUE != []:
+            if not self.RT:
+                fragment = self.TRANSMISSION_QUEUE.pop(0)
+            else:
+                fragment = self.RETRANSMISSION_QUEUE.pop(0)
+            try:
+                self.schc_send(fragment)
+            except SCHCError:
+                break
