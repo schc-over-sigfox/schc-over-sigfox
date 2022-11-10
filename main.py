@@ -30,6 +30,13 @@ def receive(request) -> tuple[object, int]:
     storage = Storage()
     storage.load()
     storage.change_ref(f"{device_type_id}/{device}")
+
+    if not storage.exists("UL"):
+        storage.write(1, "UL")
+    else:
+        cnt = storage.read("UL")
+        storage.write(cnt + 1, "UL")
+
     profile = SigfoxProfile("UPLINK", "ACK ON ERROR", Rule.from_hex(data))
     receiver = SCHCReceiver(profile, storage)
     fragment = Fragment.from_hex(data)
@@ -60,6 +67,14 @@ def receive(request) -> tuple[object, int]:
                     {device: {"downlinkData": comp_ack.to_hex()}}),
                 "status_code": 200
             }
+
+            storage.change_ref(f"{device_type_id}/{device}", reset=True)
+            if not storage.exists("DL"):
+                storage.write(1, "DL")
+            else:
+                cnt = storage.read("DL")
+                storage.write(cnt + 1, "DL")
+            storage.change_ref(f"rule_{receiver.PROFILE.RULE.ID}")
 
         if fragment.is_all_1() and comp_ack.is_complete():
             fragments = []
