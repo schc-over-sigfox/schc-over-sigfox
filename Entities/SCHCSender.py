@@ -46,6 +46,15 @@ class SCHCSender:
 
         self.LOGGER.SENT += 1
 
+        if fragment.is_all_0():
+            self.LOGGER.ALL_0_COUNT += 1
+        elif fragment.is_all_1():
+            self.LOGGER.ALL_1_COUNT += 1
+        elif fragment.is_sender_abort():
+            self.LOGGER.ABORT_COUNT += 1
+        else:
+            self.LOGGER.REGULAR_COUNT += 1
+
         if not fragment.is_sender_abort():
             path = "fragments/fragment_w{}f{}".format(w_index, f_index)
             f_json = json.loads(self.STORAGE.read(path))

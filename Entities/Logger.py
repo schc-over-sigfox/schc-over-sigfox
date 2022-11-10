@@ -16,6 +16,10 @@ class Logger:
         self.NB_FRAGMENTS = 0
         self.UPLINK_LOSS_RATE = 0
         self.DOWNLINK_LOSS_RATE = 0
+        self.REGULAR_COUNT = 0
+        self.ALL_0_COUNT = 0
+        self.ALL_1_COUNT = 0
+        self.ABORT_COUNT = 0
         self.SENT = 0
         self.RECEIVED = 0
         self.LOGGING_TIME = 0
@@ -63,7 +67,13 @@ class Logger:
         j = {
             "packet_size": self.PACKET_SIZE,
             "nb_fragments": self.NB_FRAGMENTS,
-            "sent": self.SENT,
+            "sent": {
+                "regular": self.REGULAR_COUNT,
+                "all-0": self.ALL_0_COUNT,
+                "all-1": self.ALL_1_COUNT,
+                "abort": self.ABORT_COUNT,
+                "total": self.SENT
+            },
             "received": self.RECEIVED,
             "sender-aborted": self.SENDER_ABORTED,
             "receiver-aborted": self.RECEIVER_ABORTED,
