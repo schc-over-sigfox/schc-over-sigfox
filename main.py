@@ -20,7 +20,7 @@ try:
 except OSError:
     pass
 
-for repetition in range(1):
+for repetition in range(100):
 
     for size in sizes:
 
