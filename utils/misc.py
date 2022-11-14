@@ -1,5 +1,6 @@
 """Module of miscellaneous functions used in the project."""
 import os
+import time
 
 import uos
 
@@ -48,7 +49,8 @@ def section_string(string: str, indices: list[int]) -> list[str]:
 
 
 def generate_packet(byte_size: int, path: str = None) -> bytes:
-    """Generates a string of the specified byte size and optionally saves it into a file."""
+    """Generates a string of the specified byte size
+    and optionally saves it into a file."""
 
     string = '0'
     i = 0
@@ -56,7 +58,7 @@ def generate_packet(byte_size: int, path: str = None) -> bytes:
         i = (i + 1) % 10
         string += str(i)
 
-    string = string.encode('utf-8')
+    string = string.encode()
 
     if path is not None and not os.path.isfile(path):
         with open(path, 'wb') as fi:
@@ -84,3 +86,36 @@ def round_to_next_multiple(num, factor):
 def urand(inf=0, sup=100) -> float:
     """Obtains a random float using the Pycom uos.urandom() function."""
     return inf + uos.urandom(1)[0] / 256 * (sup - inf)
+
+
+def set_led(color: str) -> None:
+    """Configures the light of the LoPy4 LED."""
+    import pycom
+
+    pycom.heartbeat(False)
+
+    colors = {
+        "blue": 0x0000ff,
+        "brown": 0x653700,
+        "cyan": 0x00ffff,
+        "green": 0x00ff00,
+        "magenta": 0xff00ff,
+        "pink": 0xff81c0,
+        "purple": 0x7e1e9c,
+        "red": 0xff0000,
+        "white": 0xffffff,
+        "yellow": 0xffff00,
+        "black": 0x000000
+    }
+
+    pycom.rgbled(colors[color])
+
+
+def blink(color: str, times: int, period: float) -> None:
+    """Makes the LoPy4 LED blink {times} times, each time lasting {period}."""
+
+    for t in range(times):
+        set_led(color)
+        time.sleep(period)
+        set_led("black")
+        time.sleep(period)
