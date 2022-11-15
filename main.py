@@ -24,15 +24,15 @@ for repetition in range(100):
 
     for size in sizes:
 
-        for bit in int_to_bin(repetition):
-            if bit == 1:
+        for bit in int_to_bin(repetition, 8):
+            if bit == "1":
                 set_led("cyan")
-                time.sleep(1)
+                time.sleep(0.5)
             else:
                 set_led("brown")
-                time.sleep(1)
+                time.sleep(0.5)
             set_led("black")
-            time.sleep(1)
+            time.sleep(0.5)
 
         PACKET = generate_packet(size)
 

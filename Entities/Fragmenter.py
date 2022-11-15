@@ -15,7 +15,7 @@ class Fragmenter:
     def __init__(
             self,
             profile: SigfoxProfile,
-            fragment_dir: str = "debug/sd",
+            fragment_dir: str = "/sd",
     ) -> None:
         """
         Instantiate a Fragmenter.
