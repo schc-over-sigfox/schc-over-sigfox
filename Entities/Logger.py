@@ -24,7 +24,7 @@ class Logger:
         self.RECEIVED = 0
         self.LOGGING_TIME = 0
         self.FRAGMENTS_INFO = {}
-        self.STORAGE = CommonFileStorage("export")
+        self.STORAGE = CommonFileStorage("/sd/export")
 
         self.LAPS = []
         self.FRAGMENTATION_TIME = 0
