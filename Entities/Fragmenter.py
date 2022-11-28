@@ -105,7 +105,8 @@ class Fragmenter:
         number_of_fragments = -(len(schc_packet) // -payload_max_length)
         fragments = []
 
-        if len(schc_packet) % payload_max_length == 0:
+        if header_len < all_1_header_len and len(
+                schc_packet) % payload_max_length == 0:
             number_of_fragments += 1
 
         for i in range(number_of_fragments):
