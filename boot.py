@@ -1,9 +1,9 @@
 import os
 
 import pycom
-from machine import SD
+# from machine import SD
 
-pycom.heartbeat(True)
+pycom.heartbeat(False)
 
-sd = SD()
-os.mount(sd, '/sd')
+# sd = SD()
+# os.mount(sd, '/sd')

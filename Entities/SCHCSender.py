@@ -12,7 +12,7 @@ from Messages.Fragment import Fragment
 from Messages.SenderAbort import SenderAbort
 from Sockets.SigfoxSocket import SigfoxSocket as Socket
 from utils.casting import bytes_to_hex, bin_to_int
-from utils.misc import replace_char, is_monochar, zfill, urand, blink
+from utils.misc import replace_char, is_monochar, zfill, urand
 
 
 class SCHCSender:
@@ -156,7 +156,6 @@ class SCHCSender:
         try:
             enable_reception = fragment.expects_ack() and not self.RT
             self.SOCKET.set_reception(enable_reception)
-            blink("blue", 1, 0.1)
             self.send(fragment)
 
             if enable_reception:
@@ -208,7 +207,6 @@ class SCHCSender:
             return
 
         except SCHCTimeoutError as exc:
-            blink("red", 1, 0.1)
             if fragment.is_all_1():
                 log.debug("ACK-REQ Attempts: {}".format(self.ATTEMPTS))
                 if self.ATTEMPTS >= self.PROFILE.MAX_ACK_REQUESTS and \
@@ -366,5 +364,4 @@ class SCHCSender:
             try:
                 self.schc_send(fragment)
             except SCHCError:
-                blink("red", 3, 0.1)
                 break
