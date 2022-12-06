@@ -1,6 +1,7 @@
-import unittest
+import queue
 from unittest import TestCase
 
+import config.schc
 from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import SCHCTimeoutError
 from Messages.CompoundACK import CompoundACK
@@ -11,8 +12,14 @@ from utils.casting import bytes_to_hex
 PORT = 1313
 
 
-@unittest.skip
 class TestHTTPSocket(TestCase):
+
+    def test_init(self):
+        socket = SigfoxHTTPSocket()
+        self.assertEqual("1a2b3c", socket.DEVICE)
+        self.assertIsInstance(socket.BUFFER, queue.Queue)
+        self.assertEqual(socket.ENDPOINT, config.schc.RECEIVER_URL)
+        self.assertEqual(60, socket.TIMEOUT)
 
     def test_send(self):
         socket = SigfoxHTTPSocket()
