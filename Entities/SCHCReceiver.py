@@ -18,10 +18,10 @@ from utils.misc import replace_char
 class SCHCReceiver:
 
     def __init__(self, profile: SigfoxProfile, storage: JSONStorage):
-        self.PROFILE = profile
-        self.STORAGE = storage
+        self.PROFILE: SigfoxProfile = profile
+        self.STORAGE: JSONStorage = storage
         self.STORAGE.change_ref(f"rule_{self.PROFILE.RULE.ID}")
-        self.LOGGER = Logger(Logger.DEBUG)
+        self.LOGGER: Logger = Logger(Logger.DEBUG)
 
         if self.STORAGE.is_empty():
             self.start_new_session(retain_previous_data=False)
@@ -31,7 +31,7 @@ class SCHCReceiver:
         self.LOGGER.debug("Checking if session was aborted...")
         return self.STORAGE.exists("state/ABORT")
 
-    def inactivity_timer_expired(self, current_timestamp) -> bool:
+    def inactivity_timer_expired(self, current_timestamp: int) -> bool:
         """Checks if the difference between the current timestamp and the
         previous one exceeds the timeout value."""
         self.LOGGER.debug("Checking if inactivity timer expired...")
@@ -205,7 +205,7 @@ class SCHCReceiver:
         updated_bitmap = replace_char(bitmap, fragment.INDEX, '1')
         self.STORAGE.write(updated_bitmap, f"state/bitmaps/w{fragment.WINDOW}")
 
-    def fragment_was_already_received(self, fragment: Fragment):
+    def fragment_was_already_received(self, fragment: Fragment) -> bool:
         """Checks if the fragment was already processed by the receiver."""
         self.LOGGER.debug("Checking if fragment was already received...")
 

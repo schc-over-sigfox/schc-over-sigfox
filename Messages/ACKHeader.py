@@ -17,7 +17,7 @@ class ACKHeader(Header):
         if len(c) != 1:
             raise LengthMismatchError("C bit must be of length 1")
 
-        self.C = c
+        self.C: str = c
 
     def to_binary(self) -> str:
         fields_in_order = [self.RULE_ID, self.DTAG, self.W, self.C]

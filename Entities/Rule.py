@@ -8,8 +8,8 @@ class Rule:
 
     def __init__(self, rule_id: str) -> None:
 
-        self.STR = rule_id
-        self.ID = bin_to_int(rule_id)
+        self.STR: str = rule_id
+        self.ID: int = bin_to_int(rule_id)
 
         if rule_id[:3] != '111':
             self.RULE_ID_SIZE = 3
@@ -38,15 +38,15 @@ class Rule:
         if len(rule_id) > self.RULE_ID_SIZE:
             raise LengthMismatchError("Rule ID is larger than RULE_ID_SIZE")
 
-        self.HEADER_LENGTH = round_to_next_multiple(
+        self.HEADER_LENGTH: int = round_to_next_multiple(
             self.RULE_ID_SIZE + self.T + self.M + self.N, L2_WORD_SIZE
         )
 
-        self.ALL1_HEADER_LENGTH = round_to_next_multiple(
+        self.ALL1_HEADER_LENGTH: int = round_to_next_multiple(
             self.RULE_ID_SIZE + self.T + self.M + self.N + self.U, L2_WORD_SIZE
         )
 
-        self.ACK_HEADER_LENGTH = self.RULE_ID_SIZE + self.M + 1
+        self.ACK_HEADER_LENGTH: int = self.RULE_ID_SIZE + self.M + 1
 
     @staticmethod
     def from_hex(h: str) -> 'Rule':

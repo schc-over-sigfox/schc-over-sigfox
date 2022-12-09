@@ -1,7 +1,7 @@
 class FileStorage:
 
     def __init__(self, root: str) -> None:
-        self.ROOT = root
+        self.ROOT: str = root
 
     def read(self, path: str) -> str:
         """Reads a file and returns its content as a string."""

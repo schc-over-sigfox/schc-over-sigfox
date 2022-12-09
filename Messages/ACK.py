@@ -17,11 +17,11 @@ class ACK:
             bitmap: str,
             padding: str = ''
     ) -> None:
-        self.PROFILE = profile
-        self.BITMAP = bitmap
-
-        self.HEADER = ACKHeader(profile, dtag, w, c)
-        self.PADDING = padding + '0' * (profile.DOWNLINK_MTU - len(self.HEADER.to_binary() + self.BITMAP + padding))
+        self.PROFILE: SigfoxProfile = profile
+        self.BITMAP: str = bitmap
+        self.HEADER: ACKHeader = ACKHeader(profile, dtag, w, c)
+        self.PADDING: str = padding + '0' * (profile.DOWNLINK_MTU - len(
+            self.HEADER.to_binary() + self.BITMAP + padding))
 
     def to_hex(self) -> str:
         """Obtains the hex representationi of the ACK."""

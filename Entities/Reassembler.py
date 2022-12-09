@@ -9,10 +9,10 @@ class Reassembler:
             profile: SigfoxProfile,
             fragments: list[Fragment],
     ) -> None:
-        self.PROFILE = profile
-        self.FRAGMENTS = fragments
-        self.SCHC_PACKET = b''
-        self.COMPLETE = False
+        self.PROFILE: SigfoxProfile = profile
+        self.FRAGMENTS: list[Fragment] = fragments
+        self.SCHC_PACKET: bytes = b''
+        self.COMPLETE: bool = False
 
     def reassemble(self) -> bytes:
         """Merges all the SCHC Fragments into the original SCHC Packet."""

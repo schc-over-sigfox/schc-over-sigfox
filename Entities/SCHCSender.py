@@ -13,6 +13,7 @@ from Messages.CompoundACK import CompoundACK
 from Messages.Fragment import Fragment
 from Messages.SenderAbort import SenderAbort
 from Sockets.SigfoxHTTPSocket import SigfoxHTTPSocket as Socket
+from db.FileStorage import FileStorage
 from utils.casting import bytes_to_hex, bin_to_int
 from utils.misc import replace_char, is_monochar, zfill
 
@@ -20,24 +21,24 @@ from utils.misc import replace_char, is_monochar, zfill
 class SCHCSender:
 
     def __init__(self, profile: SigfoxProfile):
-        self.PROFILE = profile
-        self.FRAGMENTER = Fragmenter(self.PROFILE)
-        self.STORAGE = self.FRAGMENTER.STORAGE
-        self.ATTEMPTS = 0
-        self.NB_FRAGMENTS = 0
-        self.LAST_WINDOW = 0
+        self.PROFILE: SigfoxProfile = profile
+        self.FRAGMENTER: Fragmenter = Fragmenter(self.PROFILE)
+        self.STORAGE: FileStorage = self.FRAGMENTER.STORAGE
+        self.ATTEMPTS: int = 0
+        self.NB_FRAGMENTS: int = 0
+        self.LAST_WINDOW: int = 0
         self.DELAY: float = config.DELAY_BETWEEN_FRAGMENTS
-        self.LOGGER = Logger(Logger.INFO)
-        self.SOCKET = Socket()
+        self.LOGGER: Logger = Logger(Logger.INFO)
+        self.SOCKET: Socket = Socket()
 
-        self.TRANSMISSION_QUEUE = []
-        self.RETRANSMISSION_QUEUE = []
-        self.RT = False
+        self.TRANSMISSION_QUEUE: list[Fragment] = []
+        self.RETRANSMISSION_QUEUE: list[Fragment] = []
+        self.RT: bool = False
 
-        self.LOSS_MASK = {}
-        self.UPLINK_LOSS_RATE = 0
-        self.DOWNLINK_LOSS_RATE = 0
-        self.ENABLE_MAX_ACK_REQUESTS = True
+        self.LOSS_MASK: dict = {}
+        self.UPLINK_LOSS_RATE: int = 0
+        self.DOWNLINK_LOSS_RATE: int = 0
+        self.ENABLE_MAX_ACK_REQUESTS: bool = True
 
     def send(self, fragment: Fragment) -> None:
         """Send a fragment towards the receiver end."""
@@ -318,7 +319,7 @@ class SCHCSender:
         else:
             self.SOCKET.set_timeout(60)
 
-    def start_session(self, schc_packet: bytes):
+    def start_session(self, schc_packet: bytes) -> None:
         """Performs the full SCHC Sender procedure for a given SCHC Packet."""
 
         log.info(f"SCHC Packet: {schc_packet}")

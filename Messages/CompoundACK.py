@@ -20,7 +20,7 @@ class CompoundACK(ACK):
             bitmaps: list[str],
             padding: str = ''
     ) -> None:
-        self.TUPLES = []
+        self.TUPLES: list[tuple[str, str]] = []
 
         if len(windows) != len(bitmaps):
             raise BadProfileError("Window and bitmap arrays must be of same length. "

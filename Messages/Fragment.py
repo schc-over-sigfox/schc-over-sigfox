@@ -25,12 +25,13 @@ class Fragment:
             payload: (bytes) The payload of the fragment.
         """
 
-        self.PROFILE = header.PROFILE
-        self.HEADER = header
-        self.PAYLOAD = payload
-        self.WINDOW = self.HEADER.WINDOW_NUMBER
-        self.INDEX = self.PROFILE.FCN_DICT.get(self.HEADER.FCN, self.PROFILE.WINDOW_SIZE - 1)
-        self.NUMBER = self.WINDOW * self.PROFILE.WINDOW_SIZE + self.INDEX
+        self.PROFILE: SigfoxProfile = header.PROFILE
+        self.HEADER: FragmentHeader = header
+        self.PAYLOAD: bytes = payload
+        self.WINDOW: int = self.HEADER.WINDOW_NUMBER
+        self.INDEX: int = self.PROFILE.FCN_DICT.get(self.HEADER.FCN,
+                                                    self.PROFILE.WINDOW_SIZE - 1)
+        self.NUMBER: int = self.WINDOW * self.PROFILE.WINDOW_SIZE + self.INDEX
 
     def to_bytes(self) -> bytes:
         """Returns the byte representation of the Fragment."""

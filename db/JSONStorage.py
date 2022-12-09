@@ -11,10 +11,10 @@ class JSONStorage:
     """
 
     def __init__(self) -> None:
-        self.ROOT = ''
-        self.REL = self.ROOT
-        self.REL_PATH = []
-        self.JSON = {}
+        self.ROOT: str = ''
+        self.REL: str = self.ROOT
+        self.REL_PATH: list[str] = []
+        self.JSON: dict = {}
 
         if self.REL_PATH:
             deep_write(self.JSON, {}, self.REL_PATH)

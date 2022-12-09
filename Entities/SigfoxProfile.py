@@ -13,9 +13,9 @@ class SigfoxProfile:
     DOWNLINK_MTU = 64
 
     def __init__(self, direction: str, mode: str, rule: Rule) -> None:
-        self.DIRECTION = direction
-        self.RULE = rule
-        self.MODE = mode
+        self.DIRECTION: str = direction
+        self.MODE: str = mode
+        self.RULE: Rule = rule
 
         self.MAX_ACK_REQUESTS = cfg.MAX_ACK_REQUESTS
         self.RETRANSMISSION_TIMEOUT = cfg.RETRANSMISSION_TIMEOUT

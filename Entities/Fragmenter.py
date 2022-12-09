@@ -24,9 +24,10 @@ class Fragmenter:
             profile: (SCHCProfile) SCHC Profile used for the fragmentation procedure.
             fragment_dir: (str) Directory where to store the fragments,
         """
-        self.PROFILE = profile
-        self.STORAGE = Storage(f"{fragment_dir}/rule_{self.PROFILE.RULE.ID}")
-        self.CURRENT_FRAGMENT_NUMBER = 0
+        self.PROFILE: SigfoxProfile = profile
+        self.STORAGE: Storage = Storage(
+            f"{fragment_dir}/rule_{self.PROFILE.RULE.ID}")
+        self.CURRENT_FRAGMENT_NUMBER: int = 0
 
         if not self.STORAGE.folder_exists("fragments"):
             self.STORAGE.create_folder("fragments")
