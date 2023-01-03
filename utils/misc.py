@@ -6,12 +6,14 @@ import requests
 
 
 def zfill(string: str, length: int) -> str:
-    """Adds zeroes at the begginning of a string until it completes the desired length."""
+    """Adds zeroes at the begginning of a string until it completes
+    the desired length."""
     return '0' * (length - len(string)) + string
 
 
 def zpad(string: str, length: int) -> str:
-    """Adds zeroes at the end of a string until it completes the desired length."""
+    """Adds zeroes at the end of a string until it completes
+    the desired length."""
     return string + '0' * (length - len(string))
 
 
@@ -36,14 +38,16 @@ def is_monochar(string: str, char: str = None) -> bool:
 
 
 def section_string(string: str, indices: list[int]) -> list[str]:
-    """Sections a string in the specified indices and returns a list of its sections."""
+    """Sections a string in the specified indices and
+    returns a list of its sections."""
     indices.append(len(string))
 
     return [string[i:j] for i, j in zip(indices, indices[1:])]
 
 
 def generate_packet(byte_size: int, path: str = None) -> bytes:
-    """Generates a string of the specified byte size and optionally saves it into a file."""
+    """Generates a string of the specified byte size and
+    optionally saves it into a file."""
 
     string = '0'
     i = 0
@@ -61,7 +65,8 @@ def generate_packet(byte_size: int, path: str = None) -> bytes:
 
 
 def invert_dict(dic: dict) -> dict:
-    """Inverts {key: value} pairs of a dictionary into {value: kay} pairs, only if no values are repeated."""
+    """Inverts {key: value} pairs of a dictionary into {value: kay} pairs,
+    only if no values are repeated."""
     values = list(dic.values())
 
     if len(values) != len(set(values)):
@@ -75,8 +80,10 @@ def round_to_next_multiple(num, factor):
     return -(num // (-factor)) * factor
 
 
-def http_post(body: dict, endpoint: str, asynchronous: bool = False) -> Optional[requests.Response]:
-    """Makes a HTTP POST request, which wait for its response or not."""
+def http_post(
+        body: dict, endpoint: str, asynchronous: bool = False
+) -> Optional[requests.Response]:
+    """Makes an HTTP POST request, waiting or not for its response."""
 
     timeout = .1 if asynchronous else 60
 
