@@ -12,13 +12,13 @@ class CommonFileStorage(FileStorage):
             self.create_folder()
 
     def read(self, path: str) -> str:
-        with open(f"{self.ROOT}/{path}", 'r', encoding="utf-8") as f:
-            data = f.read()
+        with open(f"{self.ROOT}/{path}", 'r', encoding="utf-8") as fil:
+            data = fil.read()
         return data
 
     def write(self, path: str, data: str) -> None:
-        with open(f"{self.ROOT}/{path}", 'w', encoding="utf-8") as f:
-            f.write(data)
+        with open(f"{self.ROOT}/{path}", 'w', encoding="utf-8") as fil:
+            fil.write(data)
 
     def delete_file(self, path: str) -> None:
         if self.file_exists(path):
@@ -27,11 +27,11 @@ class CommonFileStorage(FileStorage):
     def delete_folder(self, path: str) -> None:
         if self.folder_exists(path):
             if not self.folder_empty(path):
-                for e in self.list_files(path):
-                    if self.is_file(f"{path}/{e}"):
-                        self.delete_file(f"{path}/{e}")
-                    elif self.is_folder(f"{path}/{e}"):
-                        self.delete_folder(f"{path}/{e}")
+                for fil in self.list_files(path):
+                    if self.is_file(f"{path}/{fil}"):
+                        self.delete_file(f"{path}/{fil}")
+                    elif self.is_folder(f"{path}/{fil}"):
+                        self.delete_folder(f"{path}/{fil}")
         os.rmdir(f"{self.ROOT}/{path}")
 
     def create_folder(self, path: str = ''):
@@ -44,8 +44,7 @@ class CommonFileStorage(FileStorage):
     def list_files(self, path: str = '') -> list[str]:
         if self.folder_exists(path):
             return os.listdir(f"{self.ROOT}/{path}")
-        else:
-            return []
+        return []
 
     def file_exists(self, path: str) -> bool:
         return os.path.exists(f"{self.ROOT}/{path}")
