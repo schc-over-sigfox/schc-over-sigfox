@@ -1,13 +1,10 @@
 """Sends a single uplink Sigfox message."""
 
-import binascii
 import socket
 
 from network import Sigfox
 
 sigfox = Sigfox(mode=Sigfox.SIGFOX, rcz=Sigfox.RCZ4)
-print(binascii.hexlify(sigfox.id()))
-print(binascii.hexlify(sigfox.pac()))
 s = socket.socket(socket.AF_SIGFOX, socket.SOCK_RAW)
 s.setblocking(True)
 s.setsockopt(socket.SOL_SIGFOX, socket.SO_RX, False)
