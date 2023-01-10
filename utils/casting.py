@@ -23,12 +23,6 @@ def bin_to_bytes(bits: str) -> bytes:
     return bytes(int(bits[i:i + 8], 2) for i in range(0, len(bits), 8))
 
 
-def bin_to_string(bits: str, encoding: str = 'utf-8') -> str:
-    """Transforms a binary string into its encoded string representation."""
-    as_int = int(bits, 2)
-    return as_int.to_bytes((as_int.bit_length() + 7) // 8, byteorder='big').decode(encoding)
-
-
 def hex_to_bin(hexa: str, length: int = None) -> str:
     """Transforms a hexadecimal string into its binary representation."""
     if length is None:
@@ -79,10 +73,3 @@ def int_to_bytes(num: int, length: int = None) -> bytes:
     if length is None:
         length = int(log(num, 256)) + 1 if num != 0 else 1
     return num.to_bytes(length, byteorder='big')
-
-
-def string_to_bin(string: str, encoding: str = 'utf-8') -> str:
-    """Transforms an encoded string into its binary representation."""
-    as_int = int.from_bytes(string.encode(encoding), byteorder='big')
-    as_bin = bin(as_int)[2:]
-    return zfill(as_bin, 8 * ((len(as_bin) + 7) // 8))
