@@ -10,13 +10,17 @@ class Header:
             dtag: str,
             w: str
     ) -> None:
-        """Class to encapsulate SCHC Header fields present in Fragments and ACKs."""
+        """Class to encapsulate SCHC Header fields
+        present in Fragments and ACKs."""
 
         self.PROFILE: SigfoxProfile = profile
 
         if len(profile.RULE.STR) != profile.RULE_ID_SIZE:
-            raise LengthMismatchError(f"RULE must be of length RULE_ID_SIZE ({profile.RULE_ID_SIZE}). "
-                                      f"Rule was {profile.RULE.STR}, length = {len(profile.RULE.STR)}. ")
+            raise LengthMismatchError(
+                f"RULE must be of length RULE_ID_SIZE "
+                f"({profile.RULE_ID_SIZE}). "
+                f"Rule was {profile.RULE.STR}, "
+                f"length = {len(profile.RULE.STR)}.")
         self.RULE_ID: str = profile.RULE.STR
 
         if profile.T == "0":

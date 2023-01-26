@@ -1,3 +1,6 @@
+"""These tests require test/server_test.py to be executed
+in a separate terminal."""
+
 import queue
 from unittest import TestCase
 

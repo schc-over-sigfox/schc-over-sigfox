@@ -1,3 +1,6 @@
+"""These tests require test/server_test.py to be executed
+in a separate terminal."""
+
 import json
 import shutil
 from unittest import TestCase
@@ -86,6 +89,7 @@ class TestSCHCSender(TestCase):
     def test_recv(self):
         rule = Rule("000")
         profile = SigfoxProfile(direction="UPLINK", mode="ACK ON ERROR", rule=rule)
+        profile.SIGFOX_DL_TIMEOUT = 5
         sender = SCHCSender(profile)
         sender.SOCKET.ENDPOINT = f'http://127.0.0.1:{PORT}/test'
 

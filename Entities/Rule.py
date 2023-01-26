@@ -49,10 +49,10 @@ class Rule:
         self.ACK_HEADER_LENGTH: int = self.RULE_ID_SIZE + self.M + 1
 
     @staticmethod
-    def from_hex(h: str) -> 'Rule':
+    def from_hex(hexa: str) -> 'Rule':
         """Parses the Rule ID of the given hex string,
          assuming that it is located in the leftmost bits."""
-        as_bin = hex_to_bin(h)
+        as_bin = hex_to_bin(hexa)
         first_byte = as_bin[:8]
         rule_id = first_byte[:3]
         if is_monochar(rule_id, '1'):

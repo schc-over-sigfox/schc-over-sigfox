@@ -196,12 +196,12 @@ class SCHCReceiver:
 
         for i in range(fragment.WINDOW):
             if not self.STORAGE.exists(f"state/bitmaps/w{i}"):
-                self.STORAGE.write('0' * self.PROFILE.WINDOW_SIZE,
+                self.STORAGE.write('0' * self.PROFILE.WDW_SIZE,
                                    f"state/bitmaps/w{i}")
 
         bitmap = self.STORAGE.read(f"state/bitmaps/w{fragment.WINDOW}")
         if bitmap is None:
-            bitmap = '0' * self.PROFILE.WINDOW_SIZE
+            bitmap = '0' * self.PROFILE.WDW_SIZE
         updated_bitmap = replace_char(bitmap, fragment.INDEX, '1')
         self.STORAGE.write(updated_bitmap, f"state/bitmaps/w{fragment.WINDOW}")
 
@@ -262,7 +262,7 @@ class SCHCReceiver:
                 expected_fragments = bin_to_int(fragment.HEADER.RCS)
                 expected_bitmap = \
                     f"{'1' * (expected_fragments - 1)}" \
-                    f"{'0' * (self.PROFILE.WINDOW_SIZE - expected_fragments)}" \
+                    f"{'0' * (self.PROFILE.WDW_SIZE - expected_fragments)}" \
                     f"1"
                 if bitmap != expected_bitmap:
                     lost = True
@@ -291,7 +291,7 @@ class SCHCReceiver:
                     dtag=fragment.HEADER.DTAG,
                     windows=[fragment.HEADER.W],
                     c='1',
-                    bitmaps=['0' * self.PROFILE.WINDOW_SIZE],
+                    bitmaps=['0' * self.PROFILE.WDW_SIZE],
                 )
                 self.STORAGE.write(ack.to_hex(), "state/LAST_ACK")
 

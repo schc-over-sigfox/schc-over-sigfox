@@ -72,7 +72,7 @@ class SCHCSender:
                 self.LOGGER.FRAGMENTS_INFO.update(fragment_info)
                 return
 
-        elif self.LOSS_MASK != {}:
+        elif self.LOSS_MASK:
             window_mask = self.LOSS_MASK["fragment"][str(
                 fragment.HEADER.WINDOW_NUMBER
             )]
@@ -98,7 +98,8 @@ class SCHCSender:
                                     f'F{fragment.INDEX}'
 
         self.LOGGER.FRAGMENTS_INFO.update(fragment_info)
-        return self.SOCKET.send(as_bytes)
+        self.SOCKET.send(as_bytes)
+        return
 
     def recv(self, bufsize: int) -> Optional[CompoundACK]:
         """Receives a message from the socket and parses it
@@ -114,7 +115,7 @@ class SCHCSender:
             if random.random() * 100 <= self.DOWNLINK_LOSS_RATE:
                 log.debug("ACK lost (rate)")
                 raise SCHCTimeoutError
-        elif self.LOSS_MASK != {}:
+        elif self.LOSS_MASK:
             ack_mask = self.LOSS_MASK["ack"][str(ack.HEADER.WINDOW_NUMBER)]
             loss = ack_mask != '0'
 
@@ -148,10 +149,9 @@ class SCHCSender:
             self.SOCKET.set_reception(enable_reception)
             self.send(fragment)
 
-            if enable_reception:
-                ack = self.recv(self.PROFILE.DOWNLINK_MTU // 8)
-            else:
-                ack = None
+            ack = self.recv(
+                self.PROFILE.DOWNLINK_MTU // 8
+            ) if enable_reception else None
 
             self.update_rt()
 
@@ -178,13 +178,13 @@ class SCHCSender:
                     log.error("ACK received but not requested.")
                     raise BadProfileError
 
-                if ack.HEADER.WINDOW_NUMBER == self.LAST_WINDOW:
-                    if ack.HEADER.C == '1':
-                        log.info("ACK received with C = 1. "
-                                 "End of transmission.")
-                        self.LOGGER.FINISHED = True
-                        self.FRAGMENTER.clear_fragment_directory()
-                        return
+                if ack.HEADER.WINDOW_NUMBER == self.LAST_WINDOW \
+                        and ack.HEADER.C == '1':
+                    log.info("ACK received with C = 1. "
+                             "End of transmission.")
+                    self.LOGGER.FINISHED = True
+                    self.FRAGMENTER.clear_fragment_directory()
+                    return
 
                 self.update_queues(fragment, ack)
 
@@ -195,7 +195,7 @@ class SCHCSender:
             if fragment.is_all_1():
                 log.debug(f"ACK-REQ Attempts: {self.ATTEMPTS}")
                 if self.ATTEMPTS >= self.PROFILE.MAX_ACK_REQUESTS and \
-                        config.ENABLE_MAX_ACK_REQUESTS:
+                        not config.DISABLE_MAX_ACK_REQUESTS:
                     log.error("MAX_ACK_REQUESTS reached.")
                     self.TRANSMISSION_QUEUE.insert(
                         0, SenderAbort(fragment.HEADER)
@@ -226,7 +226,7 @@ class SCHCSender:
         w_index, f_index = fragment.get_indices()
         fragment_pk = f"W{w_index}F{f_index}"
 
-        if fragment_pk in self.LOGGER.FRAGMENTS_INFO.keys():
+        if fragment_pk in self.LOGGER.FRAGMENTS_INFO:
             fragment_info = {
                 fragment_pk: self.LOGGER.FRAGMENTS_INFO[fragment_pk]
             }
@@ -244,7 +244,7 @@ class SCHCSender:
     def update_rt(self) -> None:
         """Updates the RT flag. This method should be called before and
         after processing an ACK."""
-        self.RT = self.RETRANSMISSION_QUEUE != []
+        self.RT = bool(self.RETRANSMISSION_QUEUE)
 
     def update_queues(self, fragment: Fragment, ack: CompoundACK) -> None:
         """Updates the transmission and retransmission queues with
@@ -259,8 +259,9 @@ class SCHCSender:
                 if not fragment.is_all_1():
                     raise BadProfileError("The last ACK-REQ was not an All-1.")
 
-                last_bitmap = bitmap[:(
-                                                  self.NB_FRAGMENTS - 1) % self.PROFILE.WINDOW_SIZE]
+                last_bitmap = bitmap[
+                              :(self.NB_FRAGMENTS - 1) % self.PROFILE.WDW_SIZE
+                              ]
 
                 bitmap_has_only_all1 = last_bitmap == '' and bitmap[-1] == '1'
                 bitmap_is_1s = is_monochar(last_bitmap, '1')
@@ -283,16 +284,16 @@ class SCHCSender:
 
             for j, bit in enumerate(bitmap_to_retransmit):
                 if bit == '0':
-                    fragment_id = self.PROFILE.WINDOW_SIZE \
+                    fragment_id = self.PROFILE.WDW_SIZE \
                                   * ack_window_number \
                                   + j
                     w_index = zfill(
-                        str(fragment_id // self.PROFILE.WINDOW_SIZE),
+                        str(fragment_id // self.PROFILE.WDW_SIZE),
                         (2 ** self.PROFILE.M - 1) // 10 + 1
                     )
                     f_index = zfill(
-                        str(fragment_id % self.PROFILE.WINDOW_SIZE),
-                        self.PROFILE.WINDOW_SIZE // 10 + 1
+                        str(fragment_id % self.PROFILE.WDW_SIZE),
+                        self.PROFILE.WDW_SIZE // 10 + 1
                     )
                     path = f"{self.STORAGE.ROOT}/" \
                            f"fragments/fragment_w{w_index}f{f_index}"
@@ -333,7 +334,7 @@ class SCHCSender:
         self.LOGGER.UPLINK_LOSS_RATE = self.UPLINK_LOSS_RATE
         self.LOGGER.DOWNLINK_LOSS_RATE = self.DOWNLINK_LOSS_RATE
 
-        while self.TRANSMISSION_QUEUE != [] or self.RETRANSMISSION_QUEUE != []:
+        while self.TRANSMISSION_QUEUE or self.RETRANSMISSION_QUEUE:
             if not self.RT:
                 fragment = self.TRANSMISSION_QUEUE.pop(0)
             else:

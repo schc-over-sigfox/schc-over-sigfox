@@ -35,15 +35,22 @@ class FragmentHeader(Header):
 
         self.PADDING: str = ''
         header_length = len(
-            self.RULE_ID + self.DTAG + self.W + self.FCN + self.RCS) % L2_WORD_SIZE
+            self.RULE_ID
+            + self.DTAG
+            + self.W
+            + self.FCN
+            + self.RCS
+        ) % L2_WORD_SIZE
 
         if header_length % L2_WORD_SIZE != 0:
-            self.PADDING = '0' * (L2_WORD_SIZE - (header_length % L2_WORD_SIZE))
+            self.PADDING = '0'\
+                           * (L2_WORD_SIZE - (header_length % L2_WORD_SIZE))
 
     def to_binary(self) -> str:
         """Generate the binary string representation of the Header"""
 
-        fields_in_order = [self.RULE_ID, self.DTAG, self.W, self.FCN, self.RCS, self.PADDING]
+        fields_in_order = [self.RULE_ID, self.DTAG, self.W,
+                           self.FCN, self.RCS, self.PADDING]
         return ''.join(fields_in_order)
 
     def to_bytes(self) -> bytes:

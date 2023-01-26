@@ -13,7 +13,8 @@ class Socket:
         raise NotImplementedError
 
     def set_reception(self, flag: bool) -> None:
-        """Configures the socket to be able to receive a message after sending one."""
+        """Configures the socket to be able to receive a message
+        after sending one."""
         raise NotImplementedError
 
     def set_timeout(self, timeout: float) -> None:

@@ -1,4 +1,5 @@
 class FileStorage:
+    """Abstract class for file read/write operations."""
 
     def __init__(self, root: str) -> None:
         self.ROOT: str = root

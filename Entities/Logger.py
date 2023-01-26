@@ -86,8 +86,8 @@ class Logger:
         if not os.path.isdir("export"):
             os.mkdir("export")
 
-        with open(f"export/{filename}", 'w') as fi:
-            fi.write(json.dumps(j, indent=2))
+        with open(f"export/{filename}", 'w', encoding='utf-8') as fil:
+            fil.write(json.dumps(j, indent=2))
 
 
 log = Logger(Logger.WARNING)

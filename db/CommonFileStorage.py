@@ -4,6 +4,7 @@ from db.FileStorage import FileStorage
 
 
 class CommonFileStorage(FileStorage):
+    """Wrapper class for local file storage operations."""
 
     def __init__(self, root: str):
         super().__init__(root)
