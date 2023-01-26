@@ -20,12 +20,14 @@ class CompoundACK(ACK):
             bitmaps: list[str],
             padding: str = ''
     ) -> None:
-        self.TUPLES = []
+        self.TUPLES: list[tuple[str, str]] = []
 
         if len(windows) != len(bitmaps):
-            raise BadProfileError("Window and bitmap arrays must be of same length. "
-                                  f"(Window array has length {len(windows)}, "
-                                  f"bitmap array has length {len(bitmaps)})")
+            raise BadProfileError(
+                "Window and bitmap arrays must be of same length. "
+                f"(Window array has length {len(windows)}, "
+                f"bitmap array has length {len(bitmaps)})"
+            )
 
         first_window = windows[0]
         first_bitmap = bitmaps[0]
@@ -55,7 +57,9 @@ class CompoundACK(ACK):
         as_bin = hex_to_bin(hex_string)
 
         if len(as_bin) != SigfoxProfile.DOWNLINK_MTU:
-            raise LengthMismatchError("Compound ACK was not of length DOWNLINK_MTU.")
+            raise LengthMismatchError(
+                "Compound ACK was not of length DOWNLINK_MTU."
+            )
 
         rule = Rule.from_hex(hex_string)
         profile = SigfoxProfile("UPLINK", config.FR_MODE, rule)
@@ -71,18 +75,18 @@ class CompoundACK(ACK):
         c = header[c_idx:c_idx + 1]
 
         payload = as_bin[rule.ACK_HEADER_LENGTH:]
-        bitmap = payload[:profile.WINDOW_SIZE]
-        padding = payload[profile.WINDOW_SIZE:]
+        bitmap = payload[:profile.WDW_SIZE]
+        padding = payload[profile.WDW_SIZE:]
 
         windows = [w]
         bitmaps = [bitmap]
 
-        while len(padding) >= profile.M + profile.WINDOW_SIZE:
+        while len(padding) >= profile.M + profile.WDW_SIZE:
             if is_monochar(padding, '0'):
                 break
             windows.append(padding[:profile.M])
-            bitmaps.append(padding[profile.M:profile.M + profile.WINDOW_SIZE])
-            padding = padding[profile.M + profile.WINDOW_SIZE:]
+            bitmaps.append(padding[profile.M:profile.M + profile.WDW_SIZE])
+            padding = padding[profile.M + profile.WDW_SIZE:]
 
         return CompoundACK(
             profile,

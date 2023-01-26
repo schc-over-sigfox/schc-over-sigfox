@@ -13,9 +13,9 @@ class SigfoxProfile:
     DOWNLINK_MTU = 64
 
     def __init__(self, direction: str, mode: str, rule: Rule) -> None:
-        self.DIRECTION = direction
-        self.RULE = rule
-        self.MODE = mode
+        self.DIRECTION: str = direction
+        self.MODE: str = mode
+        self.RULE: Rule = rule
 
         self.MAX_ACK_REQUESTS = cfg.MAX_ACK_REQUESTS
         self.RETRANSMISSION_TIMEOUT = cfg.RETRANSMISSION_TIMEOUT
@@ -29,9 +29,14 @@ class SigfoxProfile:
                 self.N = rule.N
                 self.M = rule.M
                 self.U = rule.U
-                self.WINDOW_SIZE = rule.WINDOW_SIZE
+                self.WDW_SIZE = rule.WINDOW_SIZE
                 self.MAX_WINDOW_NUMBER = 2 ** self.M
-                self.MAX_FRAGMENT_NUMBER = self.MAX_WINDOW_NUMBER * self.WINDOW_SIZE
+                self.MAX_FRAGMENT_NUMBER = self.MAX_WINDOW_NUMBER\
+                                           * self.WDW_SIZE
 
-                self.FCN_DICT = {int_to_bin(self.WINDOW_SIZE - (j % self.WINDOW_SIZE) - 1, self.N): j
-                                 for j in range(self.WINDOW_SIZE)}
+                self.FCN_DICT = {
+                    int_to_bin(
+                        self.WDW_SIZE - (j % self.WDW_SIZE) - 1, self.N
+                    ): j
+                    for j in range(self.WDW_SIZE)
+                }

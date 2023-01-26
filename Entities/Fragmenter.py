@@ -10,7 +10,8 @@ from utils.casting import int_to_bin, bytes_to_bin
 
 
 class Fragmenter:
-    """A Fragmenter object, which generates SCHC Fragments from a SCHC Packet."""
+    """A Fragmenter object, which generates SCHC Fragments
+    from a SCHC Packet."""
 
     def __init__(
             self,
@@ -21,31 +22,35 @@ class Fragmenter:
         Instantiate a Fragmenter.
 
         Args:
-            profile: (SCHCProfile) SCHC Profile used for the fragmentation procedure.
+            profile: (SCHCProfile) SCHC Profile used for the fragmentation
+            procedure.
             fragment_dir: (str) Directory where to store the fragments,
         """
-        self.PROFILE = profile
-        self.STORAGE = Storage(f"{fragment_dir}/rule_{self.PROFILE.RULE.ID}")
-        self.CURRENT_FRAGMENT_NUMBER = 0
+        self.PROFILE: SigfoxProfile = profile
+        self.STORAGE: Storage = Storage(
+            f"{fragment_dir}/rule_{self.PROFILE.RULE.ID}")
+        self.CURR_FRAG_NUMBER: int = 0
 
         if not self.STORAGE.folder_exists("fragments"):
             self.STORAGE.create_folder("fragments")
 
     def generate_fragment(self, payload: bytes, all_1: bool) -> Fragment:
 
-        number_of_windows = 2 ** self.PROFILE.M
-        w = int_to_bin(
-            floor(self.CURRENT_FRAGMENT_NUMBER / self.PROFILE.WINDOW_SIZE % number_of_windows), self.PROFILE.M
-        )
+        window_id = self.CURR_FRAG_NUMBER / self.PROFILE.WDW_SIZE
+        w = int_to_bin(floor(window_id % 2 ** self.PROFILE.M), self.PROFILE.M)
         dtag = ''
 
         if all_1:
             fcn = '1' * self.PROFILE.N
-            rcs = int_to_bin(self.CURRENT_FRAGMENT_NUMBER % self.PROFILE.WINDOW_SIZE + 1, self.PROFILE.U)
+            rcs = int_to_bin(
+                self.CURR_FRAG_NUMBER % self.PROFILE.WDW_SIZE + 1,
+                self.PROFILE.U
+            )
             header_length = self.PROFILE.RULE.ALL1_HEADER_LENGTH
             payload_max_length = self.PROFILE.UPLINK_MTU - header_length
         else:
-            index = self.PROFILE.WINDOW_SIZE - (self.CURRENT_FRAGMENT_NUMBER % self.PROFILE.WINDOW_SIZE) - 1
+            index = self.PROFILE.WDW_SIZE \
+                    - (self.CURR_FRAG_NUMBER % self.PROFILE.WDW_SIZE) - 1
             fcn = int_to_bin(index, self.PROFILE.N)
             rcs = None
             header_length = self.PROFILE.RULE.HEADER_LENGTH
@@ -55,11 +60,13 @@ class Fragmenter:
 
         if len(header.to_binary()) > header_length:
             raise LengthMismatchError(
-                f"Header is larger than its maximum size ({len(header.to_binary())} > {header_length})."
+                f"Header is larger than its maximum size "
+                f"({len(header.to_binary())} > {header_length})."
             )
         if len(bytes_to_bin(payload)) > payload_max_length:
             raise LengthMismatchError(
-                f"Payload is larger than its maximum size ({(len(bytes_to_bin(payload)))} > {payload_max_length})."
+                f"Payload is larger than its maximum size "
+                f"({(len(bytes_to_bin(payload)))} > {payload_max_length})."
             )
 
         fragment = Fragment(header, payload)
@@ -70,9 +77,11 @@ class Fragmenter:
         w_index, f_index = fragment.get_indices()
 
         self.STORAGE.write(
-            f"fragments/fragment_w{w_index}f{f_index}", json.dumps(fragment_data)
+            f"fragments/fragment_w{w_index}f{f_index}",
+            json.dumps(fragment_data)
         )
-        self.CURRENT_FRAGMENT_NUMBER = (self.CURRENT_FRAGMENT_NUMBER + 1) % self.PROFILE.MAX_FRAGMENT_NUMBER
+        self.CURR_FRAG_NUMBER = (self.CURR_FRAG_NUMBER + 1) \
+                                % self.PROFILE.MAX_FRAGMENT_NUMBER
 
         return fragment
 
@@ -106,12 +115,11 @@ class Fragmenter:
         for i in range(number_of_fragments):
             payload = schc_packet[
                       i * payload_max_length:(i + 1) * payload_max_length]
-            fragment = self.generate_fragment(
-                payload, all_1=(i == number_of_fragments - 1)
-            )
+            fragment = self.generate_fragment(payload, all_1=(
+                    i == number_of_fragments - 1))
             fragments.append(fragment)
 
-        self.CURRENT_FRAGMENT_NUMBER = 0
+        self.CURR_FRAG_NUMBER = 0
         return fragments
 
     def clear_fragment_directory(self) -> None:

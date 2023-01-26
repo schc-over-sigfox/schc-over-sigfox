@@ -21,28 +21,36 @@ class FragmentHeader(Header):
 
         if len(fcn) != profile.N:
             raise LengthMismatchError("FCN must be of length N")
-        self.FCN = fcn
+        self.FCN: str = fcn
 
         if rcs is None:
-            self.RCS = ''
+            self.RCS: str = ''
         else:
             if profile.U != 0 and len(rcs) != profile.U:
                 raise LengthMismatchError("RCS must be of length U")
             if not is_monochar(self.FCN, '1'):
                 raise BadProfileError(
                     "RCS was not None in a regular fragment (not All-1)")
-            self.RCS = rcs
+            self.RCS: str = rcs
 
-        self.PADDING = ''
-        header_length = len(self.RULE_ID + self.DTAG + self.W + self.FCN + self.RCS) % L2_WORD_SIZE
+        self.PADDING: str = ''
+        header_length = len(
+            self.RULE_ID
+            + self.DTAG
+            + self.W
+            + self.FCN
+            + self.RCS
+        ) % L2_WORD_SIZE
 
         if header_length % L2_WORD_SIZE != 0:
-            self.PADDING = '0' * (L2_WORD_SIZE - (header_length % L2_WORD_SIZE))
+            self.PADDING = '0'\
+                           * (L2_WORD_SIZE - (header_length % L2_WORD_SIZE))
 
     def to_binary(self) -> str:
         """Generate the binary string representation of the Header"""
 
-        fields_in_order = [self.RULE_ID, self.DTAG, self.W, self.FCN, self.RCS, self.PADDING]
+        fields_in_order = [self.RULE_ID, self.DTAG, self.W,
+                           self.FCN, self.RCS, self.PADDING]
         return ''.join(fields_in_order)
 
     def to_bytes(self) -> bytes:
