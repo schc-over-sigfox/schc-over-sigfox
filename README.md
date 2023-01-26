@@ -40,6 +40,14 @@ An overview of the simulation environment is shown in the following picture.
 
 ![Overview of the simulation environment](local-overview.png)
 
+## Known issues:
+
+* After successfully completing a SCHC Session of n SCHC Fragments, if the next session uses the same Rule ID as the
+  previous one, is composed of the same number of SCHC Fragments in its last window, and if the first delivered message
+  of that session is an All-1, the Receiver will interpret that All-1 as a retransmission of the last All-1 of the
+  previous section, responding with the corresponding complete Compound ACK. Selecting different Rule IDs for
+  consecutive SCHC transmissions is suggested in order to avoid this issue.
+* 
 ## Authors
 
 * **Sergio Aguilar**: Profile coauthor, developer
@@ -49,14 +57,6 @@ An overview of the simulation environment is shown in the following picture.
 * **Antonis Platis**: Developer
 * **Diego Wistuba**: Profile coauthor, developer
 * **Juan Carlos Zúñiga**: Profile coauthor, advisor
-
-## Known issues:
-
-* After successfully completing a SCHC Session of n SCHC Fragments, if the next session uses the same Rule ID as the
-  previous one, is composed of the same number of SCHC Fragments in its last window, and if the first delivered message
-  of that session is an All-1, the Receiver will interpret that All-1 as a retransmission of the last All-1 of the
-  previous section, responding with the corresponding complete Compound ACK. Selecting different Rule IDs for
-  consecutive SCHC transmissions is suggested in order to avoid this issue.
 
 ## License
 
