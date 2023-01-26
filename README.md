@@ -6,6 +6,9 @@ the [Sigfox SCHC Profile](https://datatracker.ietf.org/doc/html/draft-ietf-lpwan
 such a way to simulate the functioning of a LoPy4 device as the sender side and stateless Cloud Functions in Google
 Cloud Platform as the receiver side.
 
+A LoPy4-compatible implementation of the sender side is in the `sender` branch, whilst a GCP-deployable implementation of the receiver side is in the `receiver` branch.
+A partial integration with Firebase is in the `simulator-firebase` branch meant for testing new updates.
+
 ## About
 
 ### Static Context Header Compression and Fragmentation

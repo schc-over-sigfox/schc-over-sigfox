@@ -1,3 +1,7 @@
+"""Executes the receiver side of the SCHC/Sigfox simulation.
+It is a Flask server that receives HTTP messages,
+emulating Sigfox Callbacks"""
+
 import json
 
 from flask import Flask, request
