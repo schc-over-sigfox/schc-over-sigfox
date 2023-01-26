@@ -12,8 +12,7 @@ from utils.misc import generate_packet, zfill, set_led
 
 
 sizes = [1, 45, 88, 132, 176, 220, 263, 307]
-# loss_rates = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
-loss_rates = [0]
+loss_rates = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
 
 fs = CommonFileStorage("debug")
 
@@ -26,7 +25,7 @@ except OSError:
 
     pycom.heartbeat(True)
 
-    for repetition in range(100):
+    for repetition in range(2):
 
         for size in sizes:
 
@@ -57,7 +56,6 @@ except OSError:
                         zfill(str(repetition), 9)
                     )
                 )
-
 
     print("All experiments complete")
 
