@@ -1,6 +1,12 @@
+import os
+import sys
 import time
-
 from flask import Flask, request
+
+if os.getcwd().endswith("/test"):
+    os.chdir("..")
+
+sys.path.insert(0, os.getcwd())
 
 from Messages.Fragment import Fragment
 
