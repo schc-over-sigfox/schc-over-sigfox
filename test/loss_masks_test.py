@@ -1,9 +1,18 @@
+import os
+import sys
+
+if os.getcwd().endswith("/test"):
+    os.chdir("..")
+
+sys.path.insert(0, os.getcwd())
+
 from Entities.Rule import Rule
 from Entities.SCHCSender import SCHCSender
 from Entities.SigfoxProfile import SigfoxProfile
 from test.loss_masks_28f import loss_masks
 from utils.misc import generate_packet
 
+input("Start server.py and press any key afterwards.")
 
 for loss_mask in loss_masks:
 
@@ -21,7 +30,6 @@ for loss_mask in loss_masks:
 
     if success:
         print("Success!")
-        # input("Press Enter to continue.")
     else:
         print(f"Failure in loss mask {loss_masks.index(loss_mask)}")
         break

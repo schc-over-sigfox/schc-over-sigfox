@@ -1,6 +1,8 @@
+"""These tests require test/server_test.py to be executed
+in a separate terminal."""
+
 import json
 import shutil
-import unittest
 from unittest import TestCase
 
 from Entities.Fragmenter import Fragmenter
@@ -14,13 +16,11 @@ from utils.casting import bin_to_hex
 PORT = 1313
 
 
-@unittest.skip
 class TestSCHCSender(TestCase):
 
     def test_send(self):
         rule = Rule("000")
-        profile = SigfoxProfile(direction="UPLINK", mode="ACK ON ERROR",
-                                rule=rule)
+        profile = SigfoxProfile(direction="UPLINK", mode="ACK ON ERROR", rule=rule)
         sender = SCHCSender(profile)
         sender.SOCKET.ENDPOINT = f'http://127.0.0.1:{PORT}/test'
 
@@ -33,9 +33,7 @@ class TestSCHCSender(TestCase):
         fragment = Fragment.from_hex(h)
 
         indices = fragment.get_indices()
-        with open(
-                f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}",
-                'w', encoding="utf-8") as f:
+        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w', encoding="utf-8") as f:
             f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
         sender.send(fragment)
@@ -44,25 +42,23 @@ class TestSCHCSender(TestCase):
         self.assertEqual(1, sender.SOCKET.SEQNUM)
         self.assertEqual('W2F0', sender.LOGGER.SEQUENCE)
 
-        sender.LOSS_RATE = 100
+        sender.UPLINK_LOSS_RATE = 100
 
         b = '00010101100010001000100010001000'
         h = bin_to_hex(b)
         fragment = Fragment.from_hex(h)
 
         indices = fragment.get_indices()
-        with open(
-                f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}",
-                'w', encoding="utf-8") as f:
+        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w', encoding="utf-8") as f:
             f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
         sender.send(fragment)
 
-        self.assertEqual(1, sender.LOGGER.SENT)
+        self.assertEqual(2, sender.LOGGER.SENT)
         self.assertEqual(2, sender.SOCKET.SEQNUM)
         self.assertEqual('W2F0', sender.LOGGER.SEQUENCE)
 
-        sender.LOSS_RATE = 0
+        sender.UPLINK_LOSS_RATE = 0
         sender.LOSS_MASK = {
             "fragment": {
                 "2": "0010000"
@@ -74,14 +70,12 @@ class TestSCHCSender(TestCase):
         fragment = Fragment.from_hex(h)
 
         indices = fragment.get_indices()
-        with open(
-                f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}",
-                'w', encoding="utf-8") as f:
+        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w', encoding="utf-8") as f:
             f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
         sender.send(fragment)
 
-        self.assertEqual(1, sender.LOGGER.SENT)
+        self.assertEqual(3, sender.LOGGER.SENT)
         self.assertEqual(3, sender.SOCKET.SEQNUM)
         self.assertEqual('W2F0', sender.LOGGER.SEQUENCE)
         self.assertEqual({
@@ -94,8 +88,8 @@ class TestSCHCSender(TestCase):
 
     def test_recv(self):
         rule = Rule("000")
-        profile = SigfoxProfile(direction="UPLINK", mode="ACK ON ERROR",
-                                rule=rule)
+        profile = SigfoxProfile(direction="UPLINK", mode="ACK ON ERROR", rule=rule)
+        profile.SIGFOX_DL_TIMEOUT = 5
         sender = SCHCSender(profile)
         sender.SOCKET.ENDPOINT = f'http://127.0.0.1:{PORT}/test'
 
@@ -109,9 +103,7 @@ class TestSCHCSender(TestCase):
         self.assertTrue(fragment.is_all_1())
 
         indices = fragment.get_indices()
-        with open(
-                f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}",
-                'w', encoding="utf-8") as f:
+        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w', encoding="utf-8") as f:
             f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
         sender.SOCKET.set_reception(True)
@@ -128,26 +120,26 @@ class TestSCHCSender(TestCase):
                 'w', encoding="utf-8") as f:
             f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
+        sender.UPLINK_LOSS_RATE = 100
+        sender.PROFILE.RETRANSMISSION_TIMEOUT = 1
         sender.send(fragment)
-        sender.LOSS_RATE = 100
 
         with self.assertRaises(SCHCTimeoutError):
             ack = sender.recv(SigfoxProfile.DOWNLINK_MTU)
+
         self.assertTrue(sender.SOCKET.BUFFER.empty())
 
-        sender.LOSS_RATE = 0
+        sender.UPLINK_LOSS_RATE = 0
         sender.LOSS_MASK = {
             "fragment": {
                 "3": "0000000"
             },
             "ack": {
-                "3": "10000"
+                "3": "1"
             }
         }
 
-        with open(
-                f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}",
-                'w', encoding="utf-8") as f:
+        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w', encoding="utf-8") as f:
             f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
         sender.send(fragment)
@@ -159,7 +151,7 @@ class TestSCHCSender(TestCase):
                 "3": "0000000"
             },
             "ack": {
-                "3": "0000"
+                "3": "0"
             }
         }, sender.LOSS_MASK)
         sender.ATTEMPTS += 1
@@ -172,7 +164,7 @@ class TestSCHCSender(TestCase):
                 "3": "0000000"
             },
             "ack": {
-                "3": "000"
+                "3": "0"
             }
         }, sender.LOSS_MASK)
 
@@ -199,65 +191,41 @@ class TestSCHCSender(TestCase):
         rule_0 = Rule("000")
         profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule_0)
         profile.SIGFOX_DL_TIMEOUT = 1
-        profile.SIGFOX_DL_TIMEOUT = 2
         fragmenter = Fragmenter(profile, "debug/sd")
         fragments = fragmenter.fragment(randbytes)
         sender = SCHCSender(profile)
         sender.SOCKET.ENDPOINT = f'http://127.0.0.1:{PORT}/test'
         sender.LAST_WINDOW = fragments[-1].HEADER.WINDOW_NUMBER
 
-        self.assertEqual(0, sender.CURRENT_FRAGMENT_INDEX)
-
-        windows = [fragments[0:7], fragments[7:14], fragments[14:21],
-                   fragments[21:28]]
+        windows = [fragments[0:7], fragments[7:14], fragments[14:21], fragments[21:28]]
 
         for fragment in windows[0][:-1]:
             sender.schc_send(fragment)
             self.assertEqual(60, sender.SOCKET.TIMEOUT)
-            self.assertEqual(fragment.NUMBER + 1,
-                             sender.CURRENT_FRAGMENT_INDEX)
-            self.assertEqual(0, sender.CURRENT_WINDOW_INDEX)
 
         sender.schc_send(windows[0][-1])
         self.assertEqual(profile.SIGFOX_DL_TIMEOUT, sender.SOCKET.TIMEOUT)
-        self.assertEqual(7, sender.CURRENT_FRAGMENT_INDEX)
-        self.assertEqual(1, sender.CURRENT_WINDOW_INDEX)
 
         for fragment in windows[1][:-1]:
             sender.schc_send(fragment)
             self.assertEqual(60, sender.SOCKET.TIMEOUT)
-            self.assertEqual(fragment.NUMBER + 1,
-                             sender.CURRENT_FRAGMENT_INDEX)
-            self.assertEqual(1, sender.CURRENT_WINDOW_INDEX)
 
         sender.schc_send(windows[1][-1])
         self.assertEqual(profile.SIGFOX_DL_TIMEOUT, sender.SOCKET.TIMEOUT)
-        self.assertEqual(14, sender.CURRENT_FRAGMENT_INDEX)
-        self.assertEqual(2, sender.CURRENT_WINDOW_INDEX)
 
         for fragment in windows[2][:-1]:
             sender.schc_send(fragment)
             self.assertEqual(60, sender.SOCKET.TIMEOUT)
-            self.assertEqual(fragment.NUMBER + 1,
-                             sender.CURRENT_FRAGMENT_INDEX)
-            self.assertEqual(2, sender.CURRENT_WINDOW_INDEX)
 
         sender.schc_send(windows[2][-1])
         self.assertEqual(profile.SIGFOX_DL_TIMEOUT, sender.SOCKET.TIMEOUT)
-        self.assertEqual(21, sender.CURRENT_FRAGMENT_INDEX)
-        self.assertEqual(3, sender.CURRENT_WINDOW_INDEX)
 
         for fragment in windows[3][:-1]:
             sender.schc_send(fragment)
             self.assertEqual(60, sender.SOCKET.TIMEOUT)
-            self.assertEqual(fragment.NUMBER + 1,
-                             sender.CURRENT_FRAGMENT_INDEX)
-            self.assertEqual(3, sender.CURRENT_WINDOW_INDEX)
 
         sender.schc_send(windows[3][-1])
         self.assertEqual(profile.RETRANSMISSION_TIMEOUT, sender.SOCKET.TIMEOUT)
-        self.assertEqual(28, sender.CURRENT_FRAGMENT_INDEX)
-        self.assertEqual(3, sender.CURRENT_WINDOW_INDEX)
         self.assertTrue(sender.LOGGER.FINISHED)
 
     def test_start_session(self):
@@ -284,7 +252,7 @@ class TestSCHCSender(TestCase):
         profile.SIGFOX_DL_TIMEOUT = 2
         sender = SCHCSender(profile)
         sender.SOCKET.ENDPOINT = f'http://127.0.0.1:{PORT}/test'
-        sender.start_session(randbytes)
 
-        self.assertEqual(28, len(sender.FRAGMENT_LIST))
+        sender.start_session(randbytes)
+        self.assertEqual(0, len(sender.TRANSMISSION_QUEUE))
         self.assertEqual(3, sender.LAST_WINDOW)

@@ -11,6 +11,7 @@ class LocalStorage(JSONStorage):
 
         super().__init__()
         self.PATH: str = "debug"
+        self.JSON: dict = {}
 
         if not os.path.exists(self.PATH):
             os.makedirs(self.PATH, exist_ok=True)
@@ -18,25 +19,25 @@ class LocalStorage(JSONStorage):
         if not os.path.exists(f"{self.PATH}/STORAGE.json"):
             with open(
                     f"{self.PATH}/STORAGE.json", 'w', encoding="utf-8"
-            ) as fi:
-                fi.write(json.dumps(self.JSON))
+            ) as fil:
+                fil.write(json.dumps(self.JSON))
 
     def load(self) -> None:
         try:
             with open(
                     f"{self.PATH}/STORAGE.json", 'r', encoding="utf-8"
-            ) as fi:
-                j = json.loads(fi.read())
+            ) as fil:
+                j = json.loads(fil.read())
         except FileNotFoundError:
             j = {}
             with open(
                     f"{self.PATH}/STORAGE.json", 'w', encoding="utf-8"
-            ) as fi:
-                fi.write(json.dumps(j))
+            ) as fil:
+                fil.write(json.dumps(j))
         self.JSON = j
 
     def save(self) -> None:
         with open(
                 f"{self.PATH}/STORAGE.json", 'w', encoding="utf-8"
-        ) as fi:
-            fi.write(json.dumps(self.JSON, indent=2))
+        ) as fil:
+            fil.write(json.dumps(self.JSON, indent=2))

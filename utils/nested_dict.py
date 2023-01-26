@@ -1,34 +1,36 @@
 """
-Functions to handle nested dictionaries, using a list of keys used as a path to obtain a value.
+Functions to handle nested dictionaries,
+using a list of keys used as a path to obtain a value.
 """
 
 
 def deep_write(dic: dict, value: object, path: list[str]) -> None:
-    """Searches for a key in a nested dictionary and writes the value for that key."""
+    """Searches for a key in a nested dictionary
+    and writes the value for that key."""
 
     if not path:
         if isinstance(value, dict):
             dic.clear()
-            return
+            return None
         raise ValueError("Value to write at the root was not a dictionary.")
 
     first_key = path[0]
 
     if len(path) == 1:
         dic[first_key] = value
-        return
+        return None
     next_node = dic.get(first_key, None)
     if next_node is not None:
         if isinstance(next_node, dict):
             return deep_write(next_node, value, path[1:])
         raise ValueError(f"Value for {first_key} is not a dictionary.")
-    else:
-        dic[first_key] = {}
-        return deep_write(dic[first_key], value, path[1:])
+    dic[first_key] = {}
+    return deep_write(dic[first_key], value, path[1:])
 
 
 def deep_read(dic: dict, path: list[str]) -> object:
-    """Searches for a key in a nested dictionary and returns the value for that key."""
+    """Searches for a key in a nested dictionary
+    and returns the value for that key."""
 
     if not path:
         return dic
@@ -47,7 +49,8 @@ def deep_read(dic: dict, path: list[str]) -> object:
 
 
 def deep_delete(dic: dict, path: list[str]) -> None:
-    """Searches for a key in a nested dictionary and deletes the value for that key."""
+    """Searches for a key in a nested dictionary
+    and deletes the value for that key."""
     first_key = path[0]
 
     if not path:
@@ -65,4 +68,5 @@ def deep_delete(dic: dict, path: list[str]) -> None:
             else:
                 raise ValueError(f"Value for {first_key} is not a dictionary.")
         else:
-            raise ValueError(f"Cannot continue reading (value for {first_key} is None).")
+            raise ValueError(f"Cannot continue reading "
+                             f"(value for {first_key} is None).")

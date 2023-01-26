@@ -17,11 +17,11 @@ class ACK:
             bitmap: str,
             padding: str = ''
     ) -> None:
-        self.PROFILE = profile
-        self.BITMAP = bitmap
-
-        self.HEADER = ACKHeader(profile, dtag, w, c)
-        self.PADDING = padding + '0' * (profile.DOWNLINK_MTU - len(self.HEADER.to_binary() + self.BITMAP + padding))
+        self.PROFILE: SigfoxProfile = profile
+        self.BITMAP: str = bitmap
+        self.HEADER: ACKHeader = ACKHeader(profile, dtag, w, c)
+        self.PADDING: str = padding + '0' * (profile.DOWNLINK_MTU - len(
+            self.HEADER.to_binary() + self.BITMAP + padding))
 
     def to_hex(self) -> str:
         """Obtains the hex representationi of the ACK."""
@@ -31,7 +31,10 @@ class ACK:
         """Checks whether the ACK is a SCHC Receiver Abort."""
 
         as_bin = hex_to_bin(self.to_hex())
-        header_length = len(self.HEADER.RULE_ID + self.HEADER.DTAG + self.HEADER.W + self.HEADER.C)
+        header_length = len(self.HEADER.RULE_ID
+                            + self.HEADER.DTAG
+                            + self.HEADER.W
+                            + self.HEADER.C)
         header = as_bin[:header_length]
         padding = as_bin[header_length:as_bin.rfind('1') + 1]
         padding_start = padding[:-config.L2_WORD_SIZE]
@@ -39,15 +42,19 @@ class ACK:
 
         if is_monochar(self.HEADER.W, '1') and self.HEADER.C == '1':
             if padding_end == "1" * config.L2_WORD_SIZE:
-                if padding_start != '' and len(header) % config.L2_WORD_SIZE != 0:
+                if padding_start != '' \
+                        and len(header) % config.L2_WORD_SIZE != 0:
                     return is_monochar(padding_start, '1') \
-                           and (len(header) + len(padding_start)) % config.L2_WORD_SIZE == 0
+                           and (
+                                len(header) + len(padding_start)
+                        ) % config.L2_WORD_SIZE == 0
                 return len(header) % config.L2_WORD_SIZE == 0
         return False
 
     def is_compound_ack(self) -> bool:
         """Checks if the ACK can be parsed as a Compound ACK."""
-        return not self.is_receiver_abort() and not is_monochar(self.PADDING, '0')
+        return not self.is_receiver_abort() \
+            and not is_monochar(self.PADDING, '0')
 
     def is_complete(self) -> bool:
         """Checks if the ACK reports the end of a SCHC session."""
@@ -75,8 +82,8 @@ class ACK:
         c = header[c_idx:c_idx + 1]
 
         payload = as_bin[rule.ACK_HEADER_LENGTH:]
-        bitmap = payload[:profile.WINDOW_SIZE]
-        padding = payload[profile.WINDOW_SIZE:]
+        bitmap = payload[:profile.WDW_SIZE]
+        padding = payload[profile.WDW_SIZE:]
 
         return ACK(
             profile,
