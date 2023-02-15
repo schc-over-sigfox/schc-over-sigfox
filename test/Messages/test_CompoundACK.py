@@ -1,5 +1,5 @@
-from Entities.SigfoxProfile import SigfoxProfile
 from Messages.CompoundACK import CompoundACK
+from config.schc import DOWNLINK_MTU
 from test.Messages.test_ACK import TestACK
 from utils.casting import bin_to_hex, hex_to_bin
 
@@ -11,8 +11,7 @@ class TestCompoundACK(TestACK):
         as_hex = bin_to_hex(b)
         ack = CompoundACK.from_hex(as_hex)
 
-        self.assertEqual(SigfoxProfile.DOWNLINK_MTU,
-                         len(hex_to_bin(ack.to_hex())))
+        self.assertEqual(DOWNLINK_MTU, len(hex_to_bin(ack.to_hex())))
         self.assertEqual('000', ack.HEADER.RULE_ID)
         self.assertEqual('', ack.HEADER.DTAG)
         self.assertEqual('00', ack.HEADER.W)

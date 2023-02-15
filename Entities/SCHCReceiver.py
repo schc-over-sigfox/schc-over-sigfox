@@ -1,7 +1,7 @@
 from typing import Optional
 
 from Entities.Logger import Logger
-from Entities.SigfoxProfile import SigfoxProfile
+from Entities.Rule import Rule
 from Entities.exceptions import ReceiverAbortError, LengthMismatchError, \
     SenderAbortError
 from Messages.ACK import ACK
@@ -9,7 +9,7 @@ from Messages.CompoundACK import CompoundACK
 from Messages.Fragment import Fragment
 from Messages.Header import Header
 from Messages.ReceiverAbort import ReceiverAbort
-from config import schc as config
+from config.schc import UPLINK_MTU, DISABLE_INACTIVITY_TIMEOUT
 from db.JSONStorage import JSONStorage
 from utils.casting import int_to_bin, bin_to_int
 from utils.misc import replace_char
@@ -17,10 +17,10 @@ from utils.misc import replace_char
 
 class SCHCReceiver:
 
-    def __init__(self, profile: SigfoxProfile, storage: JSONStorage):
-        self.PROFILE: SigfoxProfile = profile
+    def __init__(self, rule: Rule, storage: JSONStorage):
+        self.RULE: Rule = rule
         self.STORAGE: JSONStorage = storage
-        self.STORAGE.change_ref(f"rule_{self.PROFILE.RULE.ID}")
+        self.STORAGE.change_ref(f"rule_{self.RULE.ID}")
         self.LOGGER: Logger = Logger(Logger.DEBUG)
 
         if self.STORAGE.is_empty():
@@ -36,13 +36,13 @@ class SCHCReceiver:
         previous one exceeds the timeout value."""
         self.LOGGER.debug("Checking if inactivity timer expired...")
 
-        if config.DISABLE_INACTIVITY_TIMEOUT:
+        if DISABLE_INACTIVITY_TIMEOUT:
             return False
         if self.STORAGE.exists("state/TIMESTAMP"):
             previous_timestamp = int(self.STORAGE.read("state/TIMESTAMP"))
             if abs(
                     current_timestamp - previous_timestamp
-            ) > self.PROFILE.INACTIVITY_TIMEOUT:
+            ) > self.RULE.INACTIVITY_TIMEOUT:
                 return True
         return False
 
@@ -65,7 +65,7 @@ class SCHCReceiver:
         index = fragment.INDEX
 
         return window in requested_fragments.keys() \
-               and index in requested_fragments[window]
+            and index in requested_fragments[window]
 
     def fragment_is_receivable(self, fragment: Fragment) -> bool:
         """
@@ -196,12 +196,12 @@ class SCHCReceiver:
 
         for i in range(fragment.WINDOW):
             if not self.STORAGE.exists(f"state/bitmaps/w{i}"):
-                self.STORAGE.write('0' * self.PROFILE.WDW_SIZE,
+                self.STORAGE.write('0' * self.RULE.WINDOW_SIZE,
                                    f"state/bitmaps/w{i}")
 
         bitmap = self.STORAGE.read(f"state/bitmaps/w{fragment.WINDOW}")
         if bitmap is None:
-            bitmap = '0' * self.PROFILE.WDW_SIZE
+            bitmap = '0' * self.RULE.WINDOW_SIZE
         updated_bitmap = replace_char(bitmap, fragment.INDEX, '1')
         self.STORAGE.write(updated_bitmap, f"state/bitmaps/w{fragment.WINDOW}")
 
@@ -262,7 +262,7 @@ class SCHCReceiver:
                 expected_fragments = bin_to_int(fragment.HEADER.RCS)
                 expected_bitmap = \
                     f"{'1' * (expected_fragments - 1)}" \
-                    f"{'0' * (self.PROFILE.WDW_SIZE - expected_fragments)}" \
+                    f"{'0' * (self.RULE.WINDOW_SIZE - expected_fragments)}" \
                     f"1"
                 if bitmap != expected_bitmap:
                     lost = True
@@ -270,7 +270,7 @@ class SCHCReceiver:
                 lost = True
 
             if lost:
-                windows.append(int_to_bin(i, self.PROFILE.M))
+                windows.append(int_to_bin(i, self.RULE.M))
                 bitmaps.append(bitmap)
 
         losses_were_found = bitmaps and windows
@@ -278,7 +278,7 @@ class SCHCReceiver:
 
         if losses_were_found:
             ack = CompoundACK(
-                profile=self.PROFILE,
+                rule=self.RULE,
                 dtag=fragment.HEADER.DTAG,
                 windows=windows,
                 c='0',
@@ -287,11 +287,11 @@ class SCHCReceiver:
         else:
             if fragment.is_all_1():
                 ack = CompoundACK(
-                    profile=self.PROFILE,
+                    rule=self.RULE,
                     dtag=fragment.HEADER.DTAG,
                     windows=[fragment.HEADER.W],
                     c='1',
-                    bitmaps=['0' * self.PROFILE.WDW_SIZE],
+                    bitmaps=['0' * self.RULE.WINDOW_SIZE],
                 )
                 self.STORAGE.write(ack.to_hex(), "state/LAST_ACK")
 
@@ -334,7 +334,7 @@ class SCHCReceiver:
             self.LOGGER.error("Inactivity Timer expired.")
             return self.generate_receiver_abort(fragment.HEADER)
 
-        if len(fragment.to_bin()) > self.PROFILE.UPLINK_MTU:
+        if len(fragment.to_bin()) > UPLINK_MTU:
             raise LengthMismatchError("Fragment is larger than uplink MTU.")
 
         self.STORAGE.write(timestamp, "state/TIMESTAMP")
@@ -342,7 +342,7 @@ class SCHCReceiver:
         if fragment.is_sender_abort():
             self.LOGGER.error(
                 f"[Sender-Abort] Aborting session for rule "
-                f"{self.PROFILE.RULE.ID}")
+                f"{self.RULE.ID}")
             raise SenderAbortError
 
         self.LOGGER.info(

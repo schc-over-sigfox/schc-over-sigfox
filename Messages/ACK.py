@@ -1,8 +1,8 @@
 from Entities.Rule import Rule
-from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import LengthMismatchError
 from Messages.ACKHeader import ACKHeader
 from config import schc as config
+from config.schc import DOWNLINK_MTU
 from utils.casting import bin_to_hex, hex_to_bin
 from utils.misc import is_monochar
 
@@ -10,17 +10,17 @@ from utils.misc import is_monochar
 class ACK:
     def __init__(
             self,
-            profile: SigfoxProfile,
+            rule: Rule,
             dtag: str,
             w: str,
             c: str,
             bitmap: str,
             padding: str = ''
     ) -> None:
-        self.PROFILE: SigfoxProfile = profile
+        self.RULE: Rule = rule
         self.BITMAP: str = bitmap
-        self.HEADER: ACKHeader = ACKHeader(profile, dtag, w, c)
-        self.PADDING: str = padding + '0' * (profile.DOWNLINK_MTU - len(
+        self.HEADER: ACKHeader = ACKHeader(rule, dtag, w, c)
+        self.PADDING: str = padding + '0' * (DOWNLINK_MTU - len(
             self.HEADER.to_binary() + self.BITMAP + padding))
 
     def to_hex(self) -> str:
@@ -65,31 +65,23 @@ class ACK:
         """Creates an ACK from a hexadecimal string."""
         as_bin = hex_to_bin(hex_string)
 
-        if len(as_bin) != SigfoxProfile.DOWNLINK_MTU:
+        if len(as_bin) != DOWNLINK_MTU:
             raise LengthMismatchError("ACK was not of length DOWNLINK_MTU.")
 
         rule = Rule.from_hex(hex_string)
-        profile = SigfoxProfile("UPLINK", config.FR_MODE, rule)
 
-        dtag_idx = profile.RULE_ID_SIZE
-        w_idx = profile.RULE_ID_SIZE + profile.T
-        c_idx = profile.RULE_ID_SIZE + profile.T + profile.M
+        dtag_idx = rule.RULE_ID_SIZE
+        w_idx = rule.RULE_ID_SIZE + rule.T
+        c_idx = rule.RULE_ID_SIZE + rule.T + rule.M
 
         header = as_bin[:rule.ACK_HEADER_LENGTH]
 
-        dtag = header[dtag_idx:dtag_idx + profile.T]
-        w = header[w_idx:w_idx + profile.M]
+        dtag = header[dtag_idx:dtag_idx + rule.T]
+        w = header[w_idx:w_idx + rule.M]
         c = header[c_idx:c_idx + 1]
 
         payload = as_bin[rule.ACK_HEADER_LENGTH:]
-        bitmap = payload[:profile.WDW_SIZE]
-        padding = payload[profile.WDW_SIZE:]
+        bitmap = payload[:rule.WINDOW_SIZE]
+        padding = payload[rule.WINDOW_SIZE:]
 
-        return ACK(
-            profile,
-            dtag,
-            w,
-            c,
-            bitmap,
-            padding
-        )
+        return ACK(rule, dtag, w, c, bitmap, padding)

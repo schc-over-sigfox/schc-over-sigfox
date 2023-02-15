@@ -2,10 +2,9 @@ import json
 import random
 from typing import Optional
 
-import config.schc as config
 from Entities.Fragmenter import Fragmenter
 from Entities.Logger import Logger, log
-from Entities.SigfoxProfile import SigfoxProfile
+from Entities.Rule import Rule
 from Entities.exceptions import SCHCTimeoutError, SenderAbortError, \
     ReceiverAbortError, BadProfileError, \
     NetworkDownError, SCHCError
@@ -13,6 +12,7 @@ from Messages.CompoundACK import CompoundACK
 from Messages.Fragment import Fragment
 from Messages.SenderAbort import SenderAbort
 from Sockets.SigfoxHTTPSocket import SigfoxHTTPSocket as Socket
+from config.schc import DOWNLINK_MTU, DISABLE_MAX_ACK_REQUESTS
 from db.FileStorage import FileStorage
 from utils.casting import bytes_to_hex, bin_to_int
 from utils.misc import replace_char, is_monochar, zfill
@@ -20,14 +20,14 @@ from utils.misc import replace_char, is_monochar, zfill
 
 class SCHCSender:
 
-    def __init__(self, profile: SigfoxProfile):
-        self.PROFILE: SigfoxProfile = profile
-        self.FRAGMENTER: Fragmenter = Fragmenter(self.PROFILE)
+    def __init__(self, rule: Rule):
+        self.RULE: Rule = rule
+        self.FRAGMENTER: Fragmenter = Fragmenter(self.RULE)
         self.STORAGE: FileStorage = self.FRAGMENTER.STORAGE
         self.ATTEMPTS: int = 0
         self.NB_FRAGMENTS: int = 0
         self.LAST_WINDOW: int = 0
-        self.DELAY: float = config.DELAY_BETWEEN_FRAGMENTS
+        self.DELAY: float = self.RULE.DELAY_BETWEEN_FRAGMENTS
         self.LOGGER: Logger = Logger(Logger.INFO)
         self.SOCKET: Socket = Socket()
 
@@ -139,8 +139,8 @@ class SCHCSender:
         self.update_timeout(fragment)
 
         log.info(f"[SEND] Sending fragment: "
-                 f"Rule {fragment.PROFILE.RULE.ID} "
-                 f"({fragment.PROFILE.RULE.STR}), "
+                 f"Rule {fragment.RULE.ID} "
+                 f"({fragment.RULE.STR}), "
                  f"W{fragment.HEADER.WINDOW_NUMBER}"
                  f"F{fragment.INDEX}")
 
@@ -150,7 +150,7 @@ class SCHCSender:
             self.send(fragment)
 
             ack = self.recv(
-                self.PROFILE.DOWNLINK_MTU // 8
+                DOWNLINK_MTU // 8
             ) if enable_reception else None
 
             self.update_rt()
@@ -194,8 +194,8 @@ class SCHCSender:
         except SCHCTimeoutError as exc:
             if fragment.is_all_1():
                 log.debug(f"ACK-REQ Attempts: {self.ATTEMPTS}")
-                if self.ATTEMPTS >= self.PROFILE.MAX_ACK_REQUESTS and \
-                        not config.DISABLE_MAX_ACK_REQUESTS:
+                if self.ATTEMPTS >= self.RULE.MAX_ACK_REQUESTS and \
+                        not DISABLE_MAX_ACK_REQUESTS:
                     log.error("MAX_ACK_REQUESTS reached.")
                     self.TRANSMISSION_QUEUE.insert(
                         0, SenderAbort(fragment.HEADER)
@@ -260,7 +260,7 @@ class SCHCSender:
                     raise BadProfileError("The last ACK-REQ was not an All-1.")
 
                 last_bitmap = bitmap[
-                              :(self.NB_FRAGMENTS - 1) % self.PROFILE.WDW_SIZE
+                              :(self.NB_FRAGMENTS - 1) % self.RULE.WINDOW_SIZE
                               ]
 
                 bitmap_has_only_all1 = last_bitmap == '' and bitmap[-1] == '1'
@@ -284,16 +284,16 @@ class SCHCSender:
 
             for j, bit in enumerate(bitmap_to_retransmit):
                 if bit == '0':
-                    fragment_id = self.PROFILE.WDW_SIZE \
+                    fragment_id = self.RULE.WINDOW_SIZE \
                                   * ack_window_number \
                                   + j
                     w_index = zfill(
-                        str(fragment_id // self.PROFILE.WDW_SIZE),
-                        (2 ** self.PROFILE.M - 1) // 10 + 1
+                        str(fragment_id // self.RULE.WINDOW_SIZE),
+                        (2 ** self.RULE.M - 1) // 10 + 1
                     )
                     f_index = zfill(
-                        str(fragment_id % self.PROFILE.WDW_SIZE),
-                        self.PROFILE.WDW_SIZE // 10 + 1
+                        str(fragment_id % self.RULE.WINDOW_SIZE),
+                        self.RULE.WINDOW_SIZE // 10 + 1
                     )
                     path = f"{self.STORAGE.ROOT}/" \
                            f"fragments/fragment_w{w_index}f{f_index}"
@@ -310,13 +310,13 @@ class SCHCSender:
         if fragment.is_all_0() and not self.RT:
             log.debug("[SEND] [All-0] "
                       "Using All-0 SIGFOX_DL_TIMEOUT as timeout.")
-            self.SOCKET.set_timeout(self.PROFILE.SIGFOX_DL_TIMEOUT)
+            self.SOCKET.set_timeout(self.RULE.SIGFOX_DL_TIMEOUT)
         elif fragment.is_all_1():
             log.debug("[SEND] [All-1] "
                       "Using RETRANSMISSION_TIMER_VALUE as timeout. "
                       "Increasing ACK attempts.")
             self.ATTEMPTS += 1
-            self.SOCKET.set_timeout(self.PROFILE.RETRANSMISSION_TIMEOUT)
+            self.SOCKET.set_timeout(self.RULE.RETRANSMISSION_TIMEOUT)
         else:
             self.SOCKET.set_timeout(60)
 
@@ -324,7 +324,7 @@ class SCHCSender:
         """Performs the full SCHC Sender procedure for a given SCHC Packet."""
 
         log.info(f"SCHC Packet: {schc_packet}")
-        fragmenter = Fragmenter(self.PROFILE)
+        fragmenter = Fragmenter(self.RULE)
         self.TRANSMISSION_QUEUE = fragmenter.fragment(schc_packet)
         self.NB_FRAGMENTS = len(self.TRANSMISSION_QUEUE)
         self.LAST_WINDOW = self.TRANSMISSION_QUEUE[-1].HEADER.WINDOW_NUMBER

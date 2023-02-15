@@ -8,9 +8,9 @@ from unittest import TestCase
 from Entities.Fragmenter import Fragmenter
 from Entities.Rule import Rule
 from Entities.SCHCSender import SCHCSender
-from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import SCHCTimeoutError
 from Messages.Fragment import Fragment
+from config.schc import DOWNLINK_MTU
 from utils.casting import bin_to_hex
 
 PORT = 1313
@@ -20,21 +20,22 @@ class TestSCHCSender(TestCase):
 
     def test_send(self):
         rule = Rule("000")
-        profile = SigfoxProfile(direction="UPLINK", mode="ACK ON ERROR", rule=rule)
-        sender = SCHCSender(profile)
+        sender = SCHCSender(rule)
         sender.SOCKET.ENDPOINT = f'http://127.0.0.1:{PORT}/test'
 
         self.assertEqual(0, sender.LOGGER.SENT)
         self.assertEqual(0, sender.SOCKET.SEQNUM)
         self.assertEqual('', sender.LOGGER.SEQUENCE)
 
-        b = '00010110100010001000100010001000'
-        h = bin_to_hex(b)
-        fragment = Fragment.from_hex(h)
+        binstr = '00010110100010001000100010001000'
+        hexstr = bin_to_hex(binstr)
+        fragment = Fragment.from_hex(hexstr)
 
         indices = fragment.get_indices()
-        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w', encoding="utf-8") as f:
-            f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
+        with open(f"debug/sd/rule_0/fragments/"
+                  f"fragment_w{indices[0]}f{indices[1]}",
+                  'w', encoding="utf-8") as fil:
+            fil.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
         sender.send(fragment)
 
@@ -44,13 +45,15 @@ class TestSCHCSender(TestCase):
 
         sender.UPLINK_LOSS_RATE = 100
 
-        b = '00010101100010001000100010001000'
-        h = bin_to_hex(b)
-        fragment = Fragment.from_hex(h)
+        binstr = '00010101100010001000100010001000'
+        hexstr = bin_to_hex(binstr)
+        fragment = Fragment.from_hex(hexstr)
 
         indices = fragment.get_indices()
-        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w', encoding="utf-8") as f:
-            f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
+        with open(f"debug/sd/rule_0/fragments/"
+                  f"fragment_w{indices[0]}f{indices[1]}",
+                  'w', encoding="utf-8") as fil:
+            fil.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
         sender.send(fragment)
 
@@ -65,13 +68,15 @@ class TestSCHCSender(TestCase):
             }
         }
 
-        b = '00010100100010001000100010001000'
-        h = bin_to_hex(b)
-        fragment = Fragment.from_hex(h)
+        binstr = '00010100100010001000100010001000'
+        hexstr = bin_to_hex(binstr)
+        fragment = Fragment.from_hex(hexstr)
 
         indices = fragment.get_indices()
-        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w', encoding="utf-8") as f:
-            f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
+        with open(f"debug/sd/rule_0/fragments/"
+                  f"fragment_w{indices[0]}f{indices[1]}",
+                  'w', encoding="utf-8") as fil:
+            fil.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
         sender.send(fragment)
 
@@ -88,27 +93,28 @@ class TestSCHCSender(TestCase):
 
     def test_recv(self):
         rule = Rule("000")
-        profile = SigfoxProfile(direction="UPLINK", mode="ACK ON ERROR", rule=rule)
-        profile.SIGFOX_DL_TIMEOUT = 5
-        sender = SCHCSender(profile)
+        rule.SIGFOX_DL_TIMEOUT = 5
+        sender = SCHCSender(rule)
         sender.SOCKET.ENDPOINT = f'http://127.0.0.1:{PORT}/test'
 
         self.assertEqual(0, sender.LOGGER.SENT)
         self.assertEqual(0, sender.SOCKET.SEQNUM)
         self.assertEqual('', sender.LOGGER.SEQUENCE)
 
-        b = '00011111100000000100010001000100'
-        h = bin_to_hex(b)
-        fragment = Fragment.from_hex(h)
+        binstr = '00011111100000000100010001000100'
+        hexstr = bin_to_hex(binstr)
+        fragment = Fragment.from_hex(hexstr)
         self.assertTrue(fragment.is_all_1())
 
         indices = fragment.get_indices()
-        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w', encoding="utf-8") as f:
-            f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
+        with open(f"debug/sd/rule_0/fragments/"
+                  f"fragment_w{indices[0]}f{indices[1]}",
+                  'w', encoding="utf-8") as fil:
+            fil.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
         sender.SOCKET.set_reception(True)
         sender.send(fragment)
-        ack = sender.recv(SigfoxProfile.DOWNLINK_MTU)
+        ack = sender.recv(DOWNLINK_MTU)
 
         self.assertTrue(ack is not None)
         self.assertEqual('1c00000000000000', ack.to_hex())
@@ -117,15 +123,15 @@ class TestSCHCSender(TestCase):
 
         with open(
                 f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}",
-                'w', encoding="utf-8") as f:
-            f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
+                'w', encoding="utf-8") as fil:
+            fil.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
         sender.UPLINK_LOSS_RATE = 100
-        sender.PROFILE.RETRANSMISSION_TIMEOUT = 1
+        sender.RULE.RETRANSMISSION_TIMEOUT = 1
         sender.send(fragment)
 
         with self.assertRaises(SCHCTimeoutError):
-            ack = sender.recv(SigfoxProfile.DOWNLINK_MTU)
+            ack = sender.recv(DOWNLINK_MTU)
 
         self.assertTrue(sender.SOCKET.BUFFER.empty())
 
@@ -139,12 +145,14 @@ class TestSCHCSender(TestCase):
             }
         }
 
-        with open(f"debug/sd/rule_0/fragments/fragment_w{indices[0]}f{indices[1]}", 'w', encoding="utf-8") as f:
-            f.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
+        with open(f"debug/sd/rule_0/fragments/"
+                  f"fragment_w{indices[0]}f{indices[1]}",
+                  'w', encoding="utf-8") as fil:
+            fil.write(json.dumps({"hex": fragment.to_hex(), "sent": False}))
 
         sender.send(fragment)
         with self.assertRaises(SCHCTimeoutError):
-            ack = sender.recv(SigfoxProfile.DOWNLINK_MTU)
+            ack = sender.recv(DOWNLINK_MTU)
         self.assertTrue(sender.SOCKET.BUFFER.empty())
         self.assertEqual({
             "fragment": {
@@ -157,7 +165,7 @@ class TestSCHCSender(TestCase):
         sender.ATTEMPTS += 1
 
         sender.send(fragment)
-        ack = sender.recv(SigfoxProfile.DOWNLINK_MTU)
+        ack = sender.recv(DOWNLINK_MTU)
         self.assertTrue(ack is not None)
         self.assertEqual({
             "fragment": {
@@ -189,43 +197,43 @@ class TestSCHCSender(TestCase):
                     b'\x87VV\x11\xb2\xb5\xc9p\xc9\xe5'
 
         rule_0 = Rule("000")
-        profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule_0)
-        profile.SIGFOX_DL_TIMEOUT = 1
-        fragmenter = Fragmenter(profile, "debug/sd")
+        rule_0.SIGFOX_DL_TIMEOUT = 1
+        fragmenter = Fragmenter(rule_0, "debug/sd")
         fragments = fragmenter.fragment(randbytes)
-        sender = SCHCSender(profile)
+        sender = SCHCSender(rule_0)
         sender.SOCKET.ENDPOINT = f'http://127.0.0.1:{PORT}/test'
         sender.LAST_WINDOW = fragments[-1].HEADER.WINDOW_NUMBER
 
-        windows = [fragments[0:7], fragments[7:14], fragments[14:21], fragments[21:28]]
+        windows = [fragments[0:7], fragments[7:14], fragments[14:21],
+                   fragments[21:28]]
 
         for fragment in windows[0][:-1]:
             sender.schc_send(fragment)
             self.assertEqual(60, sender.SOCKET.TIMEOUT)
 
         sender.schc_send(windows[0][-1])
-        self.assertEqual(profile.SIGFOX_DL_TIMEOUT, sender.SOCKET.TIMEOUT)
+        self.assertEqual(rule_0.SIGFOX_DL_TIMEOUT, sender.SOCKET.TIMEOUT)
 
         for fragment in windows[1][:-1]:
             sender.schc_send(fragment)
             self.assertEqual(60, sender.SOCKET.TIMEOUT)
 
         sender.schc_send(windows[1][-1])
-        self.assertEqual(profile.SIGFOX_DL_TIMEOUT, sender.SOCKET.TIMEOUT)
+        self.assertEqual(rule_0.SIGFOX_DL_TIMEOUT, sender.SOCKET.TIMEOUT)
 
         for fragment in windows[2][:-1]:
             sender.schc_send(fragment)
             self.assertEqual(60, sender.SOCKET.TIMEOUT)
 
         sender.schc_send(windows[2][-1])
-        self.assertEqual(profile.SIGFOX_DL_TIMEOUT, sender.SOCKET.TIMEOUT)
+        self.assertEqual(rule_0.SIGFOX_DL_TIMEOUT, sender.SOCKET.TIMEOUT)
 
         for fragment in windows[3][:-1]:
             sender.schc_send(fragment)
             self.assertEqual(60, sender.SOCKET.TIMEOUT)
 
         sender.schc_send(windows[3][-1])
-        self.assertEqual(profile.RETRANSMISSION_TIMEOUT, sender.SOCKET.TIMEOUT)
+        self.assertEqual(rule_0.RETRANSMISSION_TIMEOUT, sender.SOCKET.TIMEOUT)
         self.assertTrue(sender.LOGGER.FINISHED)
 
     def test_start_session(self):
@@ -247,10 +255,9 @@ class TestSCHCSender(TestCase):
                     b'\x87VV\x11\xb2\xb5\xc9p\xc9\xe5'
 
         rule_0 = Rule("000")
-        profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule_0)
-        profile.SIGFOX_DL_TIMEOUT = 1
-        profile.SIGFOX_DL_TIMEOUT = 2
-        sender = SCHCSender(profile)
+        rule_0.SIGFOX_DL_TIMEOUT = 1
+        rule_0.SIGFOX_DL_TIMEOUT = 2
+        sender = SCHCSender(rule_0)
         sender.SOCKET.ENDPOINT = f'http://127.0.0.1:{PORT}/test'
 
         sender.start_session(randbytes)

@@ -5,7 +5,6 @@ from Entities.Logger import log
 from Entities.Reassembler import Reassembler
 from Entities.Rule import Rule
 from Entities.SCHCReceiver import SCHCReceiver
-from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import SenderAbortError, ReceiverAbortError
 from Messages.Fragment import Fragment
 from config import gcp, schc as config
@@ -37,10 +36,10 @@ def receive(request) -> tuple[object, int]:
         cnt = storage.read("UL")
         storage.write(cnt + 1, "UL")
 
-    profile = SigfoxProfile("UPLINK", "ACK ON ERROR", Rule.from_hex(data))
-    receiver = SCHCReceiver(profile, storage)
+    rule = Rule.from_hex(data)
+    receiver = SCHCReceiver(rule, storage)
     fragment = Fragment.from_hex(data)
-    log.debug(f"Received {data}. Rule {receiver.PROFILE.RULE.ID}")
+    log.debug(f"Received {data}. Rule {receiver.RULE.ID}")
 
     last_request = storage.read("state/LAST_REQUEST")
     if config.CHECK_FOR_CALLBACK_RETRIES and last_request is not None \
@@ -74,7 +73,7 @@ def receive(request) -> tuple[object, int]:
             else:
                 cnt = storage.read("DL")
                 storage.write(cnt + 1, "DL")
-            storage.change_ref(f"rule_{receiver.PROFILE.RULE.ID}")
+            storage.change_ref(f"rule_{receiver.RULE.ID}")
 
         if fragment.is_all_1() and comp_ack.is_complete():
             fragments = []
@@ -85,7 +84,7 @@ def receive(request) -> tuple[object, int]:
                         Fragment.from_hex(storage.read(f"fragments/{w}/{f}"))
                     )
 
-            reassembler = Reassembler(profile, fragments)
+            reassembler = Reassembler(fragments)
             schc_packet = reassembler.reassemble()
             log.info(f"Reassembled SCHC Packet: {schc_packet}")
             storage.write(schc_packet, "reassembly/SCHC_PACKET")
