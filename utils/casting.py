@@ -7,9 +7,9 @@ from math import log
 from utils.misc import zfill
 
 
-def bin_to_int(bi: str) -> int:
+def bin_to_int(bits: str) -> int:
     """Transforms a binary string into its integer representation."""
-    return int(bi, 2)
+    return int(bits, 2)
 
 
 def bin_to_hex(bits: str) -> str:

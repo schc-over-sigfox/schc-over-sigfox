@@ -1,4 +1,4 @@
-from Entities.SigfoxProfile import SigfoxProfile
+from Entities.Rule import Rule
 from Entities.exceptions import LengthMismatchError
 
 
@@ -6,34 +6,34 @@ class Header:
 
     def __init__(
             self,
-            profile: SigfoxProfile,
+            rule: Rule,
             dtag: str,
             w: str
     ) -> None:
         """Class to encapsulate SCHC Header fields
         present in Fragments and ACKs."""
 
-        self.PROFILE = profile
+        self.RULE: Rule = rule
 
-        if len(profile.RULE.STR) != profile.RULE_ID_SIZE:
+        if len(rule.STR) != rule.RULE_ID_SIZE:
             raise LengthMismatchError(
                 "RULE must be of length RULE_ID_SIZE ({}). "
                 "Rule was {}, length = {}. ".format(
-                    profile.RULE_ID_SIZE,
-                    profile.RULE.STR,
-                    len(profile.RULE.STR)
+                    rule.RULE_ID_SIZE,
+                    rule.STR,
+                    len(rule.STR)
                 )
             )
-        self.RULE_ID = profile.RULE.STR
+        self.RULE_ID = rule.STR
 
-        if profile.T == "0":
+        if rule.T == 0:
             self.DTAG = ""
-        elif len(dtag) != profile.T:
+        elif len(dtag) != rule.T:
             raise LengthMismatchError("DTAG must be of length T")
         else:
             self.DTAG = dtag
 
-        if len(w) != profile.M:
+        if len(w) != rule.M:
             raise LengthMismatchError("W must be of length M")
         self.W = w
         self.WINDOW_NUMBER = int(self.W, 2)

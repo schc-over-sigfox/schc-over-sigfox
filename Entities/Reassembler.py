@@ -1,4 +1,3 @@
-from Entities.SigfoxProfile import SigfoxProfile
 from Messages.Fragment import Fragment
 
 
@@ -6,13 +5,11 @@ class Reassembler:
 
     def __init__(
             self,
-            profile: SigfoxProfile,
             fragments: list[Fragment],
     ) -> None:
-        self.PROFILE = profile
-        self.FRAGMENTS = fragments
-        self.SCHC_PACKET = b''
-        self.COMPLETE = False
+        self.FRAGMENTS: list[Fragment] = fragments
+        self.SCHC_PACKET: bytes = b''
+        self.COMPLETE: bool = False
 
     def reassemble(self) -> bytes:
         """Merges all the SCHC Fragments into the original SCHC Packet."""

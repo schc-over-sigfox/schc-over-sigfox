@@ -1,6 +1,7 @@
 from Entities.exceptions import LengthMismatchError
-from config.schc import L2_WORD_SIZE
-from utils.casting import bin_to_int, hex_to_bin
+from config.schc import RETRANSMISSION_TIMEOUT, SIGFOX_DL_TIMEOUT, \
+    INACTIVITY_TIMEOUT, MAX_ACK_REQUESTS, DELAY_BETWEEN_FRAGMENTS, L2_WORD_SIZE
+from utils.casting import bin_to_int, hex_to_bin, int_to_bin
 from utils.misc import round_to_next_multiple, is_monochar
 
 
@@ -48,11 +49,28 @@ class Rule:
 
         self.ACK_HEADER_LENGTH = self.RULE_ID_SIZE + self.M + 1
 
+        self.MAX_WINDOW_NUMBER = 2 ** self.M
+        self.MAX_FRAGMENT_NUMBER = self.MAX_WINDOW_NUMBER \
+                                   * self.WINDOW_SIZE
+
+        self.FCN_DICT = {
+            int_to_bin(
+                self.WINDOW_SIZE - (j % self.WINDOW_SIZE) - 1, self.N
+            ): j
+            for j in range(self.WINDOW_SIZE)
+        }
+
+        self.RETRANSMISSION_TIMEOUT = RETRANSMISSION_TIMEOUT
+        self.SIGFOX_DL_TIMEOUT = SIGFOX_DL_TIMEOUT
+        self.INACTIVITY_TIMEOUT = INACTIVITY_TIMEOUT
+        self.MAX_ACK_REQUESTS = MAX_ACK_REQUESTS
+        self.DELAY_BETWEEN_FRAGMENTS = DELAY_BETWEEN_FRAGMENTS
+
     @staticmethod
-    def from_hex(h: str) -> 'Rule':
+    def from_hex(hexa: str) -> 'Rule':
         """Parses the Rule ID of the given hex string,
          assuming that it is located in the leftmost bits."""
-        as_bin = hex_to_bin(h)
+        as_bin = hex_to_bin(hexa)
         first_byte = as_bin[:8]
         rule_id = first_byte[:3]
         if is_monochar(rule_id, '1'):

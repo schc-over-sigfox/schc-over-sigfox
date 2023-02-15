@@ -61,8 +61,8 @@ def generate_packet(byte_size: int, path: str = None) -> bytes:
     string = string.encode()
 
     if path is not None and not os.path.isfile(path):
-        with open(path, 'wb') as fi:
-            fi.write(string)
+        with open(path, 'wb') as fil:
+            fil.write(string)
 
     return string
 

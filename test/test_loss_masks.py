@@ -1,6 +1,5 @@
 from Entities.Rule import Rule
 from Entities.SCHCSender import SCHCSender
-from Entities.SigfoxProfile import SigfoxProfile
 from test.loss_masks_28f import loss_masks
 from utils.misc import generate_packet
 
@@ -9,10 +8,10 @@ print("Start the server and press any key afterwards.")
 for loss_mask in loss_masks:
 
     packet = generate_packet(307)
-    profile = SigfoxProfile("UPLINK", "ACK ON ERROR", Rule('000'))
-    sender = SCHCSender(profile)
-    sender.PROFILE.SIGFOX_DL_TIMEOUT = 2
-    sender.PROFILE.RETRANSMISSION_TIMEOUT = 5
+    rule = Rule('000')
+    sender = SCHCSender(rule)
+    sender.RULE.SIGFOX_DL_TIMEOUT = 2
+    sender.RULE.RETRANSMISSION_TIMEOUT = 5
     sender.LOSS_MASK = loss_mask
     sender.start_session(packet)
 

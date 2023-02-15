@@ -1,10 +1,11 @@
 import json
 from math import floor
 
-from Entities.SigfoxProfile import SigfoxProfile
+from Entities.Rule import Rule
 from Entities.exceptions import LengthMismatchError
 from Messages.Fragment import Fragment
 from Messages.FragmentHeader import FragmentHeader
+from config.schc import UPLINK_MTU
 from db.CommonFileStorage import CommonFileStorage as Storage
 from utils.casting import int_to_bin, bytes_to_bin
 
@@ -14,7 +15,7 @@ class Fragmenter:
 
     def __init__(
             self,
-            profile: SigfoxProfile,
+            rule: Rule,
             fragment_dir: str = "debug/sd",
     ) -> None:
         """
@@ -24,36 +25,38 @@ class Fragmenter:
             profile: (SCHCProfile) SCHC Profile used for the fragmentation procedure.
             fragment_dir: (str) Directory where to store the fragments,
         """
-        self.PROFILE = profile
+        self.RULE = rule
         self.STORAGE = Storage(
-            "{}/rule_{}".format(fragment_dir, self.PROFILE.RULE.ID)
+            "{}/rule_{}".format(fragment_dir, self.RULE.ID)
         )
-        self.CURRENT_FRAGMENT_NUMBER = 0
+        self.CURR_FRAG_NUMBER = 0
 
         if not self.STORAGE.folder_exists("fragments"):
             self.STORAGE.create_folder("fragments")
 
     def generate_fragment(self, payload: bytes, all_1: bool) -> Fragment:
 
-        number_of_windows = 2 ** self.PROFILE.M
-        w = int_to_bin(
-            floor(self.CURRENT_FRAGMENT_NUMBER / self.PROFILE.WINDOW_SIZE % number_of_windows), self.PROFILE.M
-        )
+        window_id = self.CURR_FRAG_NUMBER / self.RULE.WINDOW_SIZE
+        w = int_to_bin(floor(window_id % 2 ** self.RULE.M), self.RULE.M)
         dtag = ''
 
         if all_1:
-            fcn = '1' * self.PROFILE.N
-            rcs = int_to_bin(self.CURRENT_FRAGMENT_NUMBER % self.PROFILE.WINDOW_SIZE + 1, self.PROFILE.U)
-            header_length = self.PROFILE.RULE.ALL1_HEADER_LENGTH
-            payload_max_length = self.PROFILE.UPLINK_MTU - header_length
+            fcn = '1' * self.RULE.N
+            rcs = int_to_bin(
+                self.CURR_FRAG_NUMBER % self.RULE.WINDOW_SIZE + 1,
+                self.RULE.U
+            )
+            header_length = self.RULE.ALL1_HEADER_LENGTH
+            payload_max_length = UPLINK_MTU - header_length
         else:
-            index = self.PROFILE.WINDOW_SIZE - (self.CURRENT_FRAGMENT_NUMBER % self.PROFILE.WINDOW_SIZE) - 1
-            fcn = int_to_bin(index, self.PROFILE.N)
+            index = self.RULE.WINDOW_SIZE \
+                    - (self.CURR_FRAG_NUMBER % self.RULE.WINDOW_SIZE) - 1
+            fcn = int_to_bin(index, self.RULE.N)
             rcs = None
-            header_length = self.PROFILE.RULE.HEADER_LENGTH
-            payload_max_length = self.PROFILE.UPLINK_MTU - header_length
+            header_length = self.RULE.HEADER_LENGTH
+            payload_max_length = UPLINK_MTU - header_length
 
-        header = FragmentHeader(self.PROFILE, dtag, w, fcn, rcs)
+        header = FragmentHeader(self.RULE, dtag, w, fcn, rcs)
 
         if len(header.to_binary()) > header_length:
             raise LengthMismatchError(
@@ -78,7 +81,8 @@ class Fragmenter:
             "fragments/fragment_w{}f{}".format(w_index, f_index),
             json.dumps(fragment_data)
         )
-        self.CURRENT_FRAGMENT_NUMBER = (self.CURRENT_FRAGMENT_NUMBER + 1) % self.PROFILE.MAX_FRAGMENT_NUMBER
+        self.CURR_FRAG_NUMBER = (self.CURR_FRAG_NUMBER + 1) \
+                                % self.RULE.MAX_FRAGMENT_NUMBER
 
         return fragment
 
@@ -86,12 +90,12 @@ class Fragmenter:
         """
         Generates a list of SCHC Fragments.
         """
-        header_len = self.PROFILE.RULE.HEADER_LENGTH
-        all_1_header_len = self.PROFILE.RULE.ALL1_HEADER_LENGTH
-        max_fragment_number = self.PROFILE.MAX_FRAGMENT_NUMBER
+        header_len = self.RULE.HEADER_LENGTH
+        all_1_header_len = self.RULE.ALL1_HEADER_LENGTH
+        max_fragment_number = self.RULE.MAX_FRAGMENT_NUMBER
 
-        payload_max_length = (self.PROFILE.UPLINK_MTU - header_len) // 8
-        all_1_payload = (self.PROFILE.UPLINK_MTU - all_1_header_len) // 8
+        payload_max_length = (UPLINK_MTU - header_len) // 8
+        all_1_payload = (UPLINK_MTU - all_1_header_len) // 8
 
         maximum_packet_size = payload_max_length * (
                 max_fragment_number - 1) + all_1_payload
@@ -99,7 +103,7 @@ class Fragmenter:
         if len(schc_packet) > maximum_packet_size:
             raise LengthMismatchError(
                 "SCHC Packet is larger than allowed "
-                "by Rule {}".format(self.PROFILE.RULE.ID)
+                "by Rule {}".format(self.RULE.ID)
             )
 
         number_of_fragments = -(len(schc_packet) // -payload_max_length)
@@ -116,7 +120,7 @@ class Fragmenter:
                         i == number_of_fragments - 1))
             fragments.append(fragment)
 
-        self.CURRENT_FRAGMENT_NUMBER = 0
+        self.CURR_FRAG_NUMBER = 0
         return fragments
 
     def clear_fragment_directory(self) -> None:
