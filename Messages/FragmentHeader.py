@@ -1,4 +1,4 @@
-from Entities.SigfoxProfile import SigfoxProfile
+from Entities.Rule import Rule
 from Entities.exceptions import LengthMismatchError, BadProfileError
 from Messages.Header import Header
 from config.schc import L2_WORD_SIZE
@@ -10,23 +10,23 @@ class FragmentHeader(Header):
 
     def __init__(
             self,
-            profile: SigfoxProfile,
+            rule: Rule,
             dtag: str,
             w: str,
             fcn: str,
             rcs: str = None
     ) -> None:
         """Subclass of Header, used exclusively in Fragments."""
-        super().__init__(profile, dtag, w)
+        super().__init__(rule, dtag, w)
 
-        if len(fcn) != profile.N:
+        if len(fcn) != rule.N:
             raise LengthMismatchError("FCN must be of length N")
         self.FCN: str = fcn
 
         if rcs is None:
             self.RCS: str = ''
         else:
-            if profile.U != 0 and len(rcs) != profile.U:
+            if rule.U != 0 and len(rcs) != rule.U:
                 raise LengthMismatchError("RCS must be of length U")
             if not is_monochar(self.FCN, '1'):
                 raise BadProfileError(

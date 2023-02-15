@@ -1,4 +1,4 @@
-from Entities.SigfoxProfile import SigfoxProfile
+from Entities.Rule import Rule
 from Entities.exceptions import LengthMismatchError
 from Messages.Header import Header
 
@@ -7,12 +7,12 @@ class ACKHeader(Header):
 
     def __init__(
             self,
-            profile: SigfoxProfile,
+            rule: Rule,
             dtag: str,
             w: str,
             c: str
     ) -> None:
-        super().__init__(profile, dtag, w)
+        super().__init__(rule, dtag, w)
 
         if len(c) != 1:
             raise LengthMismatchError("C bit must be of length 1")

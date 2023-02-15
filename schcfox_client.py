@@ -6,7 +6,6 @@ import sys
 
 from Entities.Rule import Rule
 from Entities.SCHCSender import SCHCSender
-from Entities.SigfoxProfile import SigfoxProfile
 from utils.misc import generate_packet
 
 sizes = [1, 45, 88, 132, 176, 220, 263, 307]
@@ -21,12 +20,11 @@ for repetition in range(2):
             print(f"PACKET SIZE = {size}")
             print(f"LOSS RATE = {lr}")
             print(f"(Repetition {repetition})")
-            profile = SigfoxProfile("UPLINK", "ACK ON ERROR", Rule('000'))
-            sender = SCHCSender(profile)
-
+            rule = Rule('000')
+            sender = SCHCSender(rule)
             sender.UPLINK_LOSS_RATE = lr
-            sender.PROFILE.SIGFOX_DL_TIMEOUT = 1
-            sender.PROFILE.RETRANSMISSION_TIMEOUT = 1
+            sender.RULE.SIGFOX_DL_TIMEOUT = 1
+            sender.RULE.RETRANSMISSION_TIMEOUT = 1
 
             sender.start_session(PACKET)
 

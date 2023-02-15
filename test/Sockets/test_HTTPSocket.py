@@ -4,12 +4,11 @@ in a separate terminal."""
 import queue
 from unittest import TestCase
 
-import config.schc
-from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import SCHCTimeoutError
 from Messages.CompoundACK import CompoundACK
 from Messages.Fragment import Fragment
 from Sockets.SigfoxHTTPSocket import SigfoxHTTPSocket
+from config.schc import DOWNLINK_MTU, RECEIVER_URL
 from utils.casting import bytes_to_hex
 
 PORT = 1313
@@ -21,7 +20,7 @@ class TestHTTPSocket(TestCase):
         socket = SigfoxHTTPSocket()
         self.assertEqual("1a2b3c", socket.DEVICE)
         self.assertIsInstance(socket.BUFFER, queue.Queue)
-        self.assertEqual(socket.ENDPOINT, config.schc.RECEIVER_URL)
+        self.assertEqual(socket.ENDPOINT, RECEIVER_URL)
         self.assertEqual(60, socket.TIMEOUT)
 
     def test_send(self):
@@ -62,7 +61,7 @@ class TestHTTPSocket(TestCase):
 
         fragment = Fragment.from_hex('172088888888888888888888')
         socket.send(fragment.to_bytes())
-        res = socket.recv(SigfoxProfile.DOWNLINK_MTU)
+        res = socket.recv(DOWNLINK_MTU)
         ack = CompoundACK.from_hex(bytes_to_hex(res))
 
         self.assertTrue(res, ack.to_hex())
