@@ -1,7 +1,7 @@
 from typing import Optional
 
 from Entities.Logger import Logger
-from Entities.SigfoxProfile import SigfoxProfile
+from Entities.Rule import Rule
 from Entities.exceptions import ReceiverAbortError, LengthMismatchError, \
     SenderAbortError
 from Messages.ACK import ACK
@@ -9,7 +9,7 @@ from Messages.CompoundACK import CompoundACK
 from Messages.Fragment import Fragment
 from Messages.Header import Header
 from Messages.ReceiverAbort import ReceiverAbort
-from config import schc as config
+from config.schc import UPLINK_MTU, DISABLE_INACTIVITY_TIMEOUT
 from db.JSONStorage import JSONStorage
 from utils.casting import int_to_bin, bin_to_int
 from utils.misc import replace_char
@@ -17,10 +17,10 @@ from utils.misc import replace_char
 
 class SCHCReceiver:
 
-    def __init__(self, profile: SigfoxProfile, storage: JSONStorage):
-        self.PROFILE: SigfoxProfile = profile
+    def __init__(self, rule: Rule, storage: JSONStorage):
+        self.RULE: Rule = rule
         self.STORAGE: JSONStorage = storage
-        self.STORAGE.change_ref(f"rule_{self.PROFILE.RULE.ID}")
+        self.STORAGE.change_ref(f"rule_{self.RULE.ID}")
         self.LOGGER: Logger = Logger(Logger.DEBUG)
 
         if self.STORAGE.is_empty():
@@ -28,30 +28,36 @@ class SCHCReceiver:
 
     def session_was_aborted(self) -> bool:
         """Checks if an "ABORT" node exists in the Storage."""
+        self.LOGGER.debug("Checking if session was aborted...")
         return self.STORAGE.exists("state/ABORT")
 
     def inactivity_timer_expired(self, current_timestamp: int) -> bool:
         """Checks if the difference between the current timestamp and the
         previous one exceeds the timeout value."""
-        if config.DISABLE_INACTIVITY_TIMEOUT:
+        self.LOGGER.debug("Checking if inactivity timer expired...")
+
+        if DISABLE_INACTIVITY_TIMEOUT:
             return False
         if self.STORAGE.exists("state/TIMESTAMP"):
             previous_timestamp = int(self.STORAGE.read("state/TIMESTAMP"))
             if abs(
                     current_timestamp - previous_timestamp
-            ) > self.PROFILE.INACTIVITY_TIMEOUT:
+            ) > self.RULE.INACTIVITY_TIMEOUT:
                 return True
         return False
 
     def generate_receiver_abort(self, header: Header) -> ReceiverAbort:
         """Creates a Receiver-Abort, stores it in the Storage
         and returns it."""
+        self.LOGGER.debug("Generating Receiver-Abort...")
         abort = ReceiverAbort(header)
         self.STORAGE.write(abort.to_hex(), "state/ABORT")
         return abort
 
     def fragment_is_requested(self, fragment: Fragment) -> bool:
         """Checks if the fragment was requested for retransmission."""
+        self.LOGGER.debug("Checking if fragment is requested...")
+
         requested_fragments = self.STORAGE.read("state/requested")
         if requested_fragments is None:
             return False
@@ -59,7 +65,7 @@ class SCHCReceiver:
         index = fragment.INDEX
 
         return window in requested_fragments.keys() \
-               and index in requested_fragments[window]
+            and index in requested_fragments[window]
 
     def fragment_is_receivable(self, fragment: Fragment) -> bool:
         """
@@ -89,6 +95,7 @@ class SCHCReceiver:
          ACK-REQs can be sent multiple times -> Receivable
         * Otherwise -> Not receivable.
         """
+        self.LOGGER.debug("Checking if fragment is receivable...")
 
         if not fragment.is_all_1() and self.fragment_was_already_received(
                 fragment):
@@ -151,6 +158,7 @@ class SCHCReceiver:
 
     def get_pending_ack(self, fragment: Fragment) -> Optional[CompoundACK]:
         """Checks if there exists an ACK to be retransmitted in the Storage."""
+        self.LOGGER.debug("Checking for any pending ACKs...")
 
         last_ack = CompoundACK.from_hex(self.STORAGE.read("state/LAST_ACK"))
 
@@ -176,6 +184,7 @@ class SCHCReceiver:
     def get_receiver_abort(self) -> CompoundACK:
         """Obtains a receiver abort from the state/ABORT node
         in the Storage."""
+        self.LOGGER.debug("Obtaining Receiver-Abort...")
         abort = CompoundACK.from_hex(self.STORAGE.read("state/ABORT"))
         self.STORAGE.delete("state/ABORT")
         return abort
@@ -183,20 +192,22 @@ class SCHCReceiver:
     def update_bitmap(self, fragment: Fragment) -> None:
         """Updates a stored bitmap according to the window
         and FCN of the fragment."""
+        self.LOGGER.debug("Updating bitmap...")
 
         for i in range(fragment.WINDOW):
             if not self.STORAGE.exists(f"state/bitmaps/w{i}"):
-                self.STORAGE.write('0' * self.PROFILE.WDW_SIZE,
+                self.STORAGE.write('0' * self.RULE.WINDOW_SIZE,
                                    f"state/bitmaps/w{i}")
 
         bitmap = self.STORAGE.read(f"state/bitmaps/w{fragment.WINDOW}")
         if bitmap is None:
-            bitmap = '0' * self.PROFILE.WDW_SIZE
+            bitmap = '0' * self.RULE.WINDOW_SIZE
         updated_bitmap = replace_char(bitmap, fragment.INDEX, '1')
         self.STORAGE.write(updated_bitmap, f"state/bitmaps/w{fragment.WINDOW}")
 
     def fragment_was_already_received(self, fragment: Fragment) -> bool:
         """Checks if the fragment was already processed by the receiver."""
+        self.LOGGER.debug("Checking if fragment was already received...")
 
         bitmap = self.STORAGE.read(f"state/bitmaps/w{fragment.WINDOW}")
 
@@ -217,6 +228,8 @@ class SCHCReceiver:
     def update_requested(self, ack: CompoundACK) -> None:
         """Updates the dictionary of requested fragments,
         using the tuples of a Compound ACK."""
+        self.LOGGER.debug("Updating dictionary of requested fragments...")
+
         if not ack.is_complete():
             requested = self.STORAGE.read("state/requested")
 
@@ -236,6 +249,7 @@ class SCHCReceiver:
         CompoundACK]:
         """Reads data from the stored bitmaps and generates (or not)
         an ACK accordingly."""
+        self.LOGGER.debug("Generating Compound-ACK")
         current_window = fragment.WINDOW
         windows = []
         bitmaps = []
@@ -248,7 +262,7 @@ class SCHCReceiver:
                 expected_fragments = bin_to_int(fragment.HEADER.RCS)
                 expected_bitmap = \
                     f"{'1' * (expected_fragments - 1)}" \
-                    f"{'0' * (self.PROFILE.WDW_SIZE - expected_fragments)}" \
+                    f"{'0' * (self.RULE.WINDOW_SIZE - expected_fragments)}" \
                     f"1"
                 if bitmap != expected_bitmap:
                     lost = True
@@ -256,7 +270,7 @@ class SCHCReceiver:
                 lost = True
 
             if lost:
-                windows.append(int_to_bin(i, self.PROFILE.M))
+                windows.append(int_to_bin(i, self.RULE.M))
                 bitmaps.append(bitmap)
 
         losses_were_found = bitmaps and windows
@@ -264,7 +278,7 @@ class SCHCReceiver:
 
         if losses_were_found:
             ack = CompoundACK(
-                profile=self.PROFILE,
+                rule=self.RULE,
                 dtag=fragment.HEADER.DTAG,
                 windows=windows,
                 c='0',
@@ -273,11 +287,11 @@ class SCHCReceiver:
         else:
             if fragment.is_all_1():
                 ack = CompoundACK(
-                    profile=self.PROFILE,
+                    rule=self.RULE,
                     dtag=fragment.HEADER.DTAG,
                     windows=[fragment.HEADER.W],
                     c='1',
-                    bitmaps=['0' * self.PROFILE.WDW_SIZE],
+                    bitmaps=['0' * self.RULE.WINDOW_SIZE],
                 )
                 self.STORAGE.write(ack.to_hex(), "state/LAST_ACK")
 
@@ -289,6 +303,7 @@ class SCHCReceiver:
 
     def upload_fragment(self, fragment: Fragment) -> None:
         """Uploads the hex representation of a fragment into the Storage."""
+        self.LOGGER.debug("Uploading fragment...")
 
         if self.fragment_was_already_received(fragment):
             self.LOGGER.info(
@@ -305,6 +320,7 @@ class SCHCReceiver:
 
     def schc_recv(self, fragment: Fragment, timestamp: int) -> Optional[ACK]:
         """Receives a SCHC Fragment and processes it accordingly."""
+        self.LOGGER.debug("Processing SCHC Fragment...")
 
         if self.STORAGE.is_empty():
             self.start_new_session(retain_previous_data=False)
@@ -318,7 +334,7 @@ class SCHCReceiver:
             self.LOGGER.error("Inactivity Timer expired.")
             return self.generate_receiver_abort(fragment.HEADER)
 
-        if len(fragment.to_bin()) > self.PROFILE.UPLINK_MTU:
+        if len(fragment.to_bin()) > UPLINK_MTU:
             raise LengthMismatchError("Fragment is larger than uplink MTU.")
 
         self.STORAGE.write(timestamp, "state/TIMESTAMP")
@@ -326,11 +342,13 @@ class SCHCReceiver:
         if fragment.is_sender_abort():
             self.LOGGER.error(
                 f"[Sender-Abort] Aborting session for rule "
-                f"{self.PROFILE.RULE.ID}")
+                f"{self.RULE.ID}")
             raise SenderAbortError
 
         self.LOGGER.info(
-            f"Received fragment W{fragment.WINDOW}F{fragment.INDEX}")
+            f"Received fragment W{fragment.WINDOW}F{fragment.INDEX} "
+            f"(hex: {fragment.to_hex()})"
+        )
 
         if not self.fragment_is_receivable(fragment):
             self.start_new_session(retain_previous_data=False)

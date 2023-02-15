@@ -3,7 +3,6 @@ from unittest import TestCase
 from Entities.Fragmenter import Fragmenter
 from Entities.Reassembler import Reassembler
 from Entities.Rule import Rule
-from Entities.SigfoxProfile import SigfoxProfile
 
 
 class TestReassembler(TestCase):
@@ -20,19 +19,18 @@ class TestReassembler(TestCase):
                     b'\x0e\x98\x81\xca\xaf\xf1\x07B\x83\x85\x8d4@v\x84\x87VV\x11\xb2\xb5\xc9p\xc9\xe5'
 
         rule_0 = Rule('000')
-        profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule_0)
-        fragmenter = Fragmenter(profile, "debug/unittest/sd")
+        fragmenter = Fragmenter(rule_0, "debug/unittest/sd")
         fragments = fragmenter.fragment(randbytes)
 
-        reassembler = Reassembler(profile, fragments)
+        reassembler = Reassembler(fragments)
         schc_packet = reassembler.reassemble()
 
         self.assertEqual(randbytes, schc_packet)
 
         multiple_eleven = b'-\xf2}\x1d\x01\xefg\xe7+\xb3\x16\x12\xedf\xdf^\xe65\xcd\x144f'
-        fragmenter = Fragmenter(profile, "debug/unittest/sd")
+        fragmenter = Fragmenter(rule_0, "debug/unittest/sd")
         fragments = fragmenter.fragment(multiple_eleven)
-        reassembler = Reassembler(profile, fragments)
+        reassembler = Reassembler(fragments)
         schc_packet = reassembler.reassemble()
 
         self.assertEqual(schc_packet, multiple_eleven)

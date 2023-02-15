@@ -5,8 +5,8 @@ import unittest
 
 from Entities.Fragmenter import Fragmenter
 from Entities.Rule import Rule
-from Entities.SigfoxProfile import SigfoxProfile
 from Entities.exceptions import LengthMismatchError
+from config.schc import UPLINK_MTU
 from utils.casting import bin_to_hex, bin_to_bytes
 from utils.misc import generate_packet
 
@@ -15,8 +15,7 @@ class TestFragmenter(unittest.TestCase):
 
     def test_init(self):
         rule_0 = Rule('000')
-        profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule_0)
-        _ = Fragmenter(profile, "debug/unittest/sd")
+        _ = Fragmenter(rule_0, "debug/unittest/sd")
 
         self.assertTrue(os.path.exists("debug/unittest/sd"))
         self.assertTrue(os.path.exists("debug/unittest/sd/rule_0"))
@@ -26,13 +25,12 @@ class TestFragmenter(unittest.TestCase):
 
     def test_generate_fragment(self):
         rule_0 = Rule('000')
-        profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule_0)
-        fragmenter = Fragmenter(profile, "debug/unittest/sd")
+        fragmenter = Fragmenter(rule_0, "debug/unittest/sd")
 
         self.assertEqual(0, fragmenter.CURR_FRAG_NUMBER)
 
         fragment = fragmenter.generate_fragment(b'\xde\xad\xca\xfe', all_1=False)
-        self.assertEqual(rule_0.ID, fragment.PROFILE.RULE.ID)
+        self.assertEqual(rule_0.ID, fragment.RULE.ID)
         self.assertEqual('', fragment.HEADER.DTAG)
         self.assertEqual('00', fragment.HEADER.W)
         self.assertEqual('110', fragment.HEADER.FCN)
@@ -65,7 +63,8 @@ class TestFragmenter(unittest.TestCase):
 
         eleven_byte = '1' * 88
         with self.assertRaises(LengthMismatchError):
-            all_1 = fragmenter.generate_fragment(bin_to_bytes(eleven_byte), all_1=True)
+            all_1 = fragmenter.generate_fragment(bin_to_bytes(eleven_byte),
+                                                 all_1=True)
 
     def test_fragment(self):
         randbytes = b'\xf8\xdb\x80\x1b~!\x11?\x87<\xb1\xe3/I\xe2\xf5\x13\xcd' \
@@ -88,11 +87,10 @@ class TestFragmenter(unittest.TestCase):
                     b'\x87VV\x11\xb2\xb5\xc9p\xc9\xe5'
 
         rule_0 = Rule('000')
-        profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule_0)
-        fragmenter = Fragmenter(profile, "debug/unittest/sd")
+        fragmenter = Fragmenter(rule_0, "debug/unittest/sd")
         fragments = fragmenter.fragment(randbytes)
 
-        payload_max_length = (profile.UPLINK_MTU - profile.RULE.HEADER_LENGTH) // 8
+        payload_max_length = (UPLINK_MTU - rule_0.HEADER_LENGTH) // 8
         number_of_fragments = -(len(randbytes) // -payload_max_length)
 
         self.assertTrue(number_of_fragments, len(fragments))
@@ -109,11 +107,10 @@ class TestFragmenter(unittest.TestCase):
                 self.assertFalse(fragments[i].is_all_1())
 
         multiple_eleven = b'-\xf2}\x1d\x01\xefg\xe7+\xb3\x16\x12\xedf\xdf^\xe65\xcd\x144f'
-        fragmenter = Fragmenter(profile, "debug/unittest/sd")
+        fragmenter = Fragmenter(rule_0, "debug/unittest/sd")
         fragments = fragmenter.fragment(multiple_eleven)
 
-        payload_max_length = (
-                                     profile.UPLINK_MTU - profile.RULE.HEADER_LENGTH) // 8
+        payload_max_length = (UPLINK_MTU - rule_0.HEADER_LENGTH) // 8
         number_of_fragments = -(
                 len(multiple_eleven) // -payload_max_length) + 1
 
@@ -129,11 +126,10 @@ class TestFragmenter(unittest.TestCase):
                 self.assertEqual(11, len(fragments[i].PAYLOAD))
 
         eleven = b'01234567890'
-        fragmenter = Fragmenter(profile, "debug/unittest/sd")
+        fragmenter = Fragmenter(rule_0, "debug/unittest/sd")
         fragments = fragmenter.fragment(eleven)
 
-        payload_max_length = (
-                                     profile.UPLINK_MTU - profile.RULE.HEADER_LENGTH) // 8
+        payload_max_length = (UPLINK_MTU - rule_0.HEADER_LENGTH) // 8
         number_of_fragments = -(len(multiple_eleven) // -payload_max_length)
 
         self.assertEqual(2, number_of_fragments)
@@ -141,15 +137,15 @@ class TestFragmenter(unittest.TestCase):
         self.assertFalse(fragments[-1].is_sender_abort())
 
         long_packet = generate_packet(308)
-        fragmenter = Fragmenter(profile, "debug/unittest/sd")
+        fragmenter = Fragmenter(rule_0, "debug/unittest/sd")
         with self.assertRaises(LengthMismatchError):
             _ = fragmenter.fragment(long_packet)
 
     def test_clear_fragment_directory(self):
-        packet = b'-\xf2}\x1d\x01\xefg\xe7+\xb3\x16\x12\xedf\xdf^\xe65\xcd\x144f'
+        packet = b'-\xf2}\x1d\x01\xefg\xe7+\xb3\x16' \
+                 b'\x12\xedf\xdf^\xe65\xcd\x144f'
         rule_0 = Rule('000')
-        profile = SigfoxProfile("UPLINK", "ACK ON ERROR", rule_0)
-        fragmenter = Fragmenter(profile, "debug/unittest/sd")
+        fragmenter = Fragmenter(rule_0, "debug/unittest/sd")
         _ = fragmenter.fragment(packet)
 
         self.assertTrue(fragmenter.STORAGE.list_files("fragments") != [])

@@ -1,5 +1,7 @@
 """Contains global variables that control SCHC transmissions."""
 
+UPLINK_MTU = 96
+DOWNLINK_MTU = 64
 FR_MODE = "ACK ON ERROR"
 RETRANSMISSION_TIMEOUT = 43200  # in seconds
 SIGFOX_DL_TIMEOUT = 43200  # in seconds
@@ -29,4 +31,3 @@ CHECK_FOR_CALLBACK_RETRIES = True
 DISABLE_INACTIVITY_TIMEOUT = False
 
 RECEIVER_URL = "http://localhost:5000/receive"
-REASSEMBLER_URL = "http://localhost:5000/reassemble"

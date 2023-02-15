@@ -21,8 +21,10 @@ class Timer:
             return
 
     def start(self, timeout: int, raise_exception: bool = False) -> None:
-        """Starts an asynchronous timer which will expire after the specified amount of time."""
-        self.THREAD = threading.Thread(target=self.sleep, args=(timeout, raise_exception))
+        """Starts an asynchronous timer which will expire after
+        the specified amount of time."""
+        self.THREAD = threading.Thread(target=self.sleep,
+                                       args=(timeout, raise_exception))
         self.THREAD.start()
 
     def stop(self) -> None:
@@ -32,7 +34,8 @@ class Timer:
 
     @staticmethod
     def time(resolution: int = 1) -> int:
-        """Returns the current Unix timestamp in the given resolution (in seconds)."""
+        """Returns the current Unix timestamp in the given resolution
+        (in seconds)."""
         return int(time.time()) // resolution
 
 
